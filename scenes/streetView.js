@@ -71,98 +71,98 @@ class StreetViewScene extends Scene {
         this.positions = {
             // === Cafe → Farm main walk (14 positions) ===
             'toFarm1': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm1.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm1.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -36.4, pitch: -8.9, target: 'toFarm2' },
                     { label: 'Back to Cafe', yaw: -176.2, pitch: -17.5, targetScene: 'cafe-exterior', spawnPosition: [-2.094, 1.6, -0.948] }
                 ]
             },
             'toFarm2': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm2.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm2.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: 174.1, pitch: -6.9, target: 'toFarm3' },
                     { label: 'Go Back', yaw: -9.7, pitch: -13.2, target: 'toFarm1' }
                 ]
             },
             'toFarm3': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm3.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm3.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -175.6, pitch: -7.4, target: 'toFarm4' },
                     { label: 'Go Back', yaw: -3.7, pitch: -17.8, target: 'toFarm2' }
                 ]
             },
             'toFarm4': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm4.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm4.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -171.4, pitch: -11.5, target: 'toFarm5' },
                     { label: 'Go Back', yaw: 14.5, pitch: -20.1, target: 'toFarm3' }
                 ]
             },
             'toFarm5': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm5.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm5.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -171.4, pitch: -6, target: 'toFarm6' },
                     { label: 'Go Back', yaw: 19.4, pitch: -22.3, target: 'toFarm4' }
                 ]
             },
             'toFarm6': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm6.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm6.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -158.5, pitch: -3.7, target: 'toFarm7' },
                     { label: 'Go Back', yaw: 15.4, pitch: -22.2, target: 'toFarm5' }
                 ]
             },
             'toFarm7': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm7.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm7.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: 160.8, pitch: -18.7, target: 'toFarm8' },
                     { label: 'Go Back', yaw: -11.8, pitch: -25.3, target: 'toFarm6' }
                 ]
             },
             'toFarm8': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm8.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm8.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: 159.1, pitch: -27.6, target: 'toFarm9' },
                     { label: 'Go Back', yaw: -25, pitch: -17.6, target: 'toFarm7' }
                 ]
             },
             'toFarm9': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm9.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm9.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: 154.5, pitch: -26.4, target: 'toFarm10' },
                     { label: 'Go Back', yaw: -24.5, pitch: -17.6, target: 'toFarm8' }
                 ]
             },
             'toFarm10': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm10.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm10.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -170.3, pitch: -23.3, target: 'toFarm11' },
                     { label: 'Go Back', yaw: -36.2, pitch: -20.7, target: 'toFarm9' }
                 ]
             },
             'toFarm11': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm11.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm11.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -177.1, pitch: -19.3, target: 'toFarm12' },
                     { label: 'Go Back', yaw: 8.2, pitch: -13.3, target: 'toFarm10' }
                 ]
             },
             'toFarm12': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm12.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm12.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: 177.4, pitch: -18.4, target: 'toFarm13' },
                     { label: 'Go Back', yaw: 6.8, pitch: -24.2, target: 'toFarm11' }
                 ]
             },
             'toFarm13': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm13.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm13.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: 161.9, pitch: -17.9, target: 'toFarm14' },
                     { label: 'Go Back', yaw: -9.8, pitch: -25.6, target: 'toFarm12' }
                 ]
             },
             'toFarm14': {
-                photo: 'Assets/Photos (360)/aGoing Main/toFarm14.jpg',
+                photo: assetUrl('Photos (360)/aGoing Main/toFarm14.jpg'),
                 arrows: [
                     { label: 'Go Back', yaw: 22.2, pitch: -23, target: 'toFarm13' },
                     { label: 'View Farm', yaw: 171.1, pitch: -17.6, target: 'farm1-1' },
@@ -172,35 +172,35 @@ class StreetViewScene extends Scene {
 
             // === Farm viewing spots (5 positions) ===
             'farm1-1': {
-                photo: 'Assets/Photos (360)/Farm1/farm1 1.jpg',
+                photo: assetUrl('Photos (360)/Farm1/farm1 1.jpg'),
                 arrows: [
                     { label: 'Next View', yaw: 171.5, pitch: -23, target: 'farm1-2' },
                     { label: 'Back', yaw: 16, pitch: -31.6, target: 'toFarm14' }
                 ]
             },
             'farm1-2': {
-                photo: 'Assets/Photos (360)/Farm1/farm1 2.jpg',
+                photo: assetUrl('Photos (360)/Farm1/farm1 2.jpg'),
                 arrows: [
                     { label: 'Next View', yaw: 151.7, pitch: -25.3, target: 'farm1-3' },
                     { label: 'Back', yaw: 6.3, pitch: -33.3, target: 'farm1-1' }
                 ]
             },
             'farm1-3': {
-                photo: 'Assets/Photos (360)/Farm1/farm1 3.jpg',
+                photo: assetUrl('Photos (360)/Farm1/farm1 3.jpg'),
                 arrows: [
                     { label: 'Next View', yaw: -179, pitch: -22.7, target: 'farm1-4' },
                     { label: 'Back', yaw: -42.1, pitch: -36.8, target: 'farm1-2' }
                 ]
             },
             'farm1-4': {
-                photo: 'Assets/Photos (360)/Farm1/farm1 4.jpg',
+                photo: assetUrl('Photos (360)/Farm1/farm1 4.jpg'),
                 arrows: [
                     { label: 'Next View', yaw: 13.9, pitch: -16.7, target: 'farm1-5' },
                     { label: 'Back', yaw: -146.1, pitch: -40.2, target: 'farm1-3' }
                 ]
             },
             'farm1-5': {
-                photo: 'Assets/Photos (360)/Farm1/farm1 5.jpg',
+                photo: assetUrl('Photos (360)/Farm1/farm1 5.jpg'),
                 arrows: [
                     { label: 'Continue to Harvest', yaw: 0, targetScene: 'harvesting', spawnPosition: [0, 1.6, 0] },
                     { label: 'Back', yaw: 180, target: 'farm1-4' }
@@ -209,42 +209,42 @@ class StreetViewScene extends Scene {
 
             // === Farm → Dryer walk (6 positions) ===
             'toDryer1': {
-                photo: 'Assets/Photos (360)/aTo Dryer/toDryer1.jpg',
+                photo: assetUrl('Photos (360)/aTo Dryer/toDryer1.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: 179.8, pitch: -23.2, target: 'toDryer2' },
                     { label: 'Go Back', yaw: -32.9, pitch: -28.9, target: 'toFarm14' }
                 ]
             },
             'toDryer2': {
-                photo: 'Assets/Photos (360)/aTo Dryer/toDryer2.jpg',
+                photo: assetUrl('Photos (360)/aTo Dryer/toDryer2.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -177.9, pitch: -20.3, target: 'toDryer3' },
                     { label: 'Go Back', yaw: 5.2, pitch: -28.9, target: 'toDryer1' }
                 ]
             },
             'toDryer3': {
-                photo: 'Assets/Photos (360)/aTo Dryer/toDryer3.jpg',
+                photo: assetUrl('Photos (360)/aTo Dryer/toDryer3.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -128.6, pitch: -22.9, target: 'toDryer4' },
                     { label: 'Go Back', yaw: 39.2, pitch: -30.4, target: 'toDryer2' }
                 ]
             },
             'toDryer4': {
-                photo: 'Assets/Photos (360)/aTo Dryer/toDryer4.jpg',
+                photo: assetUrl('Photos (360)/aTo Dryer/toDryer4.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -164.7, pitch: -19.5, target: 'toDryer5' },
                     { label: 'Go Back', yaw: -6.9, pitch: -27.8, target: 'toDryer3' }
                 ]
             },
             'toDryer5': {
-                photo: 'Assets/Photos (360)/aTo Dryer/toDryer5.jpg',
+                photo: assetUrl('Photos (360)/aTo Dryer/toDryer5.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: 179.8, pitch: -18, target: 'toDryer6' },
                     { label: 'Go Back', yaw: 14.9, pitch: -25.5, target: 'toDryer4' }
                 ]
             },
             'toDryer6': {
-                photo: 'Assets/Photos (360)/aTo Dryer/toDryer6.jpg',
+                photo: assetUrl('Photos (360)/aTo Dryer/toDryer6.jpg'),
                 arrows: [
                     { label: 'See the Dryer', yaw: 172.7, pitch: -16.9, target: 'dryer1' },
                     { label: 'Other Farm Side', yaw: 135.5, pitch: -7.7, target: 'farm2-1' },
@@ -254,28 +254,28 @@ class StreetViewScene extends Scene {
 
             // === Dryer area (4 positions) ===
             'dryer1': {
-                photo: 'Assets/Photos (360)/Dryer/dryer1.jpg',
+                photo: assetUrl('Photos (360)/Dryer/dryer1.jpg'),
                 arrows: [
                     { label: 'Next', yaw: -165.9, pitch: -17.2, target: 'dryer2' },
                     { label: 'Back', yaw: 8, pitch: -18.3, target: 'toDryer6' }
                 ]
             },
             'dryer2': {
-                photo: 'Assets/Photos (360)/Dryer/dryer2.jpg',
+                photo: assetUrl('Photos (360)/Dryer/dryer2.jpg'),
                 arrows: [
                     { label: 'Next', yaw: 0, target: 'dryer3' },
                     { label: 'Back', yaw: 180, target: 'dryer1' }
                 ]
             },
             'dryer3': {
-                photo: 'Assets/Photos (360)/Dryer/dryer3.jpg',
+                photo: assetUrl('Photos (360)/Dryer/dryer3.jpg'),
                 arrows: [
                     { label: 'Next', yaw: 117, pitch: -25.8, target: 'dryer4' },
                     { label: 'Back', yaw: -136.5, pitch: -14.3, target: 'dryer2' }
                 ]
             },
             'dryer4': {
-                photo: 'Assets/Photos (360)/Dryer/dryer4.jpg',
+                photo: assetUrl('Photos (360)/Dryer/dryer4.jpg'),
                 arrows: [
                     { label: 'Back', yaw: 139.6, pitch: -11.2, target: 'toDryer6' }
                 ]
@@ -283,14 +283,14 @@ class StreetViewScene extends Scene {
 
             // === Farm2 side (2 positions) ===
             'farm2-1': {
-                photo: 'Assets/Photos (360)/Farm2/farm2 1.jpg',
+                photo: assetUrl('Photos (360)/Farm2/farm2 1.jpg'),
                 arrows: [
                     { label: 'Next View', yaw: 0, target: 'farm2-2' },
                     { label: 'Back', yaw: 180, target: 'toDryer6' }
                 ]
             },
             'farm2-2': {
-                photo: 'Assets/Photos (360)/Farm2/farm2 2.jpg',
+                photo: assetUrl('Photos (360)/Farm2/farm2 2.jpg'),
                 arrows: [
                     { label: 'Back', yaw: 180, target: 'farm2-1' }
                 ]
@@ -381,6 +381,7 @@ class StreetViewScene extends Scene {
     }
 
     handleKeyAim(event) {
+        if (!window.DEV_MODE) return;
         if (!this.isLoaded) return;
         if (event.ctrlKey || event.altKey || event.metaKey) return;
 
@@ -488,7 +489,7 @@ class StreetViewScene extends Scene {
         sphere.render.meshInstances[0].material = mat;
         this.container.addChild(sphere);
         this.photoSphere = sphere;
-        console.log('Photo sphere created with placeholder material (mirrored X scale, CULLFACE_NONE)');
+        if (window.DEV_MODE) console.log('Photo sphere created with placeholder material (mirrored X scale, CULLFACE_NONE)');
     }
 
     createNadirTextureCanvas() {
@@ -579,11 +580,11 @@ class StreetViewScene extends Scene {
 
         const posData = this.positions[this.currentPosition];
         if (!posData || !posData.arrows) {
-            console.log(`[createArrows] No arrows for ${this.currentPosition}`);
+            if (window.DEV_MODE) console.log(`[createArrows] No arrows for ${this.currentPosition}`);
             return;
         }
 
-        console.log(`[createArrows] Creating ${posData.arrows.length} arrows for ${this.currentPosition}`);
+        if (window.DEV_MODE) console.log(`[createArrows] Creating ${posData.arrows.length} arrows for ${this.currentPosition}`);
 
         posData.arrows.forEach((arrow, index) => {
             if (arrow.label === 'To Dryer' && !window.journeyComplete) return;
@@ -601,7 +602,7 @@ class StreetViewScene extends Scene {
                 -Math.cos(yawRad) * Math.cos(pitchRad) * distance
             );
 
-            console.log(`[createArrows] Arrow ${index} "${arrow.label}": world pos ${arrowPos.toString()}`);
+            if (window.DEV_MODE) console.log(`[createArrows] Arrow ${index} "${arrow.label}": world pos ${arrowPos.toString()}`);
 
             // Create disc marker (flattened cylinder)
             const arrowEntity = new pc.Entity(`arrow-${index}`);
@@ -648,7 +649,7 @@ class StreetViewScene extends Scene {
             this.arrowEntities.push(arrowEntity);
 
             // Log properties after creation
-            console.log(`[createArrows]   Arrow ${index}: enabled=${arrowEntity.enabled}, parent=${!!arrowEntity.parent}, has render=${!!arrowEntity.render}`);
+            if (window.DEV_MODE) console.log(`[createArrows]   Arrow ${index}: enabled=${arrowEntity.enabled}, parent=${!!arrowEntity.parent}, has render=${!!arrowEntity.render}`);
 
             // Register for clicking
             this.registerInteractiveObject(arrowEntity, () => {
@@ -656,7 +657,7 @@ class StreetViewScene extends Scene {
             }, 1.5);
         });
 
-        console.log(`[createArrows] ✓ ${this.arrowEntities.length} arrows created`);
+        if (window.DEV_MODE) console.log(`[createArrows] ✓ ${this.arrowEntities.length} arrows created`);
     }
 
     loadTexture(url) {
@@ -719,7 +720,7 @@ class StreetViewScene extends Scene {
         if (arrow.targetScene) {
             await sceneManager.switchTo(arrow.targetScene, arrow.spawnPosition || null);
         } else if (arrow.target) {
-            console.log(`[navigation] ${this.currentPosition} → ${arrow.target}`);
+            if (window.DEV_MODE) console.log(`[navigation] ${this.currentPosition} → ${arrow.target}`);
             await this.transitionToPosition(arrow.target);
         }
     }
@@ -732,7 +733,7 @@ class StreetViewScene extends Scene {
                 this.isInputLocked = true;
                 for (let arrow of this.arrowEntities) arrow.enabled = false;
             }
-            this.showVideoPopup('Assets/Videos/farmerInterview.mp4', {
+            this.showVideoPopup(`${R2_BASE}/farmerInterview.mp4`, {
                 required,
                 onFinish: () => {
                     this.isInputLocked = false;
@@ -906,7 +907,7 @@ class StreetViewScene extends Scene {
 
             // Audio on first interaction
             const startAudioOnInteraction = () => {
-                this.initAmbient('Assets/Music/farmAmbienceSound.mp3', 0.5);
+                this.initAmbient(assetUrl('Music/farmAmbienceSound.mp3'), 0.5);
                 if (this.voAudio && this.voAudio.paused) {
                     this.voAudio.play().catch(e => console.warn('VO Autoplay blocked', e));
                 }

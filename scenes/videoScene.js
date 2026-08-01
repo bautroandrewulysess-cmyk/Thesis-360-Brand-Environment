@@ -41,6 +41,7 @@ class VideoScene extends Scene {
         this.videoElement.muted = true;
         this.videoElement.loop = true;
         this.videoElement.playsInline = true;
+        this.videoElement.crossOrigin = 'anonymous';
 
         if (this.videoSrc) {
             this.videoElement.src = this.videoSrc;
@@ -134,7 +135,7 @@ class VideoScene extends Scene {
 // Register harvesting scene
 sceneManager.registerScene('harvesting', new VideoScene({
     name: 'harvesting',
-    videoSrc: 'Assets/Videos/heroLoop.mp4',
+    videoSrc: `${R2_BASE}/heroLoop.mp4`,
     audioKey: 'harvesting',
     quizKey: 'harvesting',
     nextScene: 'roastery',

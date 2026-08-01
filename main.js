@@ -2,6 +2,15 @@
 // CORE PLAYCANVAS SETUP
 // ============================================================================
 
+const R2_BASE = 'https://pub-d9a52e1dd2124a6a8a669ef46ee0f58d.r2.dev';
+window.R2_BASE = R2_BASE;
+
+// Global asset URL helper: encodes path segments while preserving directory structure
+const assetUrl = (path) => {
+    return `${R2_BASE}/${path.split('/').map(encodeURIComponent).join('/')}`;
+};
+window.assetUrl = assetUrl;
+
 const canvas = document.getElementById('canvas');
 const app = new pc.Application(canvas, {
     mouse: new pc.Mouse(canvas),
@@ -52,6 +61,26 @@ const config = {
     fadeTransitionDuration: 0.6, // seconds
     debugMode: false,
 };
+
+const DEV_MODE = false;
+window.DEV_MODE = DEV_MODE;
+
+// Splat preloading cache
+window._preloadedSplats = {};
+
+// Loading screen trivia
+const loadingTrivia = [
+  "Coffee seedlings spend six to twelve months in polybags before they're strong enough to be planted.",
+  "Only the bright red, fully ripe cherries are hand-picked — green and yellow ones are left to ripen.",
+  "During roasting, the \"first crack\" is the moment the beans expand and begin developing their flavour.",
+  "Granja Alegre sits at the foot of Mount Kalatungan, in Pangantucan, Bukidnon.",
+  "It takes roughly three to four years before a newly planted coffee tree bears its first harvest.",
+  "Organic fertilizer goes into the planting hole before the seedling — healthy trees start with healthy soil.",
+  "Arabica thrives in the cool highlands; Robusta prefers the warmer lowlands.",
+  "The word \"terroir\" describes how soil, altitude, and climate shape the taste of what's grown there.",
+  "Every cherry is picked by hand, which is why harvest season takes weeks rather than days.",
+  "After roasting, beans need to rest for a few days before they reach their best flavour."
+];
 
 // ============================================================================
 // SCENE MANAGER
@@ -151,18 +180,33 @@ class SceneManager {
         }
 
         appState.isTransitioning = true;
+        const loadingScreen = document.getElementById('loading-screen');
         try {
             debugLog(`Switching to scene: ${sceneName}`);
             await fadeOut();
             await this.unloadScene();
-            const success = await this.loadScene(sceneName);
 
-            if (success) {
-                if (spawnPosition) {
-                    cameraEntity.setLocalPosition(spawnPosition[0], spawnPosition[1], spawnPosition[2]);
+            // Show loading screen before loading new scene
+            if (loadingScreen) {
+                loadingScreen.classList.remove('hidden');
+                showLoadingTrivia();
+            }
+
+            try {
+                const success = await this.loadScene(sceneName);
+
+                if (success) {
+                    if (spawnPosition) {
+                        cameraEntity.setLocalPosition(spawnPosition[0], spawnPosition[1], spawnPosition[2]);
+                    }
+                    appState.nextSceneName = null;
+                    await fadeIn();
                 }
-                appState.nextSceneName = null;
-                await fadeIn();
+            } finally {
+                // Hide loading screen once scene is loaded
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hidden');
+                }
             }
         } catch (e) {
             console.error(`Scene switch to '${sceneName}' failed:`, e);
@@ -173,6 +217,9 @@ class SceneManager {
             }
         } finally {
             appState.isTransitioning = false;
+            if (loadingScreen) {
+                loadingScreen.classList.add('hidden');
+            }
         }
     }
 
@@ -206,6 +253,27 @@ function fadeIn() {
         fadeOverlay.classList.remove('active');
         setTimeout(resolve, fadeTransitionDuration);
     });
+}
+
+function showLoadingTrivia() {
+    const triviaEl = document.getElementById('loading-trivia-text');
+    if (!triviaEl) return;
+
+    if (triviaEl._triviaInterval) {
+        clearInterval(triviaEl._triviaInterval);
+    }
+
+    const showRandomTrivia = () => {
+        const trivia = loadingTrivia[Math.floor(Math.random() * loadingTrivia.length)];
+        triviaEl.style.opacity = '0';
+        setTimeout(() => {
+            triviaEl.textContent = trivia;
+            triviaEl.style.opacity = '0.8';
+        }, 200);
+    };
+
+    showRandomTrivia();
+    triviaEl._triviaInterval = setInterval(showRandomTrivia, 8000);
 }
 
 // ============================================================================
@@ -288,7 +356,7 @@ class RaycastSystem {
         }
 
         if (closestHit) {
-            console.log(`[raycast] HIT ${closestHit.entity.name}`);
+            if (DEV_MODE) console.log(`[raycast] HIT ${closestHit.entity.name}`);
             closestHit.callback({ entity: closestHit.entity });
         }
     }
@@ -440,13 +508,12 @@ class Scene {
         this.stopVo();
 
         const lang = window.currentLanguage || 'en';
-        // Bisaya support requires Assets/Subtitles/ceb/*.vtt files (and optionally Assets/VO/ceb/*.mp3 for localized VO)
-        // VO path currently uses single language variant; audio remains in original language for all locales
-        const audioPath = `Assets/VO/${audioKey}.mp3`;
-        const langVttPath = lang === 'en' ? `Assets/Subtitles/${audioKey}.vtt` : `Assets/Subtitles/${lang}/${audioKey}.vtt`;
-        const fallbackVttPath = `Assets/Subtitles/${audioKey}.vtt`;
+        const audioPath = assetUrl(`VO/${audioKey}.mp3`);
+        const langVttPath = assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`);
+        const fallbackVttPath = assetUrl(`Subtitles/${audioKey}.vtt`);
 
         const audio = document.createElement('audio');
+        audio.crossOrigin = 'anonymous';
         audio.src = audioPath;
         audio.preload = 'auto';
         audio.hidden = true;
@@ -671,8 +738,10 @@ class Scene {
         const choicesEl = document.getElementById('quiz-choices');
         const feedbackEl = document.getElementById('quiz-feedback');
 
-        console.log(`[quiz] hideQuiz() called — THIS SHOULD NOT BE CALLED DURING A QUIZ SET`);
-        console.trace();
+        if (DEV_MODE) {
+            console.log(`[quiz] hideQuiz() called — THIS SHOULD NOT BE CALLED DURING A QUIZ SET`);
+            console.trace();
+        }
         overlay.style.opacity = '0';
         setTimeout(() => {
             overlay.style.display = 'none';
@@ -735,6 +804,7 @@ class Scene {
         if (!popup || !video) return;
 
         caption.textContent = required ? 'Hear it from the owners' : '';
+        video.crossOrigin = 'anonymous';
         video.src = src;
         skipBtn.style.display = required ? 'none' : 'block';
 
@@ -785,6 +855,30 @@ class Scene {
                 }
             }, 800);
         }
+    }
+
+    async preloadSplat(url, assetName) {
+        if (!window._preloadedSplats) {
+            window._preloadedSplats = {};
+        }
+
+        if (window._preloadedSplats[assetName]) {
+            console.warn(`[Preload] Using cached splat: ${assetName}`);
+            return window._preloadedSplats[assetName];
+        }
+
+        console.warn(`[Preload] Starting splat download: ${assetName} from ${url}`);
+        const splatAsset = new pc.Asset(assetName, 'gsplat', { url });
+        app.assets.add(splatAsset);
+        app.assets.load(splatAsset);
+
+        return new Promise((resolve) => {
+            splatAsset.ready(() => {
+                window._preloadedSplats[assetName] = splatAsset;
+                console.warn(`[Preload] Splat ready (preloaded): ${assetName}`);
+                resolve(splatAsset);
+            });
+        });
     }
 
     update(deltaTime) {
@@ -1041,7 +1135,7 @@ const DevJump = {
         window.journeyComplete = !window.journeyComplete;
         const surveyLink = document.getElementById('survey-link');
         if (surveyLink) surveyLink.style.display = window.journeyComplete ? 'block' : 'none';
-        console.log('[DEV] journeyComplete:', window.journeyComplete);
+        if (DEV_MODE) console.log('[DEV] journeyComplete:', window.journeyComplete);
     },
 
     resetJourney() {
@@ -1079,6 +1173,7 @@ window.addEventListener('resize', () => {
 const debugInfo = document.getElementById('debug-info');
 
 function debugLog(message) {
+    if (!DEV_MODE) return;
     if (config.debugMode) {
         console.log(message);
         updateDebugUI();
@@ -1097,6 +1192,7 @@ function updateDebugUI() {
 }
 
 function toggleDebugMode() {
+    if (!DEV_MODE) return;
     config.debugMode = !config.debugMode;
     debugInfo.classList.toggle('active', config.debugMode);
     console.log('Debug mode:', config.debugMode);
@@ -1104,12 +1200,14 @@ function toggleDebugMode() {
 
 window.addEventListener('keydown', (e) => {
     if (e.key === 'c' && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+        if (!DEV_MODE) return;
         const quizOverlay = document.getElementById('quiz-overlay');
         if (!quizOverlay || quizOverlay.style.display !== 'flex') {
             ColorGrading.toggleMenu();
         }
     }
     if ((e.key === '`' || e.key === '~') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        if (!DEV_MODE) return;
         e.preventDefault();
         if (e.shiftKey) {
             window.journeyComplete = false;
@@ -1119,6 +1217,7 @@ window.addEventListener('keydown', (e) => {
         }
     }
     if (e.key === 'm' && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+        if (!DEV_MODE) return;
         const quizOverlay = document.getElementById('quiz-overlay');
         const completionPanel = document.getElementById('completion-panel');
         if ((quizOverlay && quizOverlay.style.display === 'flex') || (completionPanel && completionPanel.style.display === 'flex')) return;
@@ -1193,4 +1292,4 @@ window.ThesisApp = {
     toggleDebugMode,
 };
 
-console.log('ThesisApp loaded. Access via window.ThesisApp');
+if (DEV_MODE) console.log('ThesisApp loaded. Access via window.ThesisApp');

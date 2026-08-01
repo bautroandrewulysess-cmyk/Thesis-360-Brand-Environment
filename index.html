@@ -408,8 +408,8 @@
         </nav>
 
         <section class="hero">
-            <video class="hero-video" autoplay muted loop playsinline>
-                <source src="Assets/Videos/heroLoop.mp4" type="video/mp4">
+            <video class="hero-video" autoplay muted loop playsinline crossorigin="anonymous">
+                <source src="https://pub-d9a52e1dd2124a6a8a669ef46ee0f58d.r2.dev/heroLoop.mp4" type="video/mp4">
             </video>
 
             <div class="hero-content">
@@ -562,7 +562,7 @@
     <div id="video-popup" style="display:none; opacity:0; transition:opacity 0.8s ease; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:955; align-items:center; justify-content:center; flex-direction:column; gap:20px;">
         <div style="text-align:center; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:1.1rem; margin-bottom:10px;" id="video-popup-caption"></div>
         <div style="position:relative; width:90%; max-width:900px;">
-            <video id="popup-video" controls playsinline style="width:100%; height:auto; background:#000; border-radius:8px; display:block;"></video>
+            <video id="popup-video" controls playsinline crossorigin="anonymous" style="width:100%; height:auto; background:#000; border-radius:8px; display:block;"></video>
         </div>
         <button id="video-popup-skip" style="display:none; padding:12px 24px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; border-radius:6px; font-size:0.9rem; font-family:'Inter',sans-serif; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; transition:all 0.3s ease;" onclick="this.closest('#video-popup').style.display='none'; this.closest('#video-popup').style.opacity='0';">Skip</button>
     </div>
@@ -602,6 +602,8 @@
             <path d="M28 8 C 20 18, 36 26, 28 36 C 20 44, 32 46, 28 48" transform="rotate(-25 28 28)" fill="none" stroke="#f4f4f4" stroke-width="2" stroke-linecap="round"/>
         </svg>
         <div class="loading-text">LOADING</div>
+        <div style="margin-top:16px; font-size:0.75rem; opacity:0.5; color:#f4f4f4; font-family:'Inter',sans-serif; letter-spacing:0.5px;">Loading scene — first load may take a moment on slower connections</div>
+        <div id="loading-trivia-text" style="margin-top:16px; font-size:0.9rem; opacity:0.8; color:#f4f4f4; font-family:'Inter',sans-serif; max-width:480px; text-align:center; line-height:1.6; transition:opacity 0.4s ease;"></div>
     </div>
 
     <div id="fade-overlay"></div>

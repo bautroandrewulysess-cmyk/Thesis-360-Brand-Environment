@@ -149,68 +149,70 @@ class RoasteryScene extends Scene {
         window.addEventListener('mousemove', this.onMouseMove);
         window.addEventListener('mouseup', this.onMouseUp);
 
-        this.onKeyB = (e) => {
-            if (e.key !== 'b' && e.key !== 'B') return;
+        if (window.DEV_MODE) {
+            this.onKeyB = (e) => {
+                if (e.key !== 'b' && e.key !== 'B') return;
 
-            const now = Date.now();
-            this.bPressTimes.push(now);
-            this.bPressTimes = this.bPressTimes.filter(t => now - t < 800);
+                const now = Date.now();
+                this.bPressTimes.push(now);
+                this.bPressTimes = this.bPressTimes.filter(t => now - t < 800);
 
-            if (this.bSpawnTimer) {
-                clearTimeout(this.bSpawnTimer);
-                this.bSpawnTimer = null;
-            }
-
-            if (this.bPressTimes.length >= 3) {
-                this.bPressTimes = [];
-                this.editorMode = !this.editorMode;
-                this.setEditorMode(this.editorMode);
-                return;
-            }
-
-            if (this.editorMode && this.bPressTimes.length === 1) {
-                this.bSpawnTimer = setTimeout(() => {
+                if (this.bSpawnTimer) {
+                    clearTimeout(this.bSpawnTimer);
                     this.bSpawnTimer = null;
-                    if (this.editorMode) {
-                        this.spawnEditorBox();
-                    }
+                }
+
+                if (this.bPressTimes.length >= 3) {
                     this.bPressTimes = [];
-                }, 850);
-            }
-        };
-        window.addEventListener('keydown', this.onKeyB);
+                    this.editorMode = !this.editorMode;
+                    this.setEditorMode(this.editorMode);
+                    return;
+                }
 
-        this.onKeyDuplicate = (e) => {
-            if ((e.metaKey || e.ctrlKey) && (e.key === 'd' || e.key === 'D')) {
-                e.preventDefault();
-                this.duplicateSelectedBox();
-            }
-        };
-        window.addEventListener('keydown', this.onKeyDuplicate);
+                if (this.editorMode && this.bPressTimes.length === 1) {
+                    this.bSpawnTimer = setTimeout(() => {
+                        this.bSpawnTimer = null;
+                        if (this.editorMode) {
+                            this.spawnEditorBox();
+                        }
+                        this.bPressTimes = [];
+                    }, 850);
+                }
+            };
+            window.addEventListener('keydown', this.onKeyB);
 
-        // Blender-style transform controls (G/F/R)
-        this.onTransformKey = (e) => {
-            if (!this.editorMode || !this.selectedBox) return;
+            this.onKeyDuplicate = (e) => {
+                if ((e.metaKey || e.ctrlKey) && (e.key === 'd' || e.key === 'D')) {
+                    e.preventDefault();
+                    this.duplicateSelectedBox();
+                }
+            };
+            window.addEventListener('keydown', this.onKeyDuplicate);
 
-            const key = e.key.toLowerCase();
+            // Blender-style transform controls (G/F/R)
+            this.onTransformKey = (e) => {
+                if (!this.editorMode || !this.selectedBox) return;
 
-            // Start modes
-            if (!this.transformMode) {
-                if (key === 'g') { this.startTransform('grab'); e.preventDefault(); }
-                if (key === 'f') { this.startTransform('scale'); e.preventDefault(); }
-                if (key === 'r') { this.startTransform('rotate'); e.preventDefault(); }
-                return;
-            }
+                const key = e.key.toLowerCase();
 
-            // Axis constraints while in a mode
-            if (key === 'x') this.transformAxis = 'x';
-            if (key === 'y') this.transformAxis = 'y';
-            if (key === 'z') this.transformAxis = 'z';
+                // Start modes
+                if (!this.transformMode) {
+                    if (key === 'g') { this.startTransform('grab'); e.preventDefault(); }
+                    if (key === 'f') { this.startTransform('scale'); e.preventDefault(); }
+                    if (key === 'r') { this.startTransform('rotate'); e.preventDefault(); }
+                    return;
+                }
 
-            // Cancel
-            if (e.key === 'Escape') this.cancelTransform();
-        };
-        window.addEventListener('keydown', this.onTransformKey);
+                // Axis constraints while in a mode
+                if (key === 'x') this.transformAxis = 'x';
+                if (key === 'y') this.transformAxis = 'y';
+                if (key === 'z') this.transformAxis = 'z';
+
+                // Cancel
+                if (e.key === 'Escape') this.cancelTransform();
+            };
+            window.addEventListener('keydown', this.onTransformKey);
+        }
     }
 
     detachEventListeners() {
@@ -472,7 +474,7 @@ class RoasteryScene extends Scene {
             this.selectedBox = null;
             this.cancelTransform();
         }
-        console.log('Editor mode:', on ? 'ON' : 'OFF');
+        if (window.DEV_MODE) console.log('Editor mode:', on ? 'ON' : 'OFF');
     }
 
     startTransform(mode) {
@@ -483,7 +485,7 @@ class RoasteryScene extends Scene {
         const s = this.selectedBox.getLocalScale().clone();
         const r = this.selectedBox.getLocalEulerAngles().clone();
         this.transformStart = { pos: p, scale: s, rot: r };
-        console.log(`Transform mode: ${mode}`);
+        if (window.DEV_MODE) console.log(`Transform mode: ${mode}`);
     }
 
     cancelTransform() {
@@ -743,11 +745,11 @@ class RoasteryScene extends Scene {
                     this.convertDebugBoxToEditable(entity);
                 } else {
                     entity._lastClickTime = now;
-                    console.log(`${box.name} — click again to edit`);
+                    if (window.DEV_MODE) console.log(`${box.name} — click again to edit`);
                 }
             }, clickRadius);
         });
-        console.log('Collision debug boxes visible:', this.debugBoxes.length);
+        if (window.DEV_MODE) console.log('Collision debug boxes visible:', this.debugBoxes.length);
     }
 
     convertDebugBoxToEditable(debugEntity) {
@@ -791,7 +793,7 @@ class RoasteryScene extends Scene {
         });
 
         this.selectEditorBox(boxEntity);
-        console.log(`Converted ${boxData.name} to editable box`);
+        if (window.DEV_MODE) console.log(`Converted ${boxData.name} to editable box`);
     }
 
     worldToScreen(worldPos) {
@@ -915,12 +917,18 @@ class RoasteryScene extends Scene {
         try {
             window.ThesisApp.debugLog('Loading roastery splat...');
 
-            this.splatAsset = new pc.Asset('roastery-splat', 'gsplat', {
-                url: 'Assets/Gaussian Splat/thesisRoastery.sog'
-            });
+            // Check if splat was preloaded
+            if (window._preloadedSplats && window._preloadedSplats['roastery-splat']) {
+                this.splatAsset = window._preloadedSplats['roastery-splat'];
+                console.warn('[Roastery] Using preloaded splat');
+            } else {
+                this.splatAsset = new pc.Asset('roastery-splat', 'gsplat', {
+                    url: `${R2_BASE}/thesisRoastery.sog`
+                });
 
-            app.assets.add(this.splatAsset);
-            app.assets.load(this.splatAsset);
+                app.assets.add(this.splatAsset);
+                app.assets.load(this.splatAsset);
+            }
 
             await new Promise((resolve) => {
                 this.splatAsset.ready(() => {
@@ -962,6 +970,9 @@ class RoasteryScene extends Scene {
 
             this.isVoFinished = false;
             this.playVoWithSubtitles('roasting');
+            if (!window.journeyComplete) {
+                this.preloadSplat(`${R2_BASE}/thesisCafeInterior.sog`, 'cafe-interior-splat');
+            }
 
             const startVoOnInteraction = () => {
                 if (this.voAudio && this.voAudio.paused) {
@@ -1083,7 +1094,7 @@ class RoasteryScene extends Scene {
                 const core = group.coreEntity;
                 const glow = group.glowEntity;
                 const halo = group.haloEntity;
-                if (!this._highlightedOnce) { console.log('[Glow] Highlighted hotspot pulse activated'); this._highlightedOnce = true; }
+                if (!this._highlightedOnce) { if (window.DEV_MODE) console.log('[Glow] Highlighted hotspot pulse activated'); this._highlightedOnce = true; }
                 if (core) {
                     const s = 0.12 + tripleSpeedPulse * 0.06;
                     core.setLocalScale(s, s, s);
