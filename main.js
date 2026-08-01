@@ -1053,6 +1053,103 @@ const ColorGrading = {
 };
 
 ColorGrading.init();
+ColorGrading.applyAll();
+
+// Build dev panels in DOM only if DEV_MODE is true
+if (DEV_MODE) {
+    const devPanelsHTML = `
+        <div id="color-menu" style="position:fixed; top:20px; left:20px; background:rgba(5,5,5,0.95); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:20px; width:300px; z-index:940; pointer-events:auto; font-family:'Inter',sans-serif; color:#f4f4f4; backdrop-filter:blur(8px);">
+          <h2 style="margin:0 0 18px 0; font-size:1.1rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px;">Color Grading</h2>
+          <div style="font-size:0.85rem; line-height:1.8;">
+            <div style="margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <label style="display:block;">Exposure</label>
+                <span id="exposure-val" style="color:#f4d03f;">0.95</span>
+              </div>
+              <input type="range" id="exposure-slider" min="0.1" max="3.0" step="0.05" value="0.95" style="width:100%; cursor:pointer;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <label style="display:block;">Brightness</label>
+                <span id="brightness-val" style="color:#f4d03f;">1.15</span>
+              </div>
+              <input type="range" id="brightness-slider" min="0" max="2.0" step="0.05" value="1.15" style="width:100%; cursor:pointer;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <label style="display:block;">Contrast</label>
+                <span id="contrast-val" style="color:#f4d03f;">1.05</span>
+              </div>
+              <input type="range" id="contrast-slider" min="0" max="2.0" step="0.05" value="1.05" style="width:100%; cursor:pointer;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <label style="display:block;">Saturation</label>
+                <span id="saturation-val" style="color:#f4d03f;">1.20</span>
+              </div>
+              <input type="range" id="saturation-slider" min="0" max="2.0" step="0.05" value="1.2" style="width:100%; cursor:pointer;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <label style="display:block;">Ambient Light</label>
+                <span id="ambient-val" style="color:#f4d03f;">1.15</span>
+              </div>
+              <input type="range" id="ambient-slider" min="0" max="2.0" step="0.05" value="1.15" style="width:100%; cursor:pointer;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <label style="display:block;">Gamma Correction</label>
+              </div>
+              <select id="gamma-select" style="width:100%; padding:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif;">
+                <option value="SRGB">sRGB</option>
+                <option value="NONE">Linear</option>
+              </select>
+            </div>
+            <div style="margin-bottom:18px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <label style="display:block;">Tonemapping</label>
+              </div>
+              <select id="tonemapping-select" style="width:100%; padding:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif;">
+                <option value="LINEAR">Linear</option>
+                <option value="FILMIC">Filmic</option>
+                <option value="HEJL">Hejl</option>
+                <option value="ACES" selected>ACES</option>
+                <option value="ACES2">ACES2</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button id="reset-btn" style="flex:1; padding:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">Reset</button>
+            <button id="copy-btn" style="flex:1; padding:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">Copy</button>
+          </div>
+        </div>
+        <div id="disc-values" style="position:fixed; bottom:20px; right:20px; background:rgba(5,5,5,0.95); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:16px; max-width:320px; max-height:40vh; overflow-y:auto; z-index:940; pointer-events:auto; font-family:monospace; font-size:11px; color:#f4f4f4; backdrop-filter:blur(8px); white-space:pre-wrap; word-wrap:break-word;"><div id="disc-values-content" style="margin-bottom:12px;"></div><div style="display:flex; gap:8px; flex-direction:column;"><button id="disc-copy-pos" style="padding:6px 10px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:monospace; font-size:11px; transition:all 0.2s ease;">Copy this position</button><button id="disc-copy-all" style="padding:6px 10px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:monospace; font-size:11px; transition:all 0.2s ease;">Copy ALL positions</button></div></div>
+        <div id="dev-jump-menu" style="position:fixed; top:20px; right:20px; background:rgba(5,5,5,0.95); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:20px; width:280px; z-index:940; pointer-events:auto; font-family:'Inter',sans-serif; color:#f4f4f4; backdrop-filter:blur(8px);">
+          <h2 style="margin:0 0 16px 0; font-size:0.95rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px;">Scene Jump</h2>
+          <div style="margin-bottom:18px;">
+            <button data-scene="cafe-interior" data-position="spawn" style="width:100%; padding:8px; margin-bottom:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;" class="dev-scene-btn">Café interior</button>
+            <button data-scene="cafe-interior" data-return-visit="true" style="width:100%; padding:8px; margin-bottom:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;" class="dev-scene-btn">Café interior (return)</button>
+            <button data-scene="cafe-exterior" data-position="spawn" style="width:100%; padding:8px; margin-bottom:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;" class="dev-scene-btn">Café exterior</button>
+            <button data-scene="nursery" data-position="spawn" style="width:100%; padding:8px; margin-bottom:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;" class="dev-scene-btn">Nursery</button>
+            <button data-scene="roastery" data-position="spawn" style="width:100%; padding:8px; margin-bottom:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;" class="dev-scene-btn">Roastery</button>
+            <button data-scene="street-view" data-position="spawn" style="width:100%; padding:8px; margin-bottom:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;" class="dev-scene-btn">Street view</button>
+            <button data-scene="video" data-position="spawn" style="width:100%; padding:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;" class="dev-scene-btn">Harvesting</button>
+          </div>
+          <div style="border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:12px; padding-bottom:12px;">
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <select id="dev-position-select" style="flex:1; padding:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem;"><option>—</option></select>
+              <button id="dev-go-position" style="padding:6px 12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;">Go</button>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button id="dev-toggle-journey" style="flex:1; padding:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.75rem; transition:all 0.2s ease;">Toggle journey</button>
+            <button id="dev-reset-journey" style="flex:1; padding:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.75rem; transition:all 0.2s ease;">Reset journey</button>
+          </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', devPanelsHTML);
+    ColorGrading.setupUI();
+}
 
 // ============================================================================
 // DEV TOOL — REMOVE BEFORE SUBMISSION
