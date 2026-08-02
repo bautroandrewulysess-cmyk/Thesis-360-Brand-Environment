@@ -68,6 +68,9 @@ window.DEV_MODE = DEV_MODE;
 // Splat preloading cache
 window._preloadedSplats = {};
 
+// Track if this is the first scene load in this session
+let isFirstSceneLoad = true;
+
 // Loading screen trivia
 const loadingTrivia = [
   "Coffee seedlings spend six to twelve months in polybags before they're strong enough to be planted.",
@@ -189,7 +192,7 @@ class SceneManager {
             // Show loading screen before loading new scene
             if (loadingScreen) {
                 loadingScreen.classList.remove('hidden');
-                showLoadingTrivia();
+                showLoadingTrivia(sceneName);
             }
 
             try {
@@ -255,7 +258,7 @@ function fadeIn() {
     });
 }
 
-function showLoadingTrivia() {
+function showLoadingTrivia(targetScene) {
     const triviaEl = document.getElementById('loading-trivia-text');
     if (!triviaEl) return;
 
@@ -263,17 +266,31 @@ function showLoadingTrivia() {
         clearInterval(triviaEl._triviaInterval);
     }
 
-    const showRandomTrivia = () => {
-        const trivia = loadingTrivia[Math.floor(Math.random() * loadingTrivia.length)];
-        triviaEl.style.opacity = '0';
-        setTimeout(() => {
-            triviaEl.textContent = trivia;
-            triviaEl.style.opacity = '0.8';
-        }, 200);
-    };
+    // Show onboarding on first load of cafe-interior only
+    if (isFirstSceneLoad && targetScene === 'cafe-interior') {
+        triviaEl.innerHTML = `<div style="font-size:0.95rem; line-height:1.8; text-align:left; display:inline-block;">
+            <div style="font-weight:500; margin-bottom:12px; color:#f4d03f;">How to explore</div>
+            <div style="margin-bottom:8px;"><span style="color:#e8e8e8;">W A S D</span> — walk around</div>
+            <div style="margin-bottom:8px;"><span style="color:#e8e8e8;">Mouse drag</span> — look around</div>
+            <div style="margin-bottom:8px;"><span style="color:#e8e8e8;">Click markers</span> — move between places</div>
+            <div><span style="color:#e8e8e8;">Listen for narration</span> — a question follows each stop</div>
+        </div>`;
+        triviaEl.style.opacity = '0.8';
+        isFirstSceneLoad = false;
+    } else {
+        // Show rotating trivia on all other loads
+        const showRandomTrivia = () => {
+            const trivia = loadingTrivia[Math.floor(Math.random() * loadingTrivia.length)];
+            triviaEl.style.opacity = '0';
+            setTimeout(() => {
+                triviaEl.textContent = trivia;
+                triviaEl.style.opacity = '0.8';
+            }, 200);
+        };
 
-    showRandomTrivia();
-    triviaEl._triviaInterval = setInterval(showRandomTrivia, 8000);
+        showRandomTrivia();
+        triviaEl._triviaInterval = setInterval(showRandomTrivia, 8000);
+    }
 }
 
 // ============================================================================
@@ -1350,6 +1367,9 @@ async function startup() {
 
         // Start PlayCanvas application
         app.start();
+
+        // Show onboarding on first scene load
+        showLoadingTrivia('cafe-interior');
 
         // Load cafe interior scene (registered by cafeInterior.js)
         await sceneManager.loadScene('cafe-interior');

@@ -7,6 +7,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://pub-d9a52e1dd2124a6a8a669ef46ee0f58d.r2.dev" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Oswald:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -230,6 +231,20 @@
 
         .btn-enter:hover::before { top: 0; }
 
+        .btn-status-text {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-status-text.ready {
+            opacity: 1;
+            color: #c0d9a8;
+        }
+
         .about-section {
             padding: 15vh 4vw;
             display: grid;
@@ -419,7 +434,10 @@
                 <h1 class="hero-title" style="margin-bottom: 4rem;">
                     <span class="title-line">Of Our Legacy</span>
                 </h1>
-                <button class="btn-enter hover-target" id="enter-btn">Enter 360° Experience</button>
+                <div style="text-align: center;">
+                    <button class="btn-enter hover-target" id="enter-btn">Enter 360° Experience</button>
+                    <div class="btn-status-text" id="btn-status"></div>
+                </div>
             </div>
         </section>
 
@@ -582,9 +600,43 @@
             );
         });
 
-        document.getElementById('enter-btn').addEventListener('click', () => {
+        document.getElementById('enter-btn').addEventListener('click', async () => {
             const wrapper = document.getElementById('landing-wrapper');
             const loadingScreen = document.getElementById('loading-screen');
+            const statusEl = document.getElementById('btn-status');
+            const btn = document.getElementById('enter-btn');
+
+            // Check if on mobile
+            const isPhoneOrTablet = window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(pointer: fine)').matches;
+            const tooNarrow = window.innerWidth < 900;
+            const onMobile = isPhoneOrTablet || tooNarrow;
+
+            // Disable button
+            btn.disabled = true;
+            statusEl.textContent = 'Preparing experience…';
+
+            // Start preload if not on mobile
+            let preloadComplete = false;
+            if (!onMobile) {
+                setTimeout(() => {
+                    const R2_BASE = 'https://pub-d9a52e1dd2124a6a8a669ef46ee0f58d.r2.dev';
+                    fetch(`${R2_BASE}/thesisCafeInterior.sog`, { mode: 'cors' })
+                        .then(() => {
+                            preloadComplete = true;
+                            statusEl.classList.add('ready');
+                            statusEl.textContent = 'Ready';
+                        })
+                        .catch(() => {
+                            preloadComplete = true;
+                            statusEl.textContent = '';
+                        });
+                }, 2000);
+            } else {
+                preloadComplete = true;
+            }
+
+            // Wait a minimum time for user to see the status, or for preload to complete
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
             gsap.to(wrapper, {
                 opacity: 0,
