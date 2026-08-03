@@ -46,6 +46,12 @@ app.root.addChild(cameraEntity);
 app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
 app.setCanvasResolution(pc.RESOLUTION_AUTO);
 
+// Enable CORS for cross-origin textures
+const textureHandler = app.loader.getHandler('texture');
+if (textureHandler) {
+    textureHandler.crossOrigin = 'anonymous';
+}
+
 // ============================================================================
 // APPLICATION STATE & CONFIG
 // ============================================================================

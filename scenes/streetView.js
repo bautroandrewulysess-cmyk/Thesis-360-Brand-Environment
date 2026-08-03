@@ -662,8 +662,7 @@ class StreetViewScene extends Scene {
 
     loadTexture(url) {
         return new Promise((resolve, reject) => {
-            const encodedUrl = encodeURI(url);
-            const asset = new pc.Asset(`texture-${Date.now()}`, 'texture', { url: encodedUrl });
+            const asset = new pc.Asset(`texture-${Date.now()}`, 'texture', { url: url });
 
             const onLoad = () => {
                 asset.off('load', onLoad);
@@ -671,7 +670,7 @@ class StreetViewScene extends Scene {
                 clearTimeout(timeout);
 
                 if (!asset.resource) {
-                    reject(new Error(`Texture resource not available: ${encodedUrl}`));
+                    reject(new Error(`Texture resource not available: ${url}`));
                     return;
                 }
 
@@ -682,13 +681,13 @@ class StreetViewScene extends Scene {
                 asset.off('load', onLoad);
                 asset.off('error', onError);
                 clearTimeout(timeout);
-                reject(new Error(`Texture load failed: ${encodedUrl}`));
+                reject(new Error(`Texture load failed: ${url}`));
             };
 
             const timeout = setTimeout(() => {
                 asset.off('load', onLoad);
                 asset.off('error', onError);
-                reject(new Error(`Texture load timeout: ${encodedUrl}`));
+                reject(new Error(`Texture load timeout: ${url}`));
             }, 15000);
 
             asset.on('load', onLoad);
