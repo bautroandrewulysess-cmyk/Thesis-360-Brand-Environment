@@ -983,11 +983,9 @@ class RoasteryScene extends Scene {
                 }
                 window.removeEventListener('keydown', startVoOnInteraction);
                 window.removeEventListener('click', startVoOnInteraction);
-                window.removeEventListener('mousemove', startVoOnInteraction);
             };
             window.addEventListener('keydown', startVoOnInteraction);
             window.addEventListener('click', startVoOnInteraction);
-            window.addEventListener('mousemove', startVoOnInteraction);
 
             // Attach event listeners for this scene
             this.attachEventListeners();
@@ -997,12 +995,13 @@ class RoasteryScene extends Scene {
             this.eulerAngles.yaw = 0;
             this.eulerAngles.pitch = 0;
 
-            this.isLoaded = true;
             window.ThesisApp.debugLog('Roastery scene loaded successfully');
         } catch (error) {
             console.error('Failed to load roastery scene:', error);
             this.isLoaded = false;
+            throw error;
         }
+        this.isLoaded = true;
     }
 
     async onUnload() {
@@ -1060,12 +1059,13 @@ class RoasteryScene extends Scene {
             window._boxCopyBtnInit = false;
             window._debugBoxesToggleInit = false;
 
-            this.isLoaded = false;
             window.ThesisApp.debugLog('Roastery scene unloaded');
 
             await super.onUnload();
         } catch (error) {
             console.error('Error unloading roastery scene:', error);
+        } finally {
+            this.isLoaded = false;
         }
     }
 

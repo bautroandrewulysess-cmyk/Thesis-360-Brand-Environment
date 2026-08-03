@@ -786,7 +786,7 @@ class StreetViewScene extends Scene {
             if (positionKey === 'farm1-1' && !this.farmVoStarted) {
                 this.farmVoStarted = true;
                 this.isVoFinished = false;
-                setTimeout(() => this.playVoWithSubtitles('farm'), 1000);
+                setTimeout(() => this.playVoWithSubtitles('farm'), 200);
             }
 
             // Dispose old asset before loading new one
@@ -883,8 +883,13 @@ class StreetViewScene extends Scene {
             // Create nadir patch
             this.createNadirPatch();
 
-            // Load initial photo and update sphere material
-            await this.loadPosition('toFarm1');
+            // Load initial photo and update sphere material (non-fatal on failure)
+            try {
+                await this.loadPosition('toFarm1');
+            } catch (loadError) {
+                console.error('Initial position load failed:', loadError.message);
+                console.warn('[streetView] Continuing with placeholder sphere — scene is navigable but photo failed to load');
+            }
 
             // Create arrow navigation
             this.createArrows();
@@ -921,8 +926,6 @@ class StreetViewScene extends Scene {
             this.preloadArrowTargets();
 
             this.attachEventListeners();
-            if (this.currentPosition === 'toFarm14') this.checkFarmerInterviewAtToFarm14();
-            this.isLoaded = true;
         } catch (error) {
             console.error('Street view load failed:', error);
 
@@ -938,8 +941,10 @@ class StreetViewScene extends Scene {
                 console.error('[diagnostic] Sphere rendered in red to confirm rendering pipeline works');
             }
 
+            this.isLoaded = false;
             throw error;
         }
+        this.isLoaded = true;
     }
 
     async onUnload() {
@@ -970,11 +975,11 @@ class StreetViewScene extends Scene {
             this.preloadedAssets = {};
             this.preloadedAssetKeys = [];
 
-            this.isLoaded = false;
-
             await super.onUnload();
         } catch (error) {
             console.error('Error unloading street view:', error);
+        } finally {
+            this.isLoaded = false;
         }
     }
 

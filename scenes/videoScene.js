@@ -23,44 +23,51 @@ class VideoScene extends Scene {
     async onLoad() {
         await super.onLoad();
 
-        // Hide PlayCanvas canvas
-        const canvas = document.getElementById('canvas');
-        if (canvas) canvas.style.display = 'none';
+        try {
+            // Hide PlayCanvas canvas
+            const canvas = document.getElementById('canvas');
+            if (canvas) canvas.style.display = 'none';
 
-        // Create and append full-screen video element
-        this.videoElement = document.createElement('video');
-        this.videoElement.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 10;
-        `;
-        this.videoElement.muted = true;
-        this.videoElement.loop = true;
-        this.videoElement.playsInline = true;
-        this.videoElement.crossOrigin = 'anonymous';
+            // Create and append full-screen video element
+            this.videoElement = document.createElement('video');
+            this.videoElement.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                z-index: 10;
+            `;
+            this.videoElement.muted = true;
+            this.videoElement.loop = true;
+            this.videoElement.playsInline = true;
+            this.videoElement.crossOrigin = 'anonymous';
 
-        if (this.videoSrc) {
-            this.videoElement.src = this.videoSrc;
-            this.videoElement.play().catch(() => {
-                // Autoplay may fail; video will start on first user interaction
-            });
+            if (this.videoSrc) {
+                this.videoElement.src = this.videoSrc;
+                this.videoElement.play().catch(() => {
+                    // Autoplay may fail; video will start on first user interaction
+                });
+            }
+
+            document.body.appendChild(this.videoElement);
+
+            // Start VO + subtitles (auto-triggers quiz on end)
+            if (this.audioKey) {
+                await this.playVoWithSubtitles(this.audioKey);
+            }
+
+            // In free-roam mode, show Continue button immediately
+            if (window.journeyComplete) {
+                this.showForwardButton();
+            }
+        } catch (error) {
+            console.error('Failed to load video scene:', error);
+            this.isLoaded = false;
+            throw error;
         }
-
-        document.body.appendChild(this.videoElement);
-
-        // Start VO + subtitles (auto-triggers quiz on end)
-        if (this.audioKey) {
-            await this.playVoWithSubtitles(this.audioKey);
-        }
-
-        // In free-roam mode, show Continue button immediately
-        if (window.journeyComplete) {
-            this.showForwardButton();
-        }
+        this.isLoaded = true;
     }
 
     getNavPromptText() {

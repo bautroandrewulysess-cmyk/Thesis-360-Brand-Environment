@@ -945,11 +945,9 @@ class NurseryScene extends Scene {
                 this.initAmbient(assetUrl('Music/nurseryAmbienceSound.mp3'), 0.5);
                 window.removeEventListener('keydown', startAudioOnInteraction);
                 window.removeEventListener('click', startAudioOnInteraction);
-                window.removeEventListener('mousemove', startAudioOnInteraction);
             };
             window.addEventListener('keydown', startAudioOnInteraction);
             window.addEventListener('click', startAudioOnInteraction);
-            window.addEventListener('mousemove', startAudioOnInteraction);
 
             this.isVoFinished = false;
             this.playVoWithSubtitles('nursery');
@@ -966,11 +964,9 @@ class NurseryScene extends Scene {
                 }
                 window.removeEventListener('keydown', startVoOnInteraction);
                 window.removeEventListener('click', startVoOnInteraction);
-                window.removeEventListener('mousemove', startVoOnInteraction);
             };
             window.addEventListener('keydown', startVoOnInteraction);
             window.addEventListener('click', startVoOnInteraction);
-            window.addEventListener('mousemove', startVoOnInteraction);
 
             // Attach event listeners for this scene
             this.attachEventListeners();
@@ -980,12 +976,13 @@ class NurseryScene extends Scene {
             this.eulerAngles.yaw = 0;
             this.eulerAngles.pitch = 0;
 
-            this.isLoaded = true;
             window.ThesisApp.debugLog('Nursery scene loaded successfully');
         } catch (error) {
             console.error('Failed to load nursery scene:', error);
             this.isLoaded = false;
+            throw error;
         }
+        this.isLoaded = true;
     }
 
     async onUnload() {
@@ -1035,12 +1032,13 @@ class NurseryScene extends Scene {
             window._boxCopyBtnInit = false;
             window._debugBoxesToggleInit = false;
 
-            this.isLoaded = false;
             window.ThesisApp.debugLog('Nursery scene unloaded');
 
             await super.onUnload();
         } catch (error) {
             console.error('Error unloading nursery scene:', error);
+        } finally {
+            this.isLoaded = false;
         }
     }
 

@@ -145,7 +145,7 @@ class SceneManager {
 
             // Handle color grading per scene type
             const splatScenes = ['cafe-interior', 'roastery', 'nursery', 'cafe-exterior'];
-            const equirectScenes = ['street-view', 'video'];
+            const equirectScenes = ['street-view', 'harvesting'];
             if (splatScenes.includes(sceneName)) {
                 ColorGrading.restoreState();
             } else if (equirectScenes.includes(sceneName)) {
@@ -184,6 +184,8 @@ class SceneManager {
 
         appState.isTransitioning = true;
         const loadingScreen = document.getElementById('loading-screen');
+        let loadSuccess = false;
+
         try {
             debugLog(`Switching to scene: ${sceneName}`);
             await fadeOut();
@@ -195,34 +197,54 @@ class SceneManager {
                 showLoadingTrivia(sceneName);
             }
 
-            try {
-                const success = await this.loadScene(sceneName);
+            const success = await this.loadScene(sceneName);
+            loadSuccess = success;
 
-                if (success) {
-                    if (spawnPosition) {
-                        cameraEntity.setLocalPosition(spawnPosition[0], spawnPosition[1], spawnPosition[2]);
-                    }
-                    appState.nextSceneName = null;
-                    await fadeIn();
+            if (success) {
+                if (spawnPosition) {
+                    cameraEntity.setLocalPosition(spawnPosition[0], spawnPosition[1], spawnPosition[2]);
                 }
-            } finally {
-                // Hide loading screen once scene is loaded
-                if (loadingScreen) {
-                    loadingScreen.classList.add('hidden');
+                appState.nextSceneName = null;
+            } else {
+                // Show error message for failed load
+                const errorMsg = document.getElementById('nav-prompt');
+                if (errorMsg) {
+                    errorMsg.textContent = `Scene couldn't load. Check your connection or try again.`;
+                    errorMsg.style.display = 'block';
+                    errorMsg.style.opacity = '1';
+                    setTimeout(() => {
+                        errorMsg.style.opacity = '0';
+                        setTimeout(() => errorMsg.style.display = 'none', 600);
+                    }, 4000);
                 }
             }
         } catch (e) {
             console.error(`Scene switch to '${sceneName}' failed:`, e);
+            // Show error message for exception
+            const errorMsg = document.getElementById('nav-prompt');
+            if (errorMsg) {
+                errorMsg.textContent = `Scene couldn't load. Check your connection or try again.`;
+                errorMsg.style.display = 'block';
+                errorMsg.style.opacity = '1';
+                setTimeout(() => {
+                    errorMsg.style.opacity = '0';
+                    setTimeout(() => errorMsg.style.display = 'none', 600);
+                }, 4000);
+            }
+        } finally {
+            // Always fade in, even on failure
             try {
                 await fadeIn();
             } catch (fadeErr) {
-                console.error('Failed to fade in after error:', fadeErr);
+                console.error('Failed to fade in:', fadeErr);
             }
-        } finally {
-            appState.isTransitioning = false;
+
+            // Hide loading screen
             if (loadingScreen) {
                 loadingScreen.classList.add('hidden');
             }
+
+            appState.isTransitioning = false;
         }
     }
 
@@ -545,22 +567,25 @@ class Scene {
         document.body.appendChild(audio);
         this.voAudio = audio;
 
-        track.addEventListener('load', () => {
-            const textTrack = audio.textTracks[0];
-            if (textTrack) {
-                textTrack.mode = 'hidden';
-                textTrack.addEventListener('cuechange', () => {
-                    const subtitleBar = document.getElementById('subtitle-bar');
-                    if (!subtitleBar) return;
-                    if (textTrack.activeCues && textTrack.activeCues.length > 0) {
-                        subtitleBar.textContent = textTrack.activeCues[0].text;
-                        subtitleBar.style.display = 'block';
-                    } else {
-                        subtitleBar.style.display = 'none';
-                    }
-                });
+        const textTrack = audio.textTracks[0];
+        if (textTrack) {
+            textTrack.mode = 'hidden';
+        }
+
+        const cuechangeHandler = () => {
+            const subtitleBar = document.getElementById('subtitle-bar');
+            if (!subtitleBar) return;
+            if (textTrack.activeCues && textTrack.activeCues.length > 0) {
+                subtitleBar.textContent = textTrack.activeCues[0].text;
+                subtitleBar.style.display = 'block';
+            } else {
+                subtitleBar.style.display = 'none';
             }
-        });
+        };
+        if (textTrack) {
+            textTrack.addEventListener('cuechange', cuechangeHandler);
+            this.voAudioCuechangeHandler = cuechangeHandler;
+        }
 
         track.addEventListener('error', () => {
             if (lang !== 'en') {
@@ -600,12 +625,11 @@ class Scene {
             audio.play().catch(err => {
                 console.log('[VO] Autoplay blocked:', err.message);
                 this.clearSubtitles();
-                triggerQuiz();
             });
-        }, 1000);
+        }, 300);
 
         let safetyTimeoutHandle;
-        audio.addEventListener('loadedmetadata', () => {
+        audio.addEventListener('playing', () => {
             const duration = audio.duration * 1000 + 2000;
             if (safetyTimeoutHandle) clearTimeout(safetyTimeoutHandle);
             safetyTimeoutHandle = setTimeout(() => {
@@ -628,13 +652,16 @@ class Scene {
             this.voAudio.pause();
             const textTracks = this.voAudio.textTracks;
             for (let i = 0; i < textTracks.length; i++) {
-                textTracks[i].removeEventListener('cuechange', null);
+                if (this.voAudioCuechangeHandler) {
+                    textTracks[i].removeEventListener('cuechange', this.voAudioCuechangeHandler);
+                }
             }
             this.clearSubtitles();
             if (this.voAudio.parentNode) {
                 this.voAudio.parentNode.removeChild(this.voAudio);
             }
             this.voAudio = null;
+            this.voAudioCuechangeHandler = null;
         }
     }
 

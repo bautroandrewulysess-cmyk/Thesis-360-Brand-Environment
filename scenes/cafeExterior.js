@@ -1035,12 +1035,13 @@ class CafeExteriorScene extends Scene {
             this.eulerAngles.yaw = 0;
             this.eulerAngles.pitch = 0;
 
-            this.isLoaded = true;
             window.ThesisApp.debugLog('Cafe Exterior scene loaded successfully');
         } catch (error) {
             console.error('Failed to load cafe exterior scene:', error);
             this.isLoaded = false;
+            throw error;
         }
+        this.isLoaded = true;
     }
 
     async onUnload() {
@@ -1094,12 +1095,13 @@ class CafeExteriorScene extends Scene {
             window._boxCopyBtnInit = false;
             window._debugBoxesToggleInit = false;
 
-            this.isLoaded = false;
             window.ThesisApp.debugLog('Cafe Exterior scene unloaded');
 
             await super.onUnload();
         } catch (error) {
             console.error('Error unloading cafe exterior scene:', error);
+        } finally {
+            this.isLoaded = false;
         }
     }
 

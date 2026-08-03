@@ -1106,11 +1106,9 @@ class CafeInteriorScene extends Scene {
                 }
                 window.removeEventListener('keydown', startVoOnInteraction);
                 window.removeEventListener('click', startVoOnInteraction);
-                window.removeEventListener('mousemove', startVoOnInteraction);
             };
             window.addEventListener('keydown', startVoOnInteraction);
             window.addEventListener('click', startVoOnInteraction);
-            window.addEventListener('mousemove', startVoOnInteraction);
 
             // Audio starts on first user interaction (Chrome security requirement)
             const startAudioOnInteraction = () => {
@@ -1130,12 +1128,13 @@ class CafeInteriorScene extends Scene {
             this.eulerAngles.yaw = 0;
             this.eulerAngles.pitch = 0;
 
-            this.isLoaded = true;
             window.ThesisApp.debugLog('Cafe Interior scene loaded successfully');
         } catch (error) {
             console.error('Failed to load cafe interior scene:', error);
             this.isLoaded = false;
+            throw error;
         }
+        this.isLoaded = true;
     }
 
     async onUnload() {
@@ -1204,12 +1203,13 @@ class CafeInteriorScene extends Scene {
             this.ambientSource = null;
             this.audioLoaded = false;
 
-            this.isLoaded = false;
             window.ThesisApp.debugLog('Cafe Interior scene unloaded');
 
             await super.onUnload();
         } catch (error) {
             console.error('Error unloading cafe interior scene:', error);
+        } finally {
+            this.isLoaded = false;
         }
     }
 
