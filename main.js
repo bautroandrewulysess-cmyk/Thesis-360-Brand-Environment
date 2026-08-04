@@ -887,7 +887,8 @@ class Scene {
         };
 
         const onVideoError = () => {
-            console.warn('[VideoPopup] Video failed to load');
+            const errorCode = video.error?.code || 'unknown';
+            console.warn(`[VideoPopup] Video failed to load: ${src}, error code: ${errorCode}`);
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
             this.hideVideoPopup();
             if (onFinish) onFinish();
@@ -1272,8 +1273,10 @@ if (DEV_MODE) {
         return result;
     };
 
-    // Copy selected box event handler
-    document.getElementById('box-copy-selected')?.addEventListener('click', () => {
+    // Copy selected box event handler (only in DEV_MODE)
+    const boxCopyBtn = document.getElementById('box-copy-selected');
+    if (boxCopyBtn) {
+        boxCopyBtn.addEventListener('click', () => {
         const scene = sceneManager.getActiveScene();
         if (!scene || !scene.selectedBox) {
             const feedback = document.getElementById('box-copy-feedback');
@@ -1301,9 +1304,24 @@ if (DEV_MODE) {
             feedback.textContent = '✓ Copied!';
             setTimeout(() => { feedback.textContent = ''; }, 2000);
         }
-    });
+        });
+    }
 
     ColorGrading.setupUI();
+
+    // Define updateDiscValues safely with null checks
+    window.updateDiscValues = function(positionKey, arrows) {
+        const content = document.getElementById('disc-values-content');
+        if (!content) return;
+
+        let arrowsText = `Arrows at ${positionKey}:\n`;
+        if (arrows && arrows.length > 0) {
+            arrows.forEach(arrow => {
+                arrowsText += `  • ${arrow.label} → ${arrow.target}\n`;
+            });
+        }
+        content.textContent = arrowsText;
+    };
 }
 
 // ============================================================================

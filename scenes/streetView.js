@@ -670,28 +670,6 @@ class StreetViewScene extends Scene {
             this.container.addChild(arrowEntity);
             this.arrowEntities.push(arrowEntity);
 
-            // Add floating label for harvest marker
-            if (isHarvestMarker) {
-                const label = document.createElement('div');
-                label.className = 'hotspot-label';
-                label.textContent = 'To the Harvest';
-                label.style.cssText = `
-                    position: fixed;
-                    font-family: 'Inter', sans-serif;
-                    font-size: 1.2rem;
-                    font-weight: 500;
-                    color: #f4d03f;
-                    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-                    pointer-events: none;
-                    white-space: nowrap;
-                    z-index: 100;
-                `;
-                document.body.appendChild(label);
-                this.arrowLabels.push(label);
-
-                arrowEntity.labelElement = label;
-            }
-
             // Log properties after creation
             if (window.DEV_MODE) console.log(`[createArrows]   Arrow ${index}: enabled=${arrowEntity.enabled}, parent=${!!arrowEntity.parent}, has render=${!!arrowEntity.render}`);
 
@@ -835,13 +813,17 @@ class StreetViewScene extends Scene {
             if (posData?.arrows && posData.arrows.length > 0) {
                 const forwardArrow = posData.arrows.find(arr => !arr.label.includes('Back') && arr.label !== 'Go Back');
                 if (forwardArrow) {
-                    const currentYaw = cameraEntity.getLocalEulerAngles().y;
-                    const currentPitch = cameraEntity.getLocalEulerAngles().x;
-                    cameraEntity.setLocalEulerAngles(currentPitch, forwardArrow.yaw, 0);
+                    const currentEulers = cameraEntity.getLocalEulerAngles();
+                    cameraEntity.setLocalEulerAngles(currentEulers.x, forwardArrow.yaw, 0);
+                    this.eulerAngles.yaw = forwardArrow.yaw;
                 }
             }
 
-            if (window.updateDiscValues) window.updateDiscValues(positionKey, this.positions[positionKey].arrows);
+            try {
+                if (window.updateDiscValues) window.updateDiscValues(positionKey, this.positions[positionKey].arrows);
+            } catch (e) {
+                console.error('[DiscValues] Error updating disc values:', e);
+            }
             this.checkFarmerInterviewAtToFarm14();
             this.updateCoordinateDisplay();
             this.preloadArrowTargets();
@@ -872,7 +854,7 @@ class StreetViewScene extends Scene {
             if (positionKey === 'farm1-1' && !this.farmVoStarted) {
                 this.farmVoStarted = true;
                 this.isVoFinished = false;
-                setTimeout(() => this.playVoWithSubtitles('farm'), 200);
+                setTimeout(() => this.playVoWithSubtitles('farm'), 1200);
             }
 
             // Dispose old asset before loading new one
