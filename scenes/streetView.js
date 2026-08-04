@@ -726,6 +726,11 @@ class StreetViewScene extends Scene {
 
         const isBackArrow = arrow.label === 'Back' || arrow.label === 'Go Back' || arrow.label.includes('Back');
 
+        if (!isBackArrow && !this.canTransition()) {
+            this.showVoWarning('Please wait for the narration and complete the quiz.');
+            return;
+        }
+
         if (this.currentPosition.startsWith('farm1-') && arrow.targetScene === 'harvesting' && !window.journeyComplete) {
             if (!this.isVoFinished || !this.quizPassed) {
                 this.showVoWarning('Please wait for the narration and complete the quiz.');

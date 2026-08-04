@@ -885,6 +885,10 @@ class NurseryScene extends Scene {
         this.activeHotspotEntity = entity;
 
         if (hotspot.isTransition) {
+            if (!this.canTransition()) {
+                this.showVoWarning('Please wait for the narration and complete the quiz.');
+                return;
+            }
             if (hotspot.targetScene === 'roastery' && !this.quizPassed && !window.journeyComplete) {
                 this.showVoWarning('Please complete the quiz first.');
                 return;

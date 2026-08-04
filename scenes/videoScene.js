@@ -19,6 +19,8 @@ class VideoScene extends Scene {
         this.quiz = window.PendingQuizzes?.[quizKey] || null;
         this.quizPassed = false;
         this.forwardButton = null;
+        this.sceneLoadTime = null;
+        this.fallbackTimeoutHandle = null;
     }
 
     async onLoad() {
@@ -49,16 +51,43 @@ class VideoScene extends Scene {
 
             if (this.videoSrc) {
                 this.videoElement.src = this.videoSrc;
-                this.videoElement.play().catch(() => {
-                    // Autoplay may fail; video will start on first user interaction
-                });
+                // Delay video playback by 1 second for harvest scene
+                if (this.name === 'harvesting') {
+                    this.sceneLoadTime = Date.now();
+                    setTimeout(() => {
+                        this.videoElement.play().catch(() => {
+                            // Autoplay may fail; video will start on first user interaction
+                        });
+                    }, 1000);
+                } else {
+                    this.videoElement.play().catch(() => {
+                        // Autoplay may fail; video will start on first user interaction
+                    });
+                }
             }
 
             document.body.appendChild(this.videoElement);
 
+            // Load farm ambience for harvest scene
+            if (this.name === 'harvesting') {
+                this.duckAmbient();
+                await this.initAmbient(assetUrl('Music/farmAmbienceSound.mp3'), 0.3);
+            }
+
             // Start VO + subtitles (auto-triggers quiz on end)
             if (this.audioKey) {
                 await this.playVoWithSubtitles(this.audioKey);
+            }
+
+            // Set up 90-second fallback for harvest scene
+            if (this.name === 'harvesting') {
+                this.fallbackTimeoutHandle = setTimeout(() => {
+                    console.log('[VideoScene] 90s fallback triggered - showing Continue button');
+                    if (!this.quizPassed) {
+                        console.log('[VideoScene] Quiz did not pass in 90s, forcing transition');
+                        this.showForwardButton();
+                    }
+                }, 90000);
             }
 
             // In free-roam mode, show Continue button immediately
@@ -104,7 +133,10 @@ class VideoScene extends Scene {
                 }
             };
 
-            audio.addEventListener('ended', triggerQuiz, { once: true });
+            audio.addEventListener('ended', () => {
+                console.log('[VideoScene] VO ended');
+                triggerQuiz();
+            }, { once: true });
             audio.addEventListener('error', (e) => {
                 console.error(`[VO] Audio load failed for ${audioPath}:`, e);
             });
@@ -125,8 +157,14 @@ class VideoScene extends Scene {
 
     onQuizPassed() {
         this.quizPassed = true;
+        console.log(`[VideoScene] Quiz passed for ${this.name}`);
+        if (this.fallbackTimeoutHandle) {
+            clearTimeout(this.fallbackTimeoutHandle);
+            console.log('[VideoScene] 90s fallback cleared after quiz pass');
+        }
         // Auto-advance for harvest scene (no continue button needed)
         if (this.name === 'harvesting') {
+            console.log('[VideoScene] Auto-advancing to roastery');
             setTimeout(() => {
                 sceneManager.switchTo(this.nextScene, this.nextSpawn);
             }, 2000);
@@ -177,6 +215,10 @@ class VideoScene extends Scene {
     async onUnload() {
         this.stopVo();
 
+        if (this.fallbackTimeoutHandle) {
+            clearTimeout(this.fallbackTimeoutHandle);
+        }
+
         if (this.videoElement) {
             this.videoElement.pause();
             this.videoElement.remove();
@@ -187,6 +229,9 @@ class VideoScene extends Scene {
             this.forwardButton.remove();
             this.forwardButton = null;
         }
+
+        this.restoreAmbient();
+        this.stopAmbient();
 
         // Restore PlayCanvas canvas
         const canvas = document.getElementById('canvas');

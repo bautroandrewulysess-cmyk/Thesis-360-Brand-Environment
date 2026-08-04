@@ -983,6 +983,10 @@ class CafeInteriorScene extends Scene {
         this.activeHotspotEntity = entity;
 
         if (hotspot.isTransition) {
+            if (!this.canTransition()) {
+                this.showVoWarning('Please wait for the narration and complete the quiz.');
+                return;
+            }
             if (hotspot.targetScene === 'nursery' && !this.quizPassed && !window.journeyComplete) {
                 this.showVoWarning('Please complete the quiz first.');
                 return;

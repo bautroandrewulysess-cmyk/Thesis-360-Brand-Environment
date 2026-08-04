@@ -443,6 +443,8 @@ class Scene {
         this.registeredWithRaycaster = new Set(); // Track all raycaster registrations
         this.voWarningTimer = null;
         this.quizTriggered = false;
+        this.videoPending = false;
+        this.storedAmbientGain = null;
     }
 
     async onLoad() {
@@ -514,6 +516,11 @@ class Scene {
         this.highlightTransitionHotspot();
         const navText = this.getNavPromptText();
         if (navText) this.showNavPrompt(navText);
+    }
+
+    canTransition() {
+        if (window.journeyComplete) return true;
+        return this.isVoFinished && this.quizPassed && !this.videoPending;
     }
 
     highlightTransitionHotspot() {
@@ -728,6 +735,19 @@ class Scene {
         this.audioLoaded = false;
     }
 
+    duckAmbient() {
+        if (!this.ambientGain) return;
+        this.storedAmbientGain = this.ambientGain.gain.value;
+        const targetGain = this.storedAmbientGain * 0.2;
+        this.ambientGain.gain.setTargetAtTime(targetGain, this.audioContext.currentTime, 0.4);
+    }
+
+    restoreAmbient() {
+        if (!this.ambientGain || this.storedAmbientGain === null) return;
+        this.ambientGain.gain.setTargetAtTime(this.storedAmbientGain, this.audioContext.currentTime, 0.4);
+        this.storedAmbientGain = null;
+    }
+
     showQuiz(quizData, onPass) {
         this.clearSubtitles();
         const overlay = document.getElementById('quiz-overlay');
@@ -873,6 +893,11 @@ class Scene {
 
         if (!popup || !video) return;
 
+        if (required) {
+            this.videoPending = true;
+            this.duckAmbient();
+        }
+
         captionEl.textContent = caption || '';
         video.crossOrigin = 'anonymous';
         video.preload = 'auto';
@@ -882,6 +907,8 @@ class Scene {
         const onVideoEnd = () => {
             videoEnded = true;
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
+            this.restoreAmbient();
+            this.videoPending = false;
             this.hideVideoPopup();
             if (onFinish) onFinish();
         };
@@ -890,6 +917,8 @@ class Scene {
             const errorCode = video.error?.code || 'unknown';
             console.warn(`[VideoPopup] Video failed to load: ${src}, error code: ${errorCode}`);
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
+            this.restoreAmbient();
+            this.videoPending = false;
             this.hideVideoPopup();
             if (onFinish) onFinish();
         };
@@ -902,6 +931,8 @@ class Scene {
                 console.warn('[VideoPopup] Video not playable after 30s');
                 video.removeEventListener('ended', onVideoEnd);
                 video.removeEventListener('error', onVideoError);
+                this.restoreAmbient();
+                this.videoPending = false;
                 this.hideVideoPopup();
                 if (onFinish) onFinish();
             }

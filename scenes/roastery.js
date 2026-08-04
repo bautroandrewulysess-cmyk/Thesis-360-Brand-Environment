@@ -899,6 +899,10 @@ class RoasteryScene extends Scene {
         this.activeHotspotEntity = entity;
 
         if (hotspot.isTransition) {
+            if (!this.canTransition()) {
+                this.showVoWarning('Please wait for the narration and complete the quiz.');
+                return;
+            }
             if (!this.isVoFinished && !window.journeyComplete) { this.showVoWarning(); return; }
             if (!this.quizPassed && !window.journeyComplete) {
                 this.showVoWarning('Please complete the quiz first.');

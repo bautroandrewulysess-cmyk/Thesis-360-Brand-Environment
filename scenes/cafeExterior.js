@@ -933,6 +933,10 @@ class CafeExteriorScene extends Scene {
         this.activeHotspotEntity = entity;
 
         if (hotspot.isTransition) {
+            if (!this.canTransition()) {
+                this.showVoWarning('Please wait for the narration and complete the quiz.');
+                return;
+            }
             sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
             return;
         }
