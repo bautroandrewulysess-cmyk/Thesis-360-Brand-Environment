@@ -3,7 +3,7 @@
 // ============================================================================
 
 const R2_BASE = 'https://pub-d9a52e1dd2124a6a8a669ef46ee0f58d.r2.dev';
-const SUBTITLE_VERSION = 2;
+const SUBTITLE_VERSION = 3;
 window.R2_BASE = R2_BASE;
 
 // Global asset URL helper: encodes path segments while preserving directory structure
