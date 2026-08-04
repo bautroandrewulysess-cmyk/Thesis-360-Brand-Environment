@@ -843,8 +843,10 @@
 
         // Disc values panel (P to toggle)
         window.updateDiscValues = (posKey, arrows) => {
+            if (!window.DEV_MODE) return;
             const panel = document.getElementById('disc-values');
             const content = document.getElementById('disc-values-content');
+            if (!content) return;
             let text = posKey + '\n';
             if (arrows && arrows.length > 0) {
                 arrows.forEach((arrow, idx) => {

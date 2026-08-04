@@ -738,6 +738,11 @@ class StreetViewScene extends Scene {
             return;
         }
 
+        if (isBackArrow && this.currentPosition.startsWith('farm1-') && (arrow.target?.startsWith('toFarm') || arrow.targetScene) && !window.journeyComplete) {
+            this.showVoWarning('Finish exploring the farm to return.');
+            return;
+        }
+
         if (arrow.targetScene) {
             await sceneManager.switchTo(arrow.targetScene, arrow.spawnPosition || null);
         } else if (arrow.target) {
@@ -814,9 +819,13 @@ class StreetViewScene extends Scene {
                 const forwardArrow = posData.arrows.find(arr => !arr.label.includes('Back') && arr.label !== 'Go Back');
                 if (forwardArrow) {
                     const currentEulers = cameraEntity.getLocalEulerAngles();
-                    if (window.DEV_MODE) console.log(`[camera] ${positionKey}: applying yaw ${forwardArrow.yaw} from arrow "${forwardArrow.label}"`);
+                    if (window.DEV_MODE) console.log(`[camera] ${positionKey}: arrow yaw=${forwardArrow.yaw}, applying to camera`);
                     cameraEntity.setLocalEulerAngles(currentEulers.x, forwardArrow.yaw, 0);
                     this.eulerAngles.yaw = forwardArrow.yaw;
+                    if (window.DEV_MODE) {
+                        const appliedEulers = cameraEntity.getLocalEulerAngles();
+                        console.log(`[camera] ${positionKey}: after apply, camera yaw=${appliedEulers.y}, stored yaw=${this.eulerAngles.yaw}`);
+                    }
                 }
             }
 

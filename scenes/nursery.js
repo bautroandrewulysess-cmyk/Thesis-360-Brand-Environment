@@ -988,14 +988,14 @@ class NurseryScene extends Scene {
             }
 
             const startVoOnInteraction = () => {
-                if (this.voAudio && this.voAudio.paused) {
+                if (this.voAudio && this.voAudio.paused && this.voAudio.currentTime === 0) {
                     this.voAudio.play().catch(e => {
                         console.warn('VO Autoplay blocked', e);
                         this.isVoFinished = true;
                     });
+                    window.removeEventListener('keydown', startVoOnInteraction);
+                    window.removeEventListener('click', startVoOnInteraction);
                 }
-                window.removeEventListener('keydown', startVoOnInteraction);
-                window.removeEventListener('click', startVoOnInteraction);
             };
             window.addEventListener('keydown', startVoOnInteraction);
             window.addEventListener('click', startVoOnInteraction);

@@ -44,7 +44,7 @@ class RoasteryScene extends Scene {
             },
             {
                 id: 'green-bean-packs',
-                position: new pc.Vec3(-0.471, 1.6, 0.389),
+                position: new pc.Vec3(-0.471, 0.9, 0.389),
                 label: 'Green Bean Packs',
                 description: 'Arabica grows at higher elevations and is known for a smoother, more complex, slightly sweet profile with milder acidity. Robusta is hardier, carries more caffeine, and brings a bolder, more bitter character — often used to add body and crema.',
                 isTransition: false
@@ -995,19 +995,20 @@ class RoasteryScene extends Scene {
 
             this.isVoFinished = false;
             this.playVoWithSubtitles('roasting');
+            this.initAmbient(assetUrl('Music/cafeExteriorAmbienceSound.mp3'), 0.4);
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisCafeInterior.sog`, 'cafe-interior-splat');
             }
 
             const startVoOnInteraction = () => {
-                if (this.voAudio && this.voAudio.paused) {
+                if (this.voAudio && this.voAudio.paused && this.voAudio.currentTime === 0) {
                     this.voAudio.play().catch(e => {
                         console.warn('VO Autoplay blocked', e);
                         this.isVoFinished = true;
                     });
+                    window.removeEventListener('keydown', startVoOnInteraction);
+                    window.removeEventListener('click', startVoOnInteraction);
                 }
-                window.removeEventListener('keydown', startVoOnInteraction);
-                window.removeEventListener('click', startVoOnInteraction);
             };
             window.addEventListener('keydown', startVoOnInteraction);
             window.addEventListener('click', startVoOnInteraction);
