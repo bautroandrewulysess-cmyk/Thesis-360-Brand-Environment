@@ -726,13 +726,8 @@ class StreetViewScene extends Scene {
 
         const isBackArrow = arrow.label === 'Back' || arrow.label === 'Go Back' || arrow.label.includes('Back');
 
-        if (!isBackArrow && !this.canTransition()) {
-            this.showVoWarning('Please wait for the narration and complete the quiz.');
-            return;
-        }
-
         if (this.currentPosition.startsWith('farm1-') && arrow.targetScene === 'harvesting' && !window.journeyComplete) {
-            if (!this.isVoFinished || !this.quizPassed) {
+            if (!this.canTransition()) {
                 this.showVoWarning('Please wait for the narration and complete the quiz.');
                 return;
             }
@@ -819,6 +814,7 @@ class StreetViewScene extends Scene {
                 const forwardArrow = posData.arrows.find(arr => !arr.label.includes('Back') && arr.label !== 'Go Back');
                 if (forwardArrow) {
                     const currentEulers = cameraEntity.getLocalEulerAngles();
+                    if (window.DEV_MODE) console.log(`[camera] ${positionKey}: applying yaw ${forwardArrow.yaw} from arrow "${forwardArrow.label}"`);
                     cameraEntity.setLocalEulerAngles(currentEulers.x, forwardArrow.yaw, 0);
                     this.eulerAngles.yaw = forwardArrow.yaw;
                 }

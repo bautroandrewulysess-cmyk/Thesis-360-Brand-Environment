@@ -884,8 +884,10 @@
                 console.log('[disc] Copied all positions to clipboard');
             });
         };
-        document.getElementById('disc-copy-pos').addEventListener('click', () => { const scene = window.ThesisApp?.sceneManager?.currentScene; if (scene?.currentPosition && scene?.positions) window.copyDiscPosition(scene.currentPosition, scene.positions[scene.currentPosition]); });
-        document.getElementById('disc-copy-all').addEventListener('click', () => { const scene = window.ThesisApp?.sceneManager?.currentScene; if (scene?.positions) window.copyDiscAll(scene.positions); });
+        const discCopyPos = document.getElementById('disc-copy-pos');
+        const discCopyAll = document.getElementById('disc-copy-all');
+        if (discCopyPos) discCopyPos.addEventListener('click', () => { const scene = window.ThesisApp?.sceneManager?.currentScene; if (scene?.currentPosition && scene?.positions) window.copyDiscPosition(scene.currentPosition, scene.positions[scene.currentPosition]); });
+        if (discCopyAll) discCopyAll.addEventListener('click', () => { const scene = window.ThesisApp?.sceneManager?.currentScene; if (scene?.positions) window.copyDiscAll(scene.positions); });
         window.addEventListener('keydown', (e) => { if ((e.key === 'p' || e.key === 'P') && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) { e.preventDefault(); document.getElementById('disc-values').style.display = (document.getElementById('disc-values').style.display === 'none' ? 'block' : 'none'); } });
     </script>
 </body>

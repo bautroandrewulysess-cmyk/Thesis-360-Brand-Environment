@@ -445,6 +445,7 @@ class Scene {
         this.quizTriggered = false;
         this.videoPending = false;
         this.storedAmbientGain = null;
+        this.isVoFinished = false;
     }
 
     async onLoad() {
@@ -612,7 +613,9 @@ class Scene {
         });
 
         const triggerQuiz = (path) => {
-            if (this.quiz && !window.journeyComplete && !this.quizTriggered && this.isVoFinished === true && audio.ended === true) {
+            const requiresEnded = path === 'ended';
+            const audioEndedCheck = requiresEnded ? audio.ended === true : true;
+            if (this.quiz && !window.journeyComplete && !this.quizTriggered && this.isVoFinished === true && audioEndedCheck) {
                 this.quizTriggered = true;
                 console.warn(`[VO] Quiz triggered via ${path}`);
                 const hookMethod = this[`onVoFinished_${audioKey}`];
@@ -630,19 +633,24 @@ class Scene {
 
         audio.addEventListener('ended', () => {
             this.clearSubtitles();
-            const voFinishedProp = 'isVoFinished';
-            if (voFinishedProp in this) {
-                this[voFinishedProp] = true;
-            }
+            this.isVoFinished = true;
             triggerQuiz('ended');
         });
 
         audio.addEventListener('pause', () => this.clearSubtitles());
 
+        audio.addEventListener('error', () => {
+            console.warn(`[VO] Audio fetch failed for ${audioPath}`);
+            this.clearSubtitles();
+            this.isVoFinished = true;
+            triggerQuiz('audio-error');
+        });
+
         setTimeout(() => {
             audio.play().catch(err => {
                 console.warn('[VO] Autoplay blocked:', err.message);
                 this.clearSubtitles();
+                this.isVoFinished = true;
                 triggerQuiz('autoplay-blocked');
             });
         }, 300);
@@ -663,9 +671,8 @@ class Scene {
                     armSafetyTimeout();
                     return;
                 }
-                const voFinishedProp = 'isVoFinished';
-                if (voFinishedProp in this && !this[voFinishedProp]) {
-                    this[voFinishedProp] = true;
+                if (!this.isVoFinished) {
+                    this.isVoFinished = true;
                     this.clearSubtitles();
                     console.warn('[VO] Quiz triggered via safety-timeout');
                     triggerQuiz('safety-timeout');
