@@ -968,6 +968,7 @@ class CafeInteriorScene extends Scene {
     onVoFinished_brandStory() {
         this.showVideoPopup(`${R2_BASE}/ownerInterview.mp4`, {
             required: true,
+            caption: 'Hear it from the owners',
             onFinish: () => {
                 setTimeout(() => {
                     this.showQuiz(this.quiz, () => {

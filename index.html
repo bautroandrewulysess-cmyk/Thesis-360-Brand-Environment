@@ -182,12 +182,11 @@
         }
 
         .hero-title {
-            font-family: 'Oswald', sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             font-size: clamp(4rem, 10vw, 12rem);
-            font-weight: 700;
+            font-weight: 400;
             line-height: 0.9;
-            text-transform: uppercase;
-            letter-spacing: -2px;
+            letter-spacing: -1px;
             margin-bottom: 2rem;
             clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
         }
@@ -254,9 +253,9 @@
         }
 
         .about-heading {
-            font-family: 'Oswald', sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             font-size: clamp(2rem, 5vw, 4rem);
-            text-transform: uppercase;
+            font-weight: 400;
             line-height: 1.1;
             position: sticky;
             top: 20vh;
@@ -279,11 +278,11 @@
         }
 
         .footer-title {
-            font-family: 'Oswald', sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             font-size: clamp(3rem, 8vw, 8rem);
-            text-transform: uppercase;
+            font-weight: 400;
             opacity: 0.1;
-            letter-spacing: -2px;
+            letter-spacing: -1px;
         }
 
         .footer-meta {
@@ -384,11 +383,60 @@
             display: block !important;
         }
 
+        .content-section {
+            padding: 15vh 4vw;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .section-heading {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 3rem;
+        }
+
+        .section-body {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            font-weight: 300;
+            color: #a0a0a0;
+            max-width: 65ch;
+        }
+
+        .section-body p { margin-bottom: 1.8rem; }
+
+        .stages-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .stage {
+            text-align: center;
+        }
+
+        .stage-name {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 0.8rem;
+            color: #fff;
+        }
+
+        .stage-description {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #a0a0a0;
+        }
+
         @media (max-width: 768px) {
             .about-section { grid-template-columns: 1fr; }
             .about-heading { position: relative; top: 0; margin-bottom: 2rem; }
             .nav-links { display: none; }
             .footer-meta { flex-direction: column; gap: 1rem; }
+            .stages-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -452,12 +500,46 @@
             </div>
         </section>
 
+        <section class="content-section">
+            <h2 class="section-heading gs-reveal">The Place</h2>
+            <div class="section-body">
+                <p class="gs-reveal">Granja Alegre sits at the foot of Mount Kalatungan in Pangantucan, Bukidnon. The altitude, cool highland air, and volcanic soil create conditions unlike anywhere else—the perfect foundation for exceptional coffee.</p>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2 class="section-heading gs-reveal">From Seed to Cup</h2>
+            <div class="stages-row">
+                <div class="stage gs-reveal">
+                    <div class="stage-name">Nursery</div>
+                    <div class="stage-description">Seedlings spend six to twelve months building roots, nurtured with care from the first sprout.</div>
+                </div>
+                <div class="stage gs-reveal">
+                    <div class="stage-name">Farm</div>
+                    <div class="stage-description">Trees bear their first harvest after three to four years, producing beans of deepening character.</div>
+                </div>
+                <div class="stage gs-reveal">
+                    <div class="stage-name">Harvest</div>
+                    <div class="stage-description">Only the brightest red cherries are picked by hand, sorted with precision and respect for the land.</div>
+                </div>
+                <div class="stage gs-reveal">
+                    <div class="stage-name">Roastery</div>
+                    <div class="stage-description">First crack marks the moment flavour develops, where science and craft become one.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2 class="section-heading gs-reveal">The Family</h2>
+            <div class="section-body">
+                <p class="gs-reveal">The Garces family has nurtured the land through generations. <em>Finca de Garces</em>, <em>Granja Alegre Farm</em>, and <em>Alegre Café & Roastery</em> are not separate chapters but one continuous story—rooted in soil, shaped by seasons, and bound by commitment to quality and community.</p>
+            </div>
+        </section>
+
         <footer id="contact">
             <h2 class="footer-title">Granja Alegre</h2>
             <div class="footer-meta">
                 <span>Pangantucan, Bukidnon</span>
-                <span>© 2026 All Rights Reserved</span>
-                <a href="mailto:hello@granjaalegre.com" style="color:#666; text-decoration:none;" class="hover-target">hello@granjaalegre.com</a>
             </div>
         </footer>
     </div>

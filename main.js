@@ -853,10 +853,10 @@ class Scene {
         }
     }
 
-    showVideoPopup(src, { required = false, onFinish = null } = {}) {
+    showVideoPopup(src, { required = false, caption = null, onFinish = null } = {}) {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
-        const caption = document.getElementById('video-popup-caption');
+        const captionEl = document.getElementById('video-popup-caption');
         const skipBtn = document.getElementById('video-popup-skip');
         let videoPlayable = false;
         let videoEnded = false;
@@ -864,7 +864,7 @@ class Scene {
 
         if (!popup || !video) return;
 
-        caption.textContent = required ? 'Hear it from the owners' : '';
+        captionEl.textContent = caption || '';
         video.crossOrigin = 'anonymous';
         video.preload = 'auto';
         video.src = src;
@@ -888,16 +888,16 @@ class Scene {
         video.addEventListener('error', onVideoError, { once: true });
 
         fallbackTimeoutHandle = setTimeout(() => {
-            if (!videoPlayable && !videoEnded) {
-                console.warn('[VideoPopup] Video not playable after 10s');
+            if (!videoPlayable && !videoEnded && video.readyState < 2) {
+                console.warn('[VideoPopup] Video not playable after 30s');
                 video.removeEventListener('ended', onVideoEnd);
                 video.removeEventListener('error', onVideoError);
                 this.hideVideoPopup();
                 if (onFinish) onFinish();
             }
-        }, 10000);
+        }, 30000);
 
-        video.addEventListener('canplaythrough', () => {
+        video.addEventListener('canplay', () => {
             videoPlayable = true;
             video.play().catch(e => console.warn('[VideoPopup] Play failed:', e.message));
         }, { once: true });

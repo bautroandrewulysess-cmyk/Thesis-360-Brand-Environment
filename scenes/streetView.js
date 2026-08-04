@@ -778,6 +778,7 @@ class StreetViewScene extends Scene {
             }
             this.showVideoPopup(`${R2_BASE}/farmerInterview.mp4`, {
                 required,
+                caption: 'Meet the farmer',
                 onFinish: () => {
                     this.isInputLocked = false;
                     for (let arrow of this.arrowEntities) arrow.enabled = true;
