@@ -47,7 +47,7 @@ class CafeInteriorScene extends Scene {
             },
             {
                 id: 'coffee-brewing',
-                position: new pc.Vec3(0.140, 1.890, -0.660),
+                position: new pc.Vec3(0.140, 1.650, -0.660),
                 label: 'Coffee Brewing',
                 description: '',
                 isVideo: true,

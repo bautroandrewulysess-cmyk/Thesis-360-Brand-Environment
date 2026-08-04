@@ -915,8 +915,8 @@ class Scene {
     showVideoPopup(src, { required = false, caption = null, onFinish = null } = {}) {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
-        const captionEl = document.getElementById('video-popup-caption');
         const skipBtn = document.getElementById('video-popup-skip');
+        const canvas = document.getElementById('canvas');
         let videoPlayable = false;
         let videoEnded = false;
         let fallbackTimeoutHandle = null;
@@ -925,29 +925,43 @@ class Scene {
 
         if (required) {
             this.videoPending = true;
-            this.duckAmbient();
+            this.pauseAmbient();
         }
 
-        captionEl.textContent = caption || '';
+        if (canvas) canvas.style.display = 'none';
         video.crossOrigin = 'anonymous';
         video.preload = 'auto';
         video.src = src;
         skipBtn.style.display = required ? 'none' : 'block';
 
-        const onVideoEnd = () => {
+        const cleanupVideo = async () => {
+            video.volume = 1;
+            for (let i = 0; i <= 40; i++) {
+                video.volume = Math.max(0, 1 - (i / 40));
+                await new Promise(r => setTimeout(r, 10));
+            }
+            video.pause();
+            video.currentTime = 0;
+            video.src = '';
+            video.load();
+        };
+
+        const onVideoEnd = async () => {
             videoEnded = true;
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
-            this.restoreAmbient();
+            await cleanupVideo();
+            this.resumeAmbient();
             this.videoPending = false;
             this.hideVideoPopup();
             if (onFinish) onFinish();
         };
 
-        const onVideoError = () => {
+        const onVideoError = async () => {
             const errorCode = video.error?.code || 'unknown';
             console.warn(`[VideoPopup] Video failed to load: ${src}, error code: ${errorCode}`);
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
-            this.restoreAmbient();
+            await cleanupVideo();
+            this.resumeAmbient();
             this.videoPending = false;
             this.hideVideoPopup();
             if (onFinish) onFinish();
@@ -956,12 +970,13 @@ class Scene {
         video.addEventListener('ended', onVideoEnd, { once: true });
         video.addEventListener('error', onVideoError, { once: true });
 
-        fallbackTimeoutHandle = setTimeout(() => {
+        fallbackTimeoutHandle = setTimeout(async () => {
             if (!videoPlayable && !videoEnded && video.readyState < 2) {
                 console.warn('[VideoPopup] Video not playable after 30s');
                 video.removeEventListener('ended', onVideoEnd);
                 video.removeEventListener('error', onVideoError);
-                this.restoreAmbient();
+                await cleanupVideo();
+                this.resumeAmbient();
                 this.videoPending = false;
                 this.hideVideoPopup();
                 if (onFinish) onFinish();
@@ -973,21 +988,31 @@ class Scene {
             video.play().catch(e => console.warn('[VideoPopup] Play failed:', e.message));
         }, { once: true });
 
-        popup.style.display = 'flex';
+        skipBtn.addEventListener('click', async () => {
+            videoEnded = true;
+            video.removeEventListener('ended', onVideoEnd);
+            video.removeEventListener('error', onVideoError);
+            if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
+            await cleanupVideo();
+            this.resumeAmbient();
+            this.videoPending = false;
+            this.hideVideoPopup();
+            if (onFinish) onFinish();
+        }, { once: true });
+
+        popup.style.display = 'block';
         setTimeout(() => popup.style.opacity = '1', 50);
     }
 
     hideVideoPopup() {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
+        const canvas = document.getElementById('canvas');
         if (popup) {
             popup.style.opacity = '0';
             setTimeout(() => {
                 popup.style.display = 'none';
-                if (video) {
-                    video.pause();
-                    video.src = '';
-                }
+                if (canvas) canvas.style.display = 'block';
             }, 800);
         }
     }
