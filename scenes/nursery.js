@@ -855,6 +855,15 @@ class NurseryScene extends Scene {
             this.registerInteractiveObject(group, () => {
                 this.onHotspotClick(hotspot, group);
             });
+
+            if (hotspot.isTransition) {
+                const label = document.createElement('div');
+                label.className = 'hotspot-label';
+                label.textContent = 'To Farm';
+                label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none;`;
+                document.body.appendChild(label);
+                group.labelElement = label;
+            }
         });
     }
 
@@ -887,6 +896,8 @@ class NurseryScene extends Scene {
         if (this.isLoaded) return;
 
         try {
+            document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
+
             window.ThesisApp.debugLog('Loading nursery splat...');
 
             // Check if splat was preloaded
@@ -1099,6 +1110,38 @@ class NurseryScene extends Scene {
                 }
             }
         });
+
+        // Update transition hotspot labels (only when actually visible)
+        const shouldShowLabels = this.quizPassed && !window.journeyComplete;
+        if (shouldShowLabels) {
+            this.hotspotEntities.forEach(group => {
+                if (group.labelElement && group.hotspotData?.isTransition) {
+                    const worldPos = group.getPosition();
+                    const screen = this.worldToScreen(worldPos);
+                    const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
+                    const newDisplay = isOffScreen ? 'none' : 'block';
+                    if (group._labelDisplay !== newDisplay) {
+                        group.labelElement.style.display = newDisplay;
+                        group._labelDisplay = newDisplay;
+                    }
+                    if (group._labelX !== screen.x) {
+                        group.labelElement.style.left = `${screen.x}px`;
+                        group._labelX = screen.x;
+                    }
+                    if (group._labelY !== screen.y) {
+                        group.labelElement.style.top = `${screen.y - 50}px`;
+                        group._labelY = screen.y;
+                    }
+                }
+            });
+        } else if (this.hotspotEntities.some(g => g.labelElement && g._labelDisplay !== 'none')) {
+            this.hotspotEntities.forEach(group => {
+                if (group.labelElement && group._labelDisplay !== 'none') {
+                    group.labelElement.style.display = 'none';
+                    group._labelDisplay = 'none';
+                }
+            });
+        }
 
         if (this.activeHotspotEntity) {
             const popup = this.dom.hotspotPopup;

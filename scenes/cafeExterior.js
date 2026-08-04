@@ -59,15 +59,6 @@ class CafeExteriorScene extends Scene {
                 description: 'Take the path from the cafe to the coffee farm.',
                 isTransition: true,
                 targetScene: 'street-view'
-            },
-            {
-                id: 'view-harvest',
-                position: new pc.Vec3(2.0, 1.6, -0.5),
-                label: 'View Harvest',
-                description: 'Watch the harvest drone footage.',
-                isTransition: true,
-                targetScene: 'harvesting',
-                spawnPosition: [0, 1.6, 0]
             }
         ];
         this.hotspotEntities = [];
@@ -873,6 +864,10 @@ class CafeExteriorScene extends Scene {
     }
 
     createHotspots() {
+        document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
+        this.hotspotEntities.forEach(group => { if (group?.labelElement) group.labelElement.remove(); });
+        this.hotspotEntities = [];
+
         this.hotspots.forEach(hotspot => {
             const group = new pc.Entity(`hotspot-${hotspot.id}`);
             group.setLocalPosition(hotspot.position);
@@ -960,6 +955,8 @@ class CafeExteriorScene extends Scene {
         if (this.isLoaded) return;
 
         try {
+            document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
+
             window.ThesisApp.debugLog('Loading cafe exterior splat...');
 
             // Check if splat was preloaded
@@ -1066,6 +1063,8 @@ class CafeExteriorScene extends Scene {
                 this.splatAsset = null;
             }
 
+            // Destroy hotspot entities and labels
+            this.hotspotEntities.forEach(group => { if (group) { if (group.labelElement) group.labelElement.remove(); this.unregisterInteractiveObject(group); group.destroy(); } });
             this.hotspotEntities = [];
             this.activeHotspotEntity = null;
 

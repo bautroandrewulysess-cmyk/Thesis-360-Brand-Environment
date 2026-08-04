@@ -5,13 +5,14 @@
 // Extends Scene base class; uses existing playVoWithSubtitles to trigger quiz.
 
 class VideoScene extends Scene {
-    constructor({ name, videoSrc, audioKey, quizKey, nextScene, nextSpawn }) {
+    constructor({ name, videoSrc, audioKey, quizKey, nextScene, nextSpawn, suppressSubtitles }) {
         super(name);
         this.videoSrc = videoSrc;
         this.audioKey = audioKey;
         this.quizKey = quizKey;
         this.nextScene = nextScene;
         this.nextSpawn = nextSpawn || [0, 1.6, 0];
+        this.suppressSubtitles = suppressSubtitles || false;
 
         this.videoElement = null;
         this.voAudio = null;
@@ -24,6 +25,8 @@ class VideoScene extends Scene {
         await super.onLoad();
 
         try {
+            document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
+
             // Hide PlayCanvas canvas
             const canvas = document.getElementById('canvas');
             if (canvas) canvas.style.display = 'none';
@@ -70,13 +73,66 @@ class VideoScene extends Scene {
         this.isLoaded = true;
     }
 
+    playVoWithSubtitles(audioKey) {
+        // Override to suppress subtitles if suppressSubtitles flag is set
+        if (this.suppressSubtitles) {
+            // Hide subtitle bar and play audio without VTT track
+            const subtitleBar = document.getElementById('subtitle-bar');
+            if (subtitleBar) subtitleBar.style.display = 'none';
+
+            this.stopVo();
+
+            const audioPath = assetUrl(`VO/${audioKey}.mp3`);
+            const audio = document.createElement('audio');
+            audio.crossOrigin = 'anonymous';
+            audio.src = audioPath;
+            audio.preload = 'auto';
+            audio.hidden = true;
+
+            document.body.appendChild(audio);
+            this.voAudio = audio;
+
+            const triggerQuiz = () => {
+                if (this.quiz && !window.journeyComplete && !this.quizTriggered) {
+                    this.quizTriggered = true;
+                    const hookMethod = this[`onVoFinished_${audioKey}`];
+                    if (typeof hookMethod === 'function') {
+                        hookMethod.call(this);
+                    } else {
+                        this.onQuizPassed();
+                    }
+                }
+            };
+
+            audio.addEventListener('ended', triggerQuiz, { once: true });
+            audio.addEventListener('error', (e) => {
+                console.error(`[VO] Audio load failed for ${audioPath}:`, e);
+            });
+
+            audio.play().catch(e => console.warn('[VO] Autoplay blocked:', e));
+
+            this.voAudioEndedHandler = triggerQuiz;
+            return Promise.resolve();
+        }
+
+        // Otherwise use parent class implementation
+        return super.playVoWithSubtitles(audioKey);
+    }
+
     getNavPromptText() {
         return 'Select Continue to visit the roastery';
     }
 
     onQuizPassed() {
         this.quizPassed = true;
-        this.showForwardButton();
+        // Auto-advance for harvest scene (no continue button needed)
+        if (this.name === 'harvesting') {
+            setTimeout(() => {
+                sceneManager.switchTo(this.nextScene, this.nextSpawn);
+            }, 2000);
+        } else {
+            this.showForwardButton();
+        }
     }
 
     showForwardButton() {
@@ -111,6 +167,7 @@ class VideoScene extends Scene {
             this.forwardButton.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         });
         this.forwardButton.addEventListener('click', () => {
+            console.log(`[VideoScene] Continue clicked, transitioning to ${this.nextScene} with spawn ${JSON.stringify(this.nextSpawn)}`);
             sceneManager.switchTo(this.nextScene, this.nextSpawn);
         });
 

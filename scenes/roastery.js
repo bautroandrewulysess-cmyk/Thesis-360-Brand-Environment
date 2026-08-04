@@ -910,11 +910,18 @@ class RoasteryScene extends Scene {
     }
 
     async onLoad() {
+        console.log('[Roastery] onLoad called');
         await super.onLoad();
 
-        if (this.isLoaded) return;
+        if (this.isLoaded) {
+            console.log('[Roastery] Already loaded, returning');
+            return;
+        }
 
         try {
+            console.log('[Roastery] Starting load sequence');
+            document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
+
             window.ThesisApp.debugLog('Loading roastery splat...');
 
             // Check if splat was preloaded
@@ -998,10 +1005,12 @@ class RoasteryScene extends Scene {
             window.ThesisApp.debugLog('Roastery scene loaded successfully');
         } catch (error) {
             console.error('Failed to load roastery scene:', error);
+            console.error('[Roastery] Load failed with error:', error.message);
             this.isLoaded = false;
             throw error;
         }
         this.isLoaded = true;
+        console.log('[Roastery] onLoad completed successfully');
     }
 
     async onUnload() {

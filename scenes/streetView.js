@@ -587,6 +587,7 @@ class StreetViewScene extends Scene {
 
         posData.arrows.forEach((arrow, index) => {
             if (arrow.label === 'To Dryer' && !window.journeyComplete) return;
+            if (this.currentPosition === 'farm1-1' && arrow.target === 'toFarm14' && this.farmVoStarted && !window.journeyComplete) return;
             // Parse yaw and pitch (default pitch -18° if not specified)
             const yawDeg = arrow.yaw;
             const pitchDeg = arrow.pitch !== undefined ? arrow.pitch : -18;
@@ -672,6 +673,7 @@ class StreetViewScene extends Scene {
             // Add floating label for harvest marker
             if (isHarvestMarker) {
                 const label = document.createElement('div');
+                label.className = 'hotspot-label';
                 label.textContent = 'To the Harvest';
                 label.style.cssText = `
                     position: fixed;
@@ -803,6 +805,18 @@ class StreetViewScene extends Scene {
             this.updateAmbientVolumeForPosition(positionKey);
             await this.loadPosition(positionKey);
             this.createArrows();
+
+            // Face the way forward: set camera yaw to match first forward arrow
+            const posData = this.positions[positionKey];
+            if (posData?.arrows && posData.arrows.length > 0) {
+                const forwardArrow = posData.arrows.find(arr => !arr.label.includes('Back') && arr.label !== 'Go Back');
+                if (forwardArrow) {
+                    const currentYaw = cameraEntity.getLocalEulerAngles().y;
+                    const currentPitch = cameraEntity.getLocalEulerAngles().x;
+                    cameraEntity.setLocalEulerAngles(currentPitch, forwardArrow.yaw, 0);
+                }
+            }
+
             if (window.updateDiscValues) window.updateDiscValues(positionKey, this.positions[positionKey].arrows);
             this.checkFarmerInterviewAtToFarm14();
             this.updateCoordinateDisplay();
@@ -925,6 +939,8 @@ class StreetViewScene extends Scene {
         if (this.isLoaded) return;
 
         try {
+            document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
+
             // Create sphere first (with placeholder) so loadPosition can update its material
             this.createPhotoSphere();
 
@@ -997,6 +1013,8 @@ class StreetViewScene extends Scene {
 
     async onUnload() {
         try {
+            document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
+
             this.detachEventListeners();
 
             this.isMouseDown = false;
@@ -1011,7 +1029,10 @@ class StreetViewScene extends Scene {
                 this.nadirPatchTexture.destroy();
                 this.nadirPatchTexture = null;
             }
-            this.arrowEntities.forEach(arrow => arrow.destroy());
+            this.arrowEntities.forEach(arrow => {
+                this.unregisterInteractiveObject(arrow);
+                arrow.destroy();
+            });
             this.arrowEntities = [];
             this.arrowLabels = [];
 

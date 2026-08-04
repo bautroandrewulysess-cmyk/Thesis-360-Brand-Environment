@@ -1017,6 +1017,8 @@ class CafeInteriorScene extends Scene {
         if (this.isLoaded) return;
 
         try {
+            document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
+
             window.ThesisApp.debugLog('Loading cafe interior splat...');
 
             // Check if splat was preloaded
@@ -1085,19 +1087,21 @@ class CafeInteriorScene extends Scene {
             // Reset quiz for this load
             this.quizPassed = false;
 
+            // Start ambient early so it's playing before VO begins
+            this.initAmbient(assetUrl('Music/cafeJazz.mp3'), 0.1);
+
             // Branch on return visit
             this.isVoFinished = false;
             if (this.isReturnVisit) {
                 this.quiz = [window.PendingQuizzes.backToTheCafe, window.PendingQuizzes.finalChallenge];
-                this.playVoWithSubtitles('backToTheCafe');
+                // Delay VO by ~1s to let ambient establish atmosphere
+                setTimeout(() => this.playVoWithSubtitles('backToTheCafe'), 1000);
             } else {
-                this.playVoWithSubtitles('brandStory');
+                setTimeout(() => this.playVoWithSubtitles('brandStory'), 1000);
                 if (!window.journeyComplete) {
                     this.preloadSplat(`${R2_BASE}/thesisNursery.sog`, 'nursery-splat');
                 }
             }
-
-            this.initAmbient(assetUrl('Music/cafeJazz.mp3'), 0.1);
 
             const startVoOnInteraction = () => {
                 if (this.voAudio && this.voAudio.paused) {

@@ -203,11 +203,14 @@ class SceneManager {
                 showLoadingTrivia(sceneName);
             }
 
+            console.log(`[SceneManager] About to load scene: ${sceneName}`);
             const success = await this.loadScene(sceneName);
             loadSuccess = success;
+            console.log(`[SceneManager] loadScene result for ${sceneName}: ${success}`);
 
             if (success) {
                 if (spawnPosition) {
+                    console.log(`[SceneManager] Setting spawn position: ${JSON.stringify(spawnPosition)}`);
                     cameraEntity.setLocalPosition(spawnPosition[0], spawnPosition[1], spawnPosition[2]);
                 }
                 appState.nextSceneName = null;
