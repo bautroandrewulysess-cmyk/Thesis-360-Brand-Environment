@@ -813,20 +813,18 @@ class StreetViewScene extends Scene {
             await this.loadPosition(positionKey);
             this.createArrows();
 
-            // Face the way forward: set camera yaw to match first forward arrow
-            const posData = this.positions[positionKey];
-            if (posData?.arrows && posData.arrows.length > 0) {
-                const forwardArrow = posData.arrows.find(arr => !arr.label.includes('Back') && arr.label !== 'Go Back');
-                if (forwardArrow) {
-                    const currentEulers = cameraEntity.getLocalEulerAngles();
-                    if (window.DEV_MODE) console.log(`[camera] ${positionKey}: arrow yaw=${forwardArrow.yaw}, applying to camera`);
-                    cameraEntity.setLocalEulerAngles(currentEulers.x, forwardArrow.yaw, 0);
-                    this.eulerAngles.yaw = forwardArrow.yaw;
-                    if (window.DEV_MODE) {
-                        const appliedEulers = cameraEntity.getLocalEulerAngles();
-                        console.log(`[camera] ${positionKey}: after apply, camera yaw=${appliedEulers.y}, stored yaw=${this.eulerAngles.yaw}`);
-                    }
-                }
+            // Face the way forward: derive camera yaw from forward arrow's actual world position
+            const forwardEntity = this.arrowEntities.find(entity => {
+                const arrow = entity.arrowData;
+                return arrow && !arrow.label.includes('Back') && arrow.label !== 'Go Back';
+            });
+
+            if (forwardEntity) {
+                const p = forwardEntity.getLocalPosition();
+                const yawDeg = Math.atan2(-p.x, -p.z) * 180 / Math.PI;
+                const currentPitch = cameraEntity.getLocalEulerAngles().x;
+                cameraEntity.setLocalEulerAngles(currentPitch, yawDeg, 0);
+                this.eulerAngles.yaw = yawDeg * Math.PI / 180;
             }
 
             try {
