@@ -635,9 +635,14 @@ class Scene {
         }, 300);
 
         let safetyTimeoutHandle;
-        audio.addEventListener('playing', () => {
-            const duration = audio.duration * 1000 + 2000;
+        let timeoutArmed = false;
+        const armSafetyTimeout = () => {
+            if (timeoutArmed || !isFinite(audio.duration) || audio.duration <= 0) {
+                return;
+            }
+            timeoutArmed = true;
             if (safetyTimeoutHandle) clearTimeout(safetyTimeoutHandle);
+            const remainingTime = (audio.duration - audio.currentTime) * 1000 + 2000;
             safetyTimeoutHandle = setTimeout(() => {
                 const voFinishedProp = 'isVoFinished';
                 if (voFinishedProp in this && !this[voFinishedProp]) {
@@ -646,8 +651,11 @@ class Scene {
                     console.log('[VO] Safety timeout triggered');
                     triggerQuiz();
                 }
-            }, duration);
-        });
+            }, remainingTime);
+        };
+        audio.addEventListener('playing', armSafetyTimeout);
+        audio.addEventListener('loadedmetadata', armSafetyTimeout);
+        audio.addEventListener('durationchange', armSafetyTimeout);
 
 
         return audio;
@@ -855,6 +863,7 @@ class Scene {
 
         caption.textContent = required ? 'Hear it from the owners' : '';
         video.crossOrigin = 'anonymous';
+        video.preload = 'auto';
         video.src = src;
         skipBtn.style.display = required ? 'none' : 'block';
 
@@ -885,11 +894,13 @@ class Scene {
             }
         }, 10000);
 
-        video.addEventListener('canplay', () => { videoPlayable = true; }, { once: true });
+        video.addEventListener('canplaythrough', () => {
+            videoPlayable = true;
+            video.play().catch(e => console.warn('[VideoPopup] Play failed:', e.message));
+        }, { once: true });
 
         popup.style.display = 'flex';
         setTimeout(() => popup.style.opacity = '1', 50);
-        video.play().catch(e => console.warn('[VideoPopup] Play failed:', e.message));
     }
 
     hideVideoPopup() {

@@ -1124,19 +1124,37 @@ class RoasteryScene extends Scene {
             }
         });
 
-        // Update transition hotspot labels
-        this.hotspotEntities.forEach(group => {
-            if (group.labelElement && group.hotspotData?.isTransition) {
-                const isUnlocked = this.quizPassed || window.journeyComplete;
-                const worldPos = group.getPosition();
-                const screen = this.worldToScreen(worldPos);
-                const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
-                group.labelElement.style.display = (isUnlocked && !isOffScreen && !window.journeyComplete) ? 'block' : 'none';
-                group.labelElement.style.left = `${screen.x}px`;
-                group.labelElement.style.top = `${screen.y - 50}px`;
-                group.labelElement.style.transform = 'translateX(-50%)';
-            }
-        });
+        // Update transition hotspot labels (only when actually visible)
+        const shouldShowLabels = this.quizPassed && !window.journeyComplete;
+        if (shouldShowLabels) {
+            this.hotspotEntities.forEach(group => {
+                if (group.labelElement && group.hotspotData?.isTransition) {
+                    const worldPos = group.getPosition();
+                    const screen = this.worldToScreen(worldPos);
+                    const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
+                    const newDisplay = isOffScreen ? 'none' : 'block';
+                    if (group._labelDisplay !== newDisplay) {
+                        group.labelElement.style.display = newDisplay;
+                        group._labelDisplay = newDisplay;
+                    }
+                    if (group._labelX !== screen.x) {
+                        group.labelElement.style.left = `${screen.x}px`;
+                        group._labelX = screen.x;
+                    }
+                    if (group._labelY !== screen.y) {
+                        group.labelElement.style.top = `${screen.y - 50}px`;
+                        group._labelY = screen.y;
+                    }
+                }
+            });
+        } else if (this.hotspotEntities.some(g => g.labelElement && g._labelDisplay !== 'none')) {
+            this.hotspotEntities.forEach(group => {
+                if (group.labelElement && group._labelDisplay !== 'none') {
+                    group.labelElement.style.display = 'none';
+                    group._labelDisplay = 'none';
+                }
+            });
+        }
 
         if (this.activeHotspotEntity) {
             const popup = this.dom.hotspotPopup;

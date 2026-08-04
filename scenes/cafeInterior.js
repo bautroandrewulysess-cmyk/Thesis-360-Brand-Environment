@@ -1097,6 +1097,8 @@ class CafeInteriorScene extends Scene {
                 }
             }
 
+            this.initAmbient(assetUrl('Music/cafeJazz.mp3'), 0.1);
+
             const startVoOnInteraction = () => {
                 if (this.voAudio && this.voAudio.paused) {
                     this.voAudio.play().catch(e => {
@@ -1110,14 +1112,15 @@ class CafeInteriorScene extends Scene {
             window.addEventListener('keydown', startVoOnInteraction);
             window.addEventListener('click', startVoOnInteraction);
 
-            // Audio starts on first user interaction (Chrome security requirement)
-            const startAudioOnInteraction = () => {
-                this.initAmbient(assetUrl('Music/cafeJazz.mp3'), 0.1);
-                window.removeEventListener('keydown', startAudioOnInteraction);
-                window.removeEventListener('click', startAudioOnInteraction);
+            const fallbackAudioStart = () => {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().catch(() => {});
+                }
+                window.removeEventListener('keydown', fallbackAudioStart);
+                window.removeEventListener('click', fallbackAudioStart);
             };
-            window.addEventListener('keydown', startAudioOnInteraction);
-            window.addEventListener('click', startAudioOnInteraction);
+            window.addEventListener('keydown', fallbackAudioStart);
+            window.addEventListener('click', fallbackAudioStart);
 
             // Attach event listeners for this scene
             this.attachEventListeners();
@@ -1269,19 +1272,37 @@ class CafeInteriorScene extends Scene {
             }
         });
 
-        // Update transition hotspot labels
-        this.hotspotEntities.forEach(group => {
-            if (group.labelElement && group.hotspotData?.isTransition) {
-                const isUnlocked = this.quizPassed || window.journeyComplete;
-                const worldPos = group.getPosition();
-                const screen = this.worldToScreen(worldPos);
-                const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
-                group.labelElement.style.display = (isUnlocked && !isOffScreen && !window.journeyComplete) ? 'block' : 'none';
-                group.labelElement.style.left = `${screen.x}px`;
-                group.labelElement.style.top = `${screen.y - 50}px`;
-                group.labelElement.style.transform = 'translateX(-50%)';
-            }
-        });
+        // Update transition hotspot labels (only when actually visible)
+        const shouldShowLabels = this.quizPassed && !window.journeyComplete;
+        if (shouldShowLabels) {
+            this.hotspotEntities.forEach(group => {
+                if (group.labelElement && group.hotspotData?.isTransition) {
+                    const worldPos = group.getPosition();
+                    const screen = this.worldToScreen(worldPos);
+                    const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
+                    const newDisplay = isOffScreen ? 'none' : 'block';
+                    if (group._labelDisplay !== newDisplay) {
+                        group.labelElement.style.display = newDisplay;
+                        group._labelDisplay = newDisplay;
+                    }
+                    if (group._labelX !== screen.x) {
+                        group.labelElement.style.left = `${screen.x}px`;
+                        group._labelX = screen.x;
+                    }
+                    if (group._labelY !== screen.y) {
+                        group.labelElement.style.top = `${screen.y - 50}px`;
+                        group._labelY = screen.y;
+                    }
+                }
+            });
+        } else if (this.hotspotEntities.some(g => g.labelElement && g._labelDisplay !== 'none')) {
+            this.hotspotEntities.forEach(group => {
+                if (group.labelElement && group._labelDisplay !== 'none') {
+                    group.labelElement.style.display = 'none';
+                    group._labelDisplay = 'none';
+                }
+            });
+        }
 
         // Anchor popup to hotspot marker and hide if off-screen
         if (this.activeHotspotEntity) {

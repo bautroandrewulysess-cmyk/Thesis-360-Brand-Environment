@@ -1018,14 +1018,17 @@ class CafeExteriorScene extends Scene {
             // Setup collision box editor listeners
             this.setupEditorPanelListeners();
 
-            // Audio starts on first user interaction (Chrome security requirement)
-            const startAudioOnInteraction = () => {
-                this.initAmbient(assetUrl('Music/cafeExteriorAmbienceSound.mp3'), 0.5);
-                window.removeEventListener('keydown', startAudioOnInteraction);
-                window.removeEventListener('click', startAudioOnInteraction);
+            this.initAmbient(assetUrl('Music/cafeExteriorAmbienceSound.mp3'), 0.5);
+
+            const fallbackAudioStart = () => {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().catch(() => {});
+                }
+                window.removeEventListener('keydown', fallbackAudioStart);
+                window.removeEventListener('click', fallbackAudioStart);
             };
-            window.addEventListener('keydown', startAudioOnInteraction);
-            window.addEventListener('click', startAudioOnInteraction);
+            window.addEventListener('keydown', fallbackAudioStart);
+            window.addEventListener('click', fallbackAudioStart);
 
             // Attach event listeners for this scene
             this.attachEventListeners();

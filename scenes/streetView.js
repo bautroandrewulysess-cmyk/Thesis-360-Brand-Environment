@@ -202,8 +202,7 @@ class StreetViewScene extends Scene {
             'farm1-5': {
                 photo: assetUrl('Photos (360)/Farm1/farm1 5.jpg'),
                 arrows: [
-                    { label: 'Continue to Harvest', yaw: 0, targetScene: 'harvesting', spawnPosition: [0, 1.6, 0] },
-                    { label: 'Back', yaw: 180, target: 'farm1-4' }
+                    { label: 'To the Harvest', yaw: 0, targetScene: 'harvesting', spawnPosition: [0, 1.6, 0], isHarvestMarker: true }
                 ]
             },
 
@@ -623,16 +622,25 @@ class StreetViewScene extends Scene {
 
             // Material: cyan for forward, white for back arrows; gold for highlighted farm1-5 forward
             const isBackArrow = arrow.label === 'Back' || arrow.label === 'Go Back' || arrow.label.includes('Back');
+            const isHarvestMarker = arrow.isHarvestMarker;
             const isFarm1_5ForwardArrow = this.currentPosition === 'farm1-5' && !isBackArrow && this.highlightFarm1_5Forward;
+
+            // Larger scale for harvest marker
+            if (isHarvestMarker) {
+                arrowEntity.setLocalScale(2.5, 0.12, 2.5);
+            }
+
             const mat = new pc.StandardMaterial();
             mat.cull = pc.CULLFACE_NONE;
-            mat.opacity = 0.9;
+            mat.opacity = isHarvestMarker ? 1 : 0.9;
             mat.blendType = pc.BLEND_NORMAL;
             mat.depthWrite = false;
-            mat.emissive = new pc.Color(0, 0, 0);
-            mat.emissiveIntensity = 0;
+            mat.emissive = isHarvestMarker ? new pc.Color(1, 0.85, 0.2) : new pc.Color(0, 0, 0);
+            mat.emissiveIntensity = isHarvestMarker ? 0.6 : 0;
 
-            if (isFarm1_5ForwardArrow) {
+            if (isHarvestMarker) {
+                mat.diffuse = new pc.Color(1, 0.85, 0.2);
+            } else if (isFarm1_5ForwardArrow) {
                 mat.diffuse = new pc.Color(1, 0.85, 0.2);
             } else if (isBackArrow) {
                 mat.diffuse = new pc.Color(1, 1, 1);
@@ -645,8 +653,42 @@ class StreetViewScene extends Scene {
             arrowEntity.render.meshInstances[0].material = mat;
             arrowEntity.arrowData = arrow;
             arrowEntity.arrowIndex = index;
+
+            // Add pulsing animation for harvest marker
+            if (isHarvestMarker) {
+                const pulseScale = 1.2;
+                const pulseDuration = 1.2;
+                let scaleTime = 0;
+                arrowEntity.update = (dt) => {
+                    scaleTime = (scaleTime + dt) % pulseDuration;
+                    const pulse = 1 + (Math.sin(scaleTime / pulseDuration * Math.PI * 2) * 0.3);
+                    arrowEntity.setLocalScale(2.5 * pulse, 0.12, 2.5 * pulse);
+                };
+            }
+
             this.container.addChild(arrowEntity);
             this.arrowEntities.push(arrowEntity);
+
+            // Add floating label for harvest marker
+            if (isHarvestMarker) {
+                const label = document.createElement('div');
+                label.textContent = 'To the Harvest';
+                label.style.cssText = `
+                    position: fixed;
+                    font-family: 'Inter', sans-serif;
+                    font-size: 1.2rem;
+                    font-weight: 500;
+                    color: #f4d03f;
+                    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+                    pointer-events: none;
+                    white-space: nowrap;
+                    z-index: 100;
+                `;
+                document.body.appendChild(label);
+                this.arrowLabels.push(label);
+
+                arrowEntity.labelElement = label;
+            }
 
             // Log properties after creation
             if (window.DEV_MODE) console.log(`[createArrows]   Arrow ${index}: enabled=${arrowEntity.enabled}, parent=${!!arrowEntity.parent}, has render=${!!arrowEntity.render}`);
@@ -743,6 +785,12 @@ class StreetViewScene extends Scene {
         }
     }
 
+    updateAmbientVolumeForPosition(positionKey) {
+        if (!this.ambientGain) return;
+        const targetGain = positionKey.startsWith('toFarm') ? 0.8 : positionKey.startsWith('farm1') ? 0.5 : 0.5;
+        this.ambientGain.gain.setTargetAtTime(targetGain, this.audioContext.currentTime, 0.3);
+    }
+
     async transitionToPosition(positionKey) {
         if (!this.positions[positionKey]) {
             console.error(`Position not found: ${positionKey}`);
@@ -752,6 +800,7 @@ class StreetViewScene extends Scene {
         try {
             await fadeOut();
             this.currentPosition = positionKey;
+            this.updateAmbientVolumeForPosition(positionKey);
             await this.loadPosition(positionKey);
             this.createArrows();
             if (window.updateDiscValues) window.updateDiscValues(positionKey, this.positions[positionKey].arrows);
@@ -909,17 +958,17 @@ class StreetViewScene extends Scene {
             this.eulerAngles.yaw = 0;
             this.eulerAngles.pitch = 0;
 
-            // Audio on first interaction
-            const startAudioOnInteraction = () => {
-                this.initAmbient(assetUrl('Music/farmAmbienceSound.mp3'), 0.5);
-                if (this.voAudio && this.voAudio.paused) {
-                    this.voAudio.play().catch(e => console.warn('VO Autoplay blocked', e));
+            this.initAmbient(assetUrl('Music/farmAmbienceSound.mp3'), 0.8);
+
+            const fallbackAudioStart = () => {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().catch(() => {});
                 }
-                window.removeEventListener('keydown', startAudioOnInteraction);
-                window.removeEventListener('click', startAudioOnInteraction);
+                window.removeEventListener('keydown', fallbackAudioStart);
+                window.removeEventListener('click', fallbackAudioStart);
             };
-            window.addEventListener('keydown', startAudioOnInteraction);
-            window.addEventListener('click', startAudioOnInteraction);
+            window.addEventListener('keydown', fallbackAudioStart);
+            window.addEventListener('click', fallbackAudioStart);
 
             // Preload next positions
             this.preloadArrowTargets();
