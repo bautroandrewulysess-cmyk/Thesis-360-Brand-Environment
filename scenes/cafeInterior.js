@@ -46,6 +46,15 @@ class CafeInteriorScene extends Scene {
                 description: 'The bar is where specialty coffee is meticulously crafted, served and discussed. Unlike traditional and commercial cafes, this is where the owners showcase the careful process of pouring a cup of specialty coffee while they engage with visitors.'
             },
             {
+                id: 'coffee-brewing',
+                position: new pc.Vec3(0.140, 1.890, -0.660),
+                label: 'Coffee Brewing',
+                description: '',
+                isVideo: true,
+                videoSrc: `${R2_BASE}/brewing.mp4`,
+                isTransition: false
+            },
+            {
                 id: 'chill-section',
                 position: new pc.Vec3(1.140, 1.060, 0.140),
                 label: 'Chill Section',
@@ -936,16 +945,21 @@ class CafeInteriorScene extends Scene {
             group.glowEntity = glow;
             this.hotspotEntities.push(group);
 
+            // Visibility: hide video hotspots until quiz is passed
+            if (hotspot.isVideo) {
+                group.enabled = this.quizPassed;
+            }
+
             // Register group with raycaster
             this.registerInteractiveObject(group, () => {
                 this.onHotspotClick(hotspot, group);
             });
 
-            // Create label for transition hotspots
-            if (hotspot.isTransition) {
+            // Create label for transition hotspots and video hotspots
+            if (hotspot.isTransition || hotspot.isVideo) {
                 const label = document.createElement('div');
                 label.className = 'hotspot-label';
-                label.textContent = 'To Nursery';
+                label.textContent = hotspot.label;
                 label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none;`;
                 document.body.appendChild(label);
                 group.labelElement = label;
@@ -998,21 +1012,34 @@ class CafeInteriorScene extends Scene {
             return;
         }
 
-        if (hotspot.type === 'video' && hotspot.videoSrc) {
-            if (this.dom.popupVideo) {
-                this.dom.popupVideo.src = hotspot.videoSrc;
-                this.dom.popupVideo.play();
+        if (hotspot.isVideo && hotspot.videoSrc) {
+            // Guard against overlap: ignore if video is already pending or VO is playing
+            if (this.videoPending) return;
+            if (this.voAudio && !this.voAudio.paused) return;
+
+            // Pause ambient, play video with fade in/out
+            this.pauseAmbient();
+            this.showVideoPopup(hotspot.videoSrc, {
+                required: false,
+                caption: hotspot.label,
+                onFinish: () => {
+                    this.resumeAmbient();
+                }
+            });
+
+            // Apply fade in/out to popup
+            const popup = document.getElementById('video-popup');
+            if (popup) {
+                popup.style.transition = 'opacity 0.5s ease-in-out';
             }
-            if (this.dom.videoPopup) {
-                this.dom.videoPopup.classList.add('active');
-            }
-        } else {
-            const hotspotTitle = document.getElementById('hotspot-title');
-            const hotspotDescription = document.getElementById('hotspot-description');
-            if (hotspotTitle) hotspotTitle.textContent = hotspot.label;
-            if (hotspotDescription) hotspotDescription.textContent = hotspot.description;
-            if (this.dom.hotspotPopup) this.dom.hotspotPopup.classList.add('active');
+            return;
         }
+
+        const hotspotTitle = document.getElementById('hotspot-title');
+        const hotspotDescription = document.getElementById('hotspot-description');
+        if (hotspotTitle) hotspotTitle.textContent = hotspot.label;
+        if (hotspotDescription) hotspotDescription.textContent = hotspot.description;
+        if (this.dom.hotspotPopup) this.dom.hotspotPopup.classList.add('active');
     }
 
 
@@ -1281,11 +1308,18 @@ class CafeInteriorScene extends Scene {
             }
         });
 
-        // Update transition hotspot labels (only when actually visible)
+        // Update video hotspot visibility when quiz is passed
+        this.hotspotEntities.forEach(group => {
+            if (group.hotspotData?.isVideo) {
+                group.enabled = this.quizPassed;
+            }
+        });
+
+        // Update transition and video hotspot labels (only when actually visible)
         const shouldShowLabels = this.quizPassed && !window.journeyComplete;
         if (shouldShowLabels) {
             this.hotspotEntities.forEach(group => {
-                if (group.labelElement && group.hotspotData?.isTransition) {
+                if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isVideo)) {
                     const worldPos = group.getPosition();
                     const screen = this.worldToScreen(worldPos);
                     const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;

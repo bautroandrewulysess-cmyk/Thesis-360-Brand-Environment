@@ -716,6 +716,7 @@ class Scene {
             const response = await fetch(path);
             const buffer = await response.arrayBuffer();
             const decoded = await this.audioContext.decodeAudioData(buffer);
+            this.ambientBuffer = decoded;
             this.ambientGain = this.audioContext.createGain();
             this.ambientGain.gain.value = gain;
             this.ambientGain.connect(this.audioContext.destination);
@@ -753,6 +754,28 @@ class Scene {
         if (!this.ambientGain || this.storedAmbientGain === null) return;
         this.ambientGain.gain.setTargetAtTime(this.storedAmbientGain, this.audioContext.currentTime, 0.4);
         this.storedAmbientGain = null;
+    }
+
+    pauseAmbient() {
+        if (!this.ambientSource || !this.audioContext) return;
+        this.ambientPausedGain = this.ambientGain?.gain.value || 0;
+        this.ambientPausedOffset = this.audioContext.currentTime;
+        try { this.ambientSource.stop(); } catch(e) {}
+        this.ambientSource = null;
+    }
+
+    resumeAmbient() {
+        if (!this.audioContext || !this.audioLoaded || this.ambientPausedOffset === undefined) return;
+        const offset = this.audioContext.currentTime - this.ambientPausedOffset;
+        this.ambientSource = this.audioContext.createBufferSource();
+        this.ambientSource.buffer = this.ambientBuffer;
+        this.ambientSource.loop = true;
+        this.ambientSource.connect(this.ambientGain);
+        this.ambientSource.start(0, offset);
+        if (this.ambientGain && this.ambientPausedGain !== undefined) {
+            this.ambientGain.gain.value = this.ambientPausedGain;
+        }
+        this.ambientPausedOffset = undefined;
     }
 
     showQuiz(quizData, onPass) {
