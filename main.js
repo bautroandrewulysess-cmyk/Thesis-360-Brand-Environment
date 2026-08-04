@@ -3,6 +3,7 @@
 // ============================================================================
 
 const R2_BASE = 'https://pub-d9a52e1dd2124a6a8a669ef46ee0f58d.r2.dev';
+const SUBTITLE_VERSION = 2;
 window.R2_BASE = R2_BASE;
 
 // Global asset URL helper: encodes path segments while preserving directory structure
@@ -299,12 +300,12 @@ function showLoadingTrivia(targetScene) {
 
     // Show onboarding on first load of cafe-interior only
     if (isFirstSceneLoad && targetScene === 'cafe-interior') {
-        triviaEl.innerHTML = `<div style="font-size:0.95rem; line-height:1.8; text-align:left; display:inline-block;">
+        triviaEl.innerHTML = `<div style="font-size:0.95rem; line-height:1.8; text-align:center; display:inline-block;">
             <div style="font-weight:500; margin-bottom:12px; color:#f4d03f;">How to explore</div>
-            <div style="margin-bottom:8px;"><span style="color:#e8e8e8;">W A S D</span> — walk around</div>
-            <div style="margin-bottom:8px;"><span style="color:#e8e8e8;">Mouse drag</span> — look around</div>
-            <div style="margin-bottom:8px;"><span style="color:#e8e8e8;">Click markers</span> — move between places</div>
-            <div><span style="color:#e8e8e8;">Listen for narration</span> — a question follows each stop</div>
+            <div style="margin-bottom:8px; text-align:center;"><span style="color:#e8e8e8;">W A S D</span> — walk around</div>
+            <div style="margin-bottom:8px; text-align:center;"><span style="color:#e8e8e8;">Mouse drag</span> — look around</div>
+            <div style="margin-bottom:8px; text-align:center;"><span style="color:#e8e8e8;">Click markers</span> — move between places</div>
+            <div style="text-align:center;"><span style="color:#e8e8e8;">Listen for narration</span> — a question follows each stop</div>
         </div>`;
         triviaEl.style.opacity = '0.8';
         isFirstSceneLoad = false;
@@ -557,8 +558,8 @@ class Scene {
 
         const lang = window.currentLanguage || 'en';
         const audioPath = assetUrl(`VO/${audioKey}.mp3`);
-        const langVttPath = assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`);
-        const fallbackVttPath = assetUrl(`Subtitles/${audioKey}.vtt`);
+        const langVttPath = `${assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
+        const fallbackVttPath = `${assetUrl(`Subtitles/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
 
         const audio = document.createElement('audio');
         audio.crossOrigin = 'anonymous';
@@ -603,9 +604,10 @@ class Scene {
             }
         });
 
-        const triggerQuiz = () => {
-            if (this.quiz && !window.journeyComplete && !this.quizTriggered) {
+        const triggerQuiz = (path) => {
+            if (this.quiz && !window.journeyComplete && !this.quizTriggered && this.isVoFinished === true && audio.ended === true) {
                 this.quizTriggered = true;
+                console.warn(`[VO] Quiz triggered via ${path}`);
                 const hookMethod = this[`onVoFinished_${audioKey}`];
                 if (typeof hookMethod === 'function') {
                     hookMethod.call(this);
@@ -625,15 +627,16 @@ class Scene {
             if (voFinishedProp in this) {
                 this[voFinishedProp] = true;
             }
-            triggerQuiz();
+            triggerQuiz('ended');
         });
 
         audio.addEventListener('pause', () => this.clearSubtitles());
 
         setTimeout(() => {
             audio.play().catch(err => {
-                console.log('[VO] Autoplay blocked:', err.message);
+                console.warn('[VO] Autoplay blocked:', err.message);
                 this.clearSubtitles();
+                triggerQuiz('autoplay-blocked');
             });
         }, 300);
 
@@ -647,12 +650,18 @@ class Scene {
             if (safetyTimeoutHandle) clearTimeout(safetyTimeoutHandle);
             const remainingTime = (audio.duration - audio.currentTime) * 1000 + 2000;
             safetyTimeoutHandle = setTimeout(() => {
+                if (!audio.paused && audio.currentTime < audio.duration - 1) {
+                    console.warn('[VO] Safety timeout fired but audio still playing, re-arming');
+                    timeoutArmed = false;
+                    armSafetyTimeout();
+                    return;
+                }
                 const voFinishedProp = 'isVoFinished';
                 if (voFinishedProp in this && !this[voFinishedProp]) {
                     this[voFinishedProp] = true;
                     this.clearSubtitles();
-                    console.log('[VO] Safety timeout triggered');
-                    triggerQuiz();
+                    console.warn('[VO] Quiz triggered via safety-timeout');
+                    triggerQuiz('safety-timeout');
                 }
             }, remainingTime);
         };
@@ -927,8 +936,14 @@ class Scene {
         }
 
         if (window._preloadedSplats[assetName]) {
-            console.warn(`[Preload] Using cached splat: ${assetName}`);
-            return window._preloadedSplats[assetName];
+            const cachedAsset = window._preloadedSplats[assetName];
+            if (cachedAsset.resource) {
+                console.warn(`[Preload] Using cached splat: ${assetName}`);
+                return cachedAsset;
+            } else {
+                console.warn(`[Preload] Cached splat invalid (no resource), discarding: ${assetName}`);
+                delete window._preloadedSplats[assetName];
+            }
         }
 
         console.warn(`[Preload] Starting splat download: ${assetName} from ${url}`);

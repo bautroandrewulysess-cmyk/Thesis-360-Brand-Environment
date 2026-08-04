@@ -769,22 +769,45 @@ class StreetViewScene extends Scene {
     }
 
     async checkFarmerInterviewAtToFarm14() {
+        console.warn('[FarmerInterview] checkFarmerInterviewAtToFarm14 entered');
+        console.warn('[FarmerInterview] currentPosition:', this.currentPosition, 'toFarm14FirstArrival:', this.toFarm14FirstArrival);
         if (this.currentPosition === 'toFarm14' && this.toFarm14FirstArrival) {
             this.toFarm14FirstArrival = false;
             const required = !window.journeyComplete;
+            console.warn('[FarmerInterview] showVideoPopup called, required:', required);
+            const videoSrc = `${R2_BASE}/farmerInterview.mp4`;
+            console.warn('[FarmerInterview] video src:', videoSrc);
             if (required) {
                 this.isInputLocked = true;
                 for (let arrow of this.arrowEntities) arrow.enabled = false;
             }
-            this.showVideoPopup(`${R2_BASE}/farmerInterview.mp4`, {
+            const video = this.showVideoPopup(videoSrc, {
                 required,
                 caption: 'Meet the farmer',
                 onFinish: () => {
+                    console.warn('[FarmerInterview] onFinish callback fired');
                     this.isInputLocked = false;
                     for (let arrow of this.arrowEntities) arrow.enabled = true;
                     if (required) this.createArrows();
                 }
             });
+            if (video) {
+                const checkReadyState = () => {
+                    console.warn('[FarmerInterview] readyState:', video.readyState, 'duration:', video.duration, 'src:', video.src);
+                    if (video.readyState < 4) {
+                        setTimeout(checkReadyState, 5000);
+                    }
+                };
+                video.addEventListener('canplay', () => {
+                    console.warn('[FarmerInterview] canplay event fired');
+                }, { once: true });
+                video.addEventListener('error', (e) => {
+                    console.warn('[FarmerInterview] error event fired:', e);
+                }, { once: true });
+                setTimeout(checkReadyState, 5000);
+            }
+        } else {
+            console.warn('[FarmerInterview] Check skipped - not at toFarm14 or not first arrival');
         }
     }
 
