@@ -34,6 +34,20 @@ class RoasteryScene extends Scene {
                 isTransition: true,
                 targetScene: 'cafe-interior',
                 spawnPosition: [0, 1.6, 0.9]
+            },
+            {
+                id: 'roasting-machine',
+                position: new pc.Vec3(0.566, 1.3, -0.740),
+                label: 'Roasting Machine',
+                description: 'The roaster applies controlled heat to green coffee beans, moving them through drying, first crack, and development — the stages that build the sugars, acids, and oils responsible for flavour and aroma. Roast time and temperature are adjusted to draw out each bean\'s best character before cooling and packaging.',
+                isTransition: false
+            },
+            {
+                id: 'green-bean-packs',
+                position: new pc.Vec3(-0.471, 1.6, 0.389),
+                label: 'Green Bean Packs',
+                description: 'Arabica grows at higher elevations and is known for a smoother, more complex, slightly sweet profile with milder acidity. Robusta is hardier, carries more caffeine, and brings a bolder, more bitter character — often used to add body and crema.',
+                isTransition: false
             }
         ];
         this.hotspotEntities = [];
@@ -822,7 +836,7 @@ class RoasteryScene extends Scene {
 
             const coreMaterial = new pc.StandardMaterial();
             const isTransition = hotspot.isTransition;
-            coreMaterial.emissive = isTransition ? new pc.Color(0.2, 0.8, 1) : new pc.Color(1, 0.9, 0.3);
+            coreMaterial.emissive = isTransition ? new pc.Color(1, 0.9, 0.3) : new pc.Color(0.2, 0.8, 1);
             coreMaterial.emissiveIntensity = 6;
             coreMaterial.opacity = 1.0;
             coreMaterial.blendType = pc.BLEND_NORMAL;
@@ -835,7 +849,7 @@ class RoasteryScene extends Scene {
             glow.setLocalScale(0.14, 0.14, 0.14);
 
             const glowMaterial = new pc.StandardMaterial();
-            glowMaterial.emissive = isTransition ? new pc.Color(0.1, 0.6, 1) : new pc.Color(1, 0.8, 0.1);
+            glowMaterial.emissive = isTransition ? new pc.Color(1, 0.8, 0.1) : new pc.Color(0.1, 0.6, 1);
             glowMaterial.emissiveIntensity = 0.8;
             glowMaterial.opacity = 0.4;
             glowMaterial.blendType = pc.BLEND_ADDITIVE;

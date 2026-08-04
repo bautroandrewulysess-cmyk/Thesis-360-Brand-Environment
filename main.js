@@ -68,7 +68,7 @@ const config = {
     debugMode: false,
 };
 
-const DEV_MODE = false;
+const DEV_MODE = ['localhost', '127.0.0.1'].includes(location.hostname);
 window.DEV_MODE = DEV_MODE;
 
 // Splat preloading cache
@@ -1210,8 +1210,84 @@ if (DEV_MODE) {
             <button id="dev-reset-journey" style="flex:1; padding:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.75rem; transition:all 0.2s ease;">Reset journey</button>
           </div>
         </div>
+        <div id="debug-overlay" style="position:fixed; top:80px; left:20px; background:rgba(5,5,5,0.95); border:1px solid rgba(0,255,0,0.2); border-radius:8px; padding:12px; width:200px; z-index:940; pointer-events:auto; font-family:monospace; font-size:11px; color:#0f0; backdrop-filter:blur(8px); display:none;">
+          <div id="coord-x" style="margin-bottom:4px;">X: 0.000</div>
+          <div id="coord-y" style="margin-bottom:4px;">Y: 0.000</div>
+          <div id="coord-z" style="margin-bottom:4px;">Z: 0.000</div>
+        </div>
+        <div id="box-editor" style="position:fixed; top:20px; right:380px; background:rgba(5,5,5,0.95); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:16px; width:320px; z-index:940; pointer-events:auto; font-family:'Inter',sans-serif; color:#f4f4f4; backdrop-filter:blur(8px); display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h3 id="box-editor-title" style="margin:0; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.5px;">Box Editor</h3>
+            <span id="box-copy-feedback" style="font-size:0.8rem; color:#c0d9a8; font-weight:500;"></span>
+          </div>
+          <div style="font-size:0.85rem; line-height:2;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;">
+              <label style="display:flex; align-items:center; gap:4px;"><span style="min-width:20px;">PX:</span><input id="box-px" type="range" min="-100" max="100" step="0.5" style="flex:1; height:20px;"><input id="box-px-num" type="number" step="0.1" style="width:45px; padding:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:3px; font-family:monospace;"></label>
+              <label style="display:flex; align-items:center; gap:4px;"><span style="min-width:20px;">PY:</span><input id="box-py" type="range" min="-100" max="100" step="0.5" style="flex:1; height:20px;"><input id="box-py-num" type="number" step="0.1" style="width:45px; padding:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:3px; font-family:monospace;"></label>
+              <label style="display:flex; align-items:center; gap:4px;"><span style="min-width:20px;">PZ:</span><input id="box-pz" type="range" min="-100" max="100" step="0.5" style="flex:1; height:20px;"><input id="box-pz-num" type="number" step="0.1" style="width:45px; padding:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:3px; font-family:monospace;"></label>
+              <label style="display:flex; align-items:center; gap:4px;"><span style="min-width:20px;">SX:</span><input id="box-sx" type="range" min="0.1" max="50" step="0.1" style="flex:1; height:20px;"><input id="box-sx-num" type="number" step="0.1" style="width:45px; padding:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:3px; font-family:monospace;"></label>
+              <label style="display:flex; align-items:center; gap:4px;"><span style="min-width:20px;">SY:</span><input id="box-sy" type="range" min="0.1" max="50" step="0.1" style="flex:1; height:20px;"><input id="box-sy-num" type="number" step="0.1" style="width:45px; padding:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:3px; font-family:monospace;"></label>
+              <label style="display:flex; align-items:center; gap:4px;"><span style="min-width:20px;">SZ:</span><input id="box-sz" type="range" min="0.1" max="50" step="0.1" style="flex:1; height:20px;"><input id="box-sz-num" type="number" step="0.1" style="width:45px; padding:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:3px; font-family:monospace;"></label>
+              <label style="display:flex; align-items:center; gap:4px;"><span style="min-width:20px;">RY:</span><input id="box-ry" type="range" min="-180" max="180" step="1" style="flex:1; height:20px;"><input id="box-ry-num" type="number" step="0.1" style="width:45px; padding:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:3px; font-family:monospace;"></label>
+              <label style="display:flex; align-items:center; gap:4px; grid-column:1/-1;"><span style="min-width:20px;">OP:</span><input id="box-op" type="range" min="0" max="1" step="0.05" style="flex:1; height:20px;"><input id="box-op-num" type="number" step="0.05" style="width:45px; padding:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:3px; font-family:monospace;"></label>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button id="box-copy-selected" style="flex:1; padding:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;">Copy selected</button>
+            <button id="box-copy-btn" style="flex:1; padding:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#f4f4f4; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.8rem; transition:all 0.2s ease;">Copy all</button>
+          </div>
+        </div>
     `;
     document.body.insertAdjacentHTML('beforeend', devPanelsHTML);
+
+    // Toggle debug overlay visibility with backtick
+    const originalToggleDebugMode = toggleDebugMode;
+    window.toggleDebugMode = function() {
+        originalToggleDebugMode.call(this);
+        const debugOverlay = document.getElementById('debug-overlay');
+        if (debugOverlay) debugOverlay.style.display = config.debugMode ? 'block' : 'none';
+    };
+
+    // Wrap switchTo to update disc-values visibility on scene change
+    const originalSwitchTo = sceneManager.switchTo.bind(sceneManager);
+    sceneManager.switchTo = async function(sceneName, spawnPosition) {
+        const result = await originalSwitchTo(sceneName, spawnPosition);
+        const discPanel = document.getElementById('disc-values');
+        if (discPanel) discPanel.style.display = (sceneName === 'street-view') ? 'block' : 'none';
+        return result;
+    };
+
+    // Copy selected box event handler
+    document.getElementById('box-copy-selected')?.addEventListener('click', () => {
+        const scene = sceneManager.getActiveScene();
+        if (!scene || !scene.selectedBox) {
+            const feedback = document.getElementById('box-copy-feedback');
+            if (feedback) {
+                feedback.textContent = 'No box selected';
+                setTimeout(() => { feedback.textContent = ''; }, 2000);
+            }
+            return;
+        }
+
+        const b = scene.selectedBox;
+        const p = b.getLocalPosition();
+        const s = b.getLocalScale();
+        const r = b.getLocalEulerAngles();
+        let rotY = r.y;
+        if (Math.abs(r.x) > 90 || Math.abs(r.z) > 90) rotY = 180 - r.y;
+        while (rotY > 180) rotY -= 360;
+        while (rotY < -180) rotY += 360;
+
+        const data = `{ name: '${b.name}', pos: [${p.x.toFixed(3)}, ${p.y.toFixed(3)}, ${p.z.toFixed(3)}], size: [${s.x.toFixed(3)}, ${s.y.toFixed(3)}, ${s.z.toFixed(3)}], rotY: ${rotY.toFixed(1)} }`;
+        navigator.clipboard.writeText(data);
+
+        const feedback = document.getElementById('box-copy-feedback');
+        if (feedback) {
+            feedback.textContent = '✓ Copied!';
+            setTimeout(() => { feedback.textContent = ''; }, 2000);
+        }
+    });
+
     ColorGrading.setupUI();
 }
 

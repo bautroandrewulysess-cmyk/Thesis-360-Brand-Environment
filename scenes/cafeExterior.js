@@ -879,7 +879,7 @@ class CafeExteriorScene extends Scene {
 
             const coreMaterial = new pc.StandardMaterial();
             const isTransition = hotspot.isTransition;
-            coreMaterial.emissive = isTransition ? new pc.Color(0.2, 0.8, 1) : new pc.Color(1, 0.9, 0.3);
+            coreMaterial.emissive = isTransition ? new pc.Color(1, 0.9, 0.3) : new pc.Color(0.2, 0.8, 1);
             coreMaterial.emissiveIntensity = 6;
             coreMaterial.opacity = 1.0;
             coreMaterial.blendType = pc.BLEND_NORMAL;
@@ -892,7 +892,7 @@ class CafeExteriorScene extends Scene {
             glow.setLocalScale(0.14, 0.14, 0.14);
 
             const glowMaterial = new pc.StandardMaterial();
-            glowMaterial.emissive = isTransition ? new pc.Color(0.1, 0.6, 1) : new pc.Color(1, 0.8, 0.1);
+            glowMaterial.emissive = isTransition ? new pc.Color(1, 0.8, 0.1) : new pc.Color(0.1, 0.6, 1);
             glowMaterial.emissiveIntensity = 0.8;
             glowMaterial.opacity = 0.4;
             glowMaterial.blendType = pc.BLEND_ADDITIVE;

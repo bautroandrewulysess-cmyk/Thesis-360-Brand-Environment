@@ -34,6 +34,20 @@ class NurseryScene extends Scene {
                 isTransition: true,
                 targetScene: 'street-view',
                 spawnPosition: [0, 1.6, 0]
+            },
+            {
+                id: 'seedlings',
+                position: new pc.Vec3(1.337, 0.8, 0.459),
+                label: 'Seedlings',
+                description: 'This is where the coffee journey begins. Young plants are nurtured under careful shade and watering conditions before being transplanted to the farm.',
+                isTransition: false
+            },
+            {
+                id: 'net-shading',
+                position: new pc.Vec3(3.201, 1.9, 0.738),
+                label: 'Net Shading',
+                description: 'Black net shading protects the seedlings from direct sun and helps regulate temperature.',
+                isTransition: false
             }
         ];
         this.hotspotEntities = [];
@@ -808,7 +822,7 @@ class NurseryScene extends Scene {
 
             const coreMaterial = new pc.StandardMaterial();
             const isTransition = hotspot.isTransition;
-            coreMaterial.emissive = isTransition ? new pc.Color(0.2, 0.8, 1) : new pc.Color(1, 0.9, 0.3);
+            coreMaterial.emissive = isTransition ? new pc.Color(1, 0.9, 0.3) : new pc.Color(0.2, 0.8, 1);
             coreMaterial.emissiveIntensity = 6;
             coreMaterial.opacity = 1.0;
             coreMaterial.blendType = pc.BLEND_NORMAL;
@@ -821,7 +835,7 @@ class NurseryScene extends Scene {
             glow.setLocalScale(0.14, 0.14, 0.14);
 
             const glowMaterial = new pc.StandardMaterial();
-            glowMaterial.emissive = isTransition ? new pc.Color(0.1, 0.6, 1) : new pc.Color(1, 0.8, 0.1);
+            glowMaterial.emissive = isTransition ? new pc.Color(1, 0.8, 0.1) : new pc.Color(0.1, 0.6, 1);
             glowMaterial.emissiveIntensity = 0.8;
             glowMaterial.opacity = 0.4;
             glowMaterial.blendType = pc.BLEND_ADDITIVE;
