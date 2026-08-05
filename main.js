@@ -53,6 +53,12 @@ if (textureHandler) {
     textureHandler.crossOrigin = 'anonymous';
 }
 
+// WebGL context loss listener
+canvas.addEventListener('webglcontextlost', (e) => {
+    console.warn('[WebGL] Context lost — possible video playback caused context reclaim');
+    e.preventDefault();
+});
+
 // ============================================================================
 // APPLICATION STATE & CONFIG
 // ============================================================================
@@ -532,27 +538,11 @@ class Scene {
                 this.hotspotHighlight = true;
                 this.highlightedHotspot = transitionHotspot;
                 transitionHotspot.isHighlighted = true;
-                // Update core material to warm gold
-                const core = transitionHotspot.children.find(c => c.name.includes('hotspot-core'));
-                if (core && core.render && core.render.meshInstances[0]) {
-                    const material = core.render.meshInstances[0].material;
-                    if (material) {
-                        material.emissive = new pc.Color(1, 0.85, 0.2);
-                        material.emissiveIntensity = 8;
-                        material.update();
-                    }
-                }
-                // Update glow material to warm gold with higher intensity
-                const glow = transitionHotspot.children.find(c => c.name.includes('hotspot-glow'));
-                if (glow && glow.render && glow.render.meshInstances[0]) {
-                    const material = glow.render.meshInstances[0].material;
-                    if (material) {
-                        material.emissive = new pc.Color(1, 0.85, 0.2);
-                        material.emissiveIntensity = 1.5;
-                        material.opacity = 0.4;
-                        material.update();
-                    }
-                }
+                // Scale up during highlight only; colour remains gold (already set via diffuse)
+                const core = transitionHotspot.coreEntity;
+                if (core) core.setLocalScale(0.08, 0.08, 0.08);
+                const glow = transitionHotspot.glowEntity;
+                if (glow) glow.setLocalScale(0.18, 0.18, 0.18);
             }
         }
     }
@@ -908,6 +898,7 @@ class Scene {
                 window.journeyComplete = true;
                 const surveyBottom = document.getElementById('survey-link');
                 if (surveyBottom) surveyBottom.style.display = 'block';
+                this.preloadSplat(assetUrl('Splats/thesisCafeExterior.sog'), 'thesisCafeExterior');
             };
         }
     }
@@ -928,7 +919,6 @@ class Scene {
             this.pauseAmbient();
         }
 
-        if (canvas) canvas.style.display = 'none';
         video.volume = 1;
         video.crossOrigin = 'anonymous';
         video.preload = 'auto';
@@ -1007,9 +997,7 @@ class Scene {
 
     hideVideoPopup() {
         const popup = document.getElementById('video-popup');
-        const canvas = document.getElementById('canvas');
         if (popup) {
-            if (canvas) canvas.style.display = 'block';
             popup.style.opacity = '0';
             setTimeout(() => {
                 popup.style.display = 'none';

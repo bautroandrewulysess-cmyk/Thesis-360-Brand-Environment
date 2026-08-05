@@ -505,8 +505,6 @@ class StreetViewScene extends Scene {
         ctx.fillRect(0, 0, 1024, 1024);
 
         ctx.save();
-        ctx.scale(1, -1);
-        ctx.translate(0, -1024);
 
         const text = 'GRANJA ALEGRE';
         const fontSize = 60;
@@ -546,7 +544,7 @@ class StreetViewScene extends Scene {
             layers: layer ? [layer.id] : undefined
         });
         disc.setLocalPosition(0, -12, 0);
-        disc.setLocalScale(10, 0.1, 10);
+        disc.setLocalScale(-10, 0.1, 10);
 
         const canvas = this.createNadirTextureCanvas();
         const texture = new pc.Texture(app.graphicsDevice, {
