@@ -202,7 +202,8 @@ class StreetViewScene extends Scene {
             'farm1-5': {
                 photo: assetUrl('Photos (360)/Farm1/farm1 5.jpg'),
                 arrows: [
-                    { label: 'To the Harvest', yaw: 0, targetScene: 'harvesting', spawnPosition: [0, 1.6, 0], isHarvestMarker: true }
+                    { label: 'To the Harvest', yaw: 0, targetScene: 'harvesting', spawnPosition: [0, 1.6, 0], isHarvestMarker: true },
+                    { label: 'Back', yaw: 180, pitch: 0, target: 'farm1-4' }
                 ]
             },
 
@@ -300,6 +301,9 @@ class StreetViewScene extends Scene {
     }
 
     getNavPromptText() {
+        if (this.currentPosition?.startsWith('farm')) {
+            return 'Move forward until the yellow disc appears';
+        }
         return 'Follow the glowing marker along the path';
     }
 
@@ -501,8 +505,8 @@ class StreetViewScene extends Scene {
         ctx.fillRect(0, 0, 1024, 1024);
 
         ctx.save();
-        ctx.scale(-1, -1);
-        ctx.translate(-1024, -1024);
+        ctx.scale(1, -1);
+        ctx.translate(0, -1024);
 
         const text = 'GRANJA ALEGRE';
         const fontSize = 60;
@@ -862,7 +866,7 @@ class StreetViewScene extends Scene {
             if (positionKey === 'farm1-1' && !this.farmVoStarted) {
                 this.farmVoStarted = true;
                 this.isVoFinished = false;
-                setTimeout(() => this.playVoWithSubtitles('farm'), 1200);
+                this.playVoWithSubtitles('farm');
             }
 
             // Dispose old asset before loading new one

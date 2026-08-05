@@ -929,6 +929,7 @@ class Scene {
         }
 
         if (canvas) canvas.style.display = 'none';
+        video.volume = 1;
         video.crossOrigin = 'anonymous';
         video.preload = 'auto';
         video.src = src;
@@ -1006,13 +1007,12 @@ class Scene {
 
     hideVideoPopup() {
         const popup = document.getElementById('video-popup');
-        const video = document.getElementById('popup-video');
         const canvas = document.getElementById('canvas');
         if (popup) {
+            if (canvas) canvas.style.display = 'block';
             popup.style.opacity = '0';
             setTimeout(() => {
                 popup.style.display = 'none';
-                if (canvas) canvas.style.display = 'block';
             }, 800);
         }
     }

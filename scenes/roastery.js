@@ -836,8 +836,14 @@ class RoasteryScene extends Scene {
 
             const coreMaterial = new pc.StandardMaterial();
             const isTransition = hotspot.isTransition;
-            coreMaterial.emissive = isTransition ? new pc.Color(1, 0.9, 0.3) : new pc.Color(0.2, 0.8, 1);
-            coreMaterial.emissiveIntensity = 6;
+            if (isTransition) {
+                coreMaterial.diffuse = new pc.Color(1, 0.85, 0.2);
+                coreMaterial.emissive = new pc.Color(0, 0, 0);
+                coreMaterial.emissiveIntensity = 0;
+            } else {
+                coreMaterial.emissive = new pc.Color(0.2, 0.8, 1);
+                coreMaterial.emissiveIntensity = 6;
+            }
             coreMaterial.opacity = 1.0;
             coreMaterial.blendType = pc.BLEND_NORMAL;
             coreMaterial.update();
@@ -849,8 +855,14 @@ class RoasteryScene extends Scene {
             glow.setLocalScale(0.14, 0.14, 0.14);
 
             const glowMaterial = new pc.StandardMaterial();
-            glowMaterial.emissive = isTransition ? new pc.Color(1, 0.8, 0.1) : new pc.Color(0.1, 0.6, 1);
-            glowMaterial.emissiveIntensity = 0.8;
+            if (isTransition) {
+                glowMaterial.diffuse = new pc.Color(1, 0.85, 0.2);
+                glowMaterial.emissive = new pc.Color(0, 0, 0);
+                glowMaterial.emissiveIntensity = 0;
+            } else {
+                glowMaterial.emissive = new pc.Color(0.1, 0.6, 1);
+                glowMaterial.emissiveIntensity = 0.8;
+            }
             glowMaterial.opacity = 0.4;
             glowMaterial.blendType = pc.BLEND_ADDITIVE;
             glowMaterial.depthWrite = false;
@@ -891,6 +903,7 @@ class RoasteryScene extends Scene {
                 label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none;`;
                 document.body.appendChild(label);
                 group.labelElement = label;
+                console.warn(`[roastery] Created label: "To Cafe" for hotspot "${hotspot.id}"`);
             }
         });
     }
