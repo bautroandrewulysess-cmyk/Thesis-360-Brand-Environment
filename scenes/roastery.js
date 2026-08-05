@@ -982,7 +982,7 @@ class RoasteryScene extends Scene {
                 console.warn('[Roastery] Using preloaded splat');
             } else {
                 this.splatAsset = new pc.Asset('roastery-splat', 'gsplat', {
-                    url: `${R2_BASE}/thesisRoastery.sog`
+                    url: `${R2_BASE}/thesisRoastery_optimized.sog`
                 });
 
                 app.assets.add(this.splatAsset);
@@ -1031,7 +1031,7 @@ class RoasteryScene extends Scene {
             this.playVoWithSubtitles('roasting');
             this.initAmbient(assetUrl('Music/cafeExteriorAmbienceSound.mp3'), 0.4);
             if (!window.journeyComplete) {
-                this.preloadSplat(`${R2_BASE}/thesisCafeInterior.sog`, 'cafe-interior-splat');
+                this.preloadSplat(`${R2_BASE}/thesisCafeInterior_optimized.sog`, 'cafe-interior-splat');
             }
 
             const startVoOnInteraction = () => {

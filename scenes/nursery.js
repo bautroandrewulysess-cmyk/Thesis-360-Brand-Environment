@@ -926,7 +926,7 @@ class NurseryScene extends Scene {
                 console.warn('[Nursery] Using preloaded splat');
             } else {
                 this.splatAsset = new pc.Asset('nursery-splat', 'gsplat', {
-                    url: `${R2_BASE}/thesisNursery.sog`
+                    url: `${R2_BASE}/thesisNursery_optimized.sog`
                 });
 
                 app.assets.add(this.splatAsset);
@@ -986,7 +986,7 @@ class NurseryScene extends Scene {
             this.isVoFinished = false;
             this.playVoWithSubtitles('nursery');
             if (!window.journeyComplete) {
-                this.preloadSplat(`${R2_BASE}/thesisRoastery.sog`, 'roastery-splat');
+                this.preloadSplat(`${R2_BASE}/thesisRoastery_optimized.sog`, 'roastery-splat');
             }
 
             const startVoOnInteraction = () => {

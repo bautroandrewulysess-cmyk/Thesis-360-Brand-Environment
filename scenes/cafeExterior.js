@@ -970,7 +970,7 @@ class CafeExteriorScene extends Scene {
                 console.warn('[CafeExterior] Using preloaded splat');
             } else {
                 this.splatAsset = new pc.Asset('cafe-exterior-splat', 'gsplat', {
-                    url: `${R2_BASE}/thesisCafeExterior.sog`
+                    url: `${R2_BASE}/thesisCafeExterior_optimized.sog`
                 });
 
                 app.assets.add(this.splatAsset);

@@ -1070,7 +1070,7 @@ class CafeInteriorScene extends Scene {
             } else {
                 // Create and load Gaussian splat asset
                 this.splatAsset = new pc.Asset('cafe-interior-splat', 'gsplat', {
-                    url: `${R2_BASE}/thesisCafeInterior.sog`
+                    url: `${R2_BASE}/thesisCafeInterior_optimized.sog`
                 });
 
                 app.assets.add(this.splatAsset);
@@ -1141,7 +1141,7 @@ class CafeInteriorScene extends Scene {
             } else {
                 setTimeout(() => this.playVoWithSubtitles('brandStory'), 1000);
                 if (!window.journeyComplete) {
-                    this.preloadSplat(`${R2_BASE}/thesisNursery.sog`, 'nursery-splat');
+                    this.preloadSplat(`${R2_BASE}/thesisNursery_optimized.sog`, 'nursery-splat');
                 }
             }
 
