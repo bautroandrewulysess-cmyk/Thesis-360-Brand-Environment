@@ -836,6 +836,10 @@ class StreetViewScene extends Scene {
                 console.error('[DiscValues] Error updating disc values:', e);
             }
             this.checkFarmerInterviewAtToFarm14();
+            if (positionKey === 'toFarm10' && !window.farmerInterviewPreloaded) {
+                window.farmerInterviewPreloaded = true;
+                fetch(`${R2_BASE}/farmerInterview.mp4`, { mode: 'cors' }).catch(() => {});
+            }
             this.updateCoordinateDisplay();
             this.preloadArrowTargets();
             await fadeIn();

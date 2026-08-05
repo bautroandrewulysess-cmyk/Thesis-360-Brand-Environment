@@ -818,7 +818,7 @@ class NurseryScene extends Scene {
 
             const core = new pc.Entity(`hotspot-core-${hotspot.id}`);
             core.addComponent('render', { type: 'sphere' });
-            core.setLocalScale(0.04, 0.04, 0.04);
+            core.setLocalScale(0.06, 0.06, 0.06);
 
             const coreMaterial = new pc.StandardMaterial();
             const isTransition = hotspot.isTransition;
@@ -833,7 +833,7 @@ class NurseryScene extends Scene {
 
             const glow = new pc.Entity(`hotspot-glow-${hotspot.id}`);
             glow.addComponent('render', { type: 'sphere' });
-            glow.setLocalScale(0.08, 0.08, 0.08);
+            glow.setLocalScale(0.12, 0.12, 0.12);
 
             const glowMaterial = new pc.StandardMaterial();
             glowMaterial.emissive = new pc.Color(0, 0, 0);
@@ -875,7 +875,7 @@ class NurseryScene extends Scene {
                 const label = document.createElement('div');
                 label.className = 'hotspot-label';
                 label.textContent = 'To Farm';
-                label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none;`;
+                label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
                 document.body.appendChild(label);
                 group.labelElement = label;
                 console.warn(`[nursery] Created label: "To Farm" for hotspot "${hotspot.id}"`);
@@ -1138,8 +1138,12 @@ class NurseryScene extends Scene {
                 if (group.labelElement && group.hotspotData?.isTransition) {
                     const worldPos = group.getPosition();
                     const screen = this.worldToScreen(worldPos);
+                    const camPos = cameraEntity.getPosition();
+                    const camFwd = cameraEntity.forward;
+                    const toHotspot = new pc.Vec3().sub2(worldPos, camPos);
+                    const isBehind = toHotspot.dot(camFwd) <= 0;
                     const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
-                    const newDisplay = isOffScreen ? 'none' : 'block';
+                    const newDisplay = isBehind || isOffScreen ? 'none' : 'block';
                     if (group._labelDisplay !== newDisplay) {
                         group.labelElement.style.display = newDisplay;
                         group._labelDisplay = newDisplay;

@@ -44,7 +44,7 @@ class RoasteryScene extends Scene {
             },
             {
                 id: 'coffee-roasting',
-                position: new pc.Vec3(0.566, 1.8, -0.740),
+                position: new pc.Vec3(0.566, 1.6, -0.740),
                 label: 'Coffee Roasting',
                 description: '',
                 isVideo: true,
@@ -904,7 +904,7 @@ class RoasteryScene extends Scene {
                 const label = document.createElement('div');
                 label.className = 'hotspot-label';
                 label.textContent = hotspot.label;
-                label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none;`;
+                label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
                 document.body.appendChild(label);
                 group.labelElement = label;
                 console.warn(`[roastery] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
@@ -1194,14 +1194,19 @@ class RoasteryScene extends Scene {
         });
 
         // Update transition and video hotspot labels (only when actually visible)
-        const shouldShowLabels = this.quizPassed && !window.journeyComplete;
-        if (shouldShowLabels) {
-            this.hotspotEntities.forEach(group => {
-                if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isVideo)) {
+        this.hotspotEntities.forEach(group => {
+            if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isVideo)) {
+                const isVideoHotspot = group.hotspotData?.isVideo;
+                const shouldShow = isVideoHotspot ? (this.quizPassed && group.enabled) : (this.quizPassed && !window.journeyComplete);
+                if (shouldShow) {
                     const worldPos = group.getPosition();
                     const screen = this.worldToScreen(worldPos);
+                    const camPos = cameraEntity.getPosition();
+                    const camFwd = cameraEntity.forward;
+                    const toHotspot = new pc.Vec3().sub2(worldPos, camPos);
+                    const isBehind = toHotspot.dot(camFwd) <= 0;
                     const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
-                    const newDisplay = isOffScreen ? 'none' : 'block';
+                    const newDisplay = (isOffScreen || isBehind) ? 'none' : 'block';
                     if (group._labelDisplay !== newDisplay) {
                         group.labelElement.style.display = newDisplay;
                         group._labelDisplay = newDisplay;
@@ -1214,16 +1219,12 @@ class RoasteryScene extends Scene {
                         group.labelElement.style.top = `${screen.y - 50}px`;
                         group._labelY = screen.y;
                     }
-                }
-            });
-        } else if (this.hotspotEntities.some(g => g.labelElement && g._labelDisplay !== 'none')) {
-            this.hotspotEntities.forEach(group => {
-                if (group.labelElement && group._labelDisplay !== 'none') {
+                } else {
                     group.labelElement.style.display = 'none';
                     group._labelDisplay = 'none';
                 }
-            });
-        }
+            }
+        });
 
         if (this.activeHotspotEntity) {
             const popup = this.dom.hotspotPopup;

@@ -909,7 +909,7 @@ class Scene {
                 window.journeyComplete = true;
                 const surveyBottom = document.getElementById('survey-link');
                 if (surveyBottom) surveyBottom.style.display = 'block';
-                this.preloadSplat(assetUrl('Splats/thesisCafeExterior.sog'), 'thesisCafeExterior');
+                this.preloadSplat(`${R2_BASE}/thesisCafeExterior_optimized.sog`, 'thesisCafeExterior');
             };
         }
     }
