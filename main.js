@@ -1009,7 +1009,7 @@ class Scene {
             if (onFinish) onFinish();
         }, { once: true });
 
-        popup.style.display = 'block';
+        popup.style.display = 'flex';
         setTimeout(() => popup.style.opacity = '1', 50);
     }
 
