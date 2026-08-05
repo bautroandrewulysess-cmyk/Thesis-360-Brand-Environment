@@ -621,7 +621,7 @@ class StreetViewScene extends Scene {
             // No rotation needed, just position and scale
             arrowEntity.setLocalPosition(arrowPos.x, arrowPos.y, arrowPos.z);
             arrowEntity.setLocalEulerAngles(0, 0, 0); // Flat orientation
-            arrowEntity.setLocalScale(1.5, 0.08, 1.5); // Increased visibility
+            arrowEntity.setLocalScale(0.8, 0.04, 0.8);
 
             // Material: cyan for forward, white for back arrows; gold for highlighted farm1-5 forward
             const isBackArrow = arrow.label === 'Back' || arrow.label === 'Go Back' || arrow.label.includes('Back');
@@ -630,7 +630,7 @@ class StreetViewScene extends Scene {
 
             // Larger scale for harvest marker
             if (isHarvestMarker) {
-                arrowEntity.setLocalScale(2.5, 0.12, 2.5);
+                arrowEntity.setLocalScale(1.2, 0.06, 1.2);
             }
 
             const mat = new pc.StandardMaterial();
@@ -638,17 +638,18 @@ class StreetViewScene extends Scene {
             mat.opacity = isHarvestMarker ? 1 : 0.9;
             mat.blendType = pc.BLEND_NORMAL;
             mat.depthWrite = false;
-            mat.emissive = isHarvestMarker ? new pc.Color(1, 0.85, 0.2) : new pc.Color(0, 0, 0);
-            mat.emissiveIntensity = isHarvestMarker ? 0.6 : 0;
+            // Remove emission so base diffuse colors show distinctly
+            mat.emissive = new pc.Color(0, 0, 0);
+            mat.emissiveIntensity = 0;
 
             if (isHarvestMarker) {
-                mat.diffuse = new pc.Color(1, 0.85, 0.2);
+                mat.diffuse = new pc.Color(1, 0.8, 0.1);
             } else if (isFarm1_5ForwardArrow) {
-                mat.diffuse = new pc.Color(1, 0.85, 0.2);
+                mat.diffuse = new pc.Color(0.9, 0.2, 0.2);
             } else if (isBackArrow) {
-                mat.diffuse = new pc.Color(1, 1, 1);
+                mat.diffuse = new pc.Color(0.8, 0.8, 0.8);
             } else {
-                mat.diffuse = new pc.Color(0.15, 0.45, 1);
+                mat.diffuse = new pc.Color(0.1, 0.8, 0.3);
             }
 
             mat.update();

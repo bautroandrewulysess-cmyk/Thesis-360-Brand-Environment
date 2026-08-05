@@ -559,6 +559,17 @@ class Scene {
         const langVttPath = `${assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
         const fallbackVttPath = `${assetUrl(`Subtitles/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
 
+        // Force-hide native browser captions to prevent duplicate overlay texts
+        if (!document.getElementById('hide-native-cues')) {
+            const style = document.createElement('style');
+            style.id = 'hide-native-cues';
+            style.innerHTML = `
+                ::cue { display: none !important; opacity: 0 !important; color: transparent !important; background: transparent !important; }
+                audio::-webkit-media-text-track-container, video::-webkit-media-text-track-container { display: none !important; }
+            `;
+            document.head.appendChild(style);
+        }
+
         const audio = document.createElement('audio');
         audio.crossOrigin = 'anonymous';
         audio.src = audioPath;
@@ -906,6 +917,12 @@ class Scene {
     showVideoPopup(src, { required = false, caption = null, onFinish = null } = {}) {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
+        // Improve video hardware acceleration hints to reduce lag when overlaying the canvas
+        if (video && video.style) {
+            video.style.transform = 'translateZ(0)';
+            video.style.willChange = 'transform';
+            video.style.backfaceVisibility = 'hidden';
+        }
         const skipBtn = document.getElementById('video-popup-skip');
         const canvas = document.getElementById('canvas');
         let videoPlayable = false;

@@ -43,6 +43,9 @@ class VideoScene extends Scene {
                 height: 100%;
                 object-fit: cover;
                 z-index: 10;
+                transform: translateZ(0);
+                will-change: transform;
+                backface-visibility: hidden;
             `;
             this.videoElement.muted = true;
             this.videoElement.loop = true;

@@ -818,18 +818,13 @@ class NurseryScene extends Scene {
 
             const core = new pc.Entity(`hotspot-core-${hotspot.id}`);
             core.addComponent('render', { type: 'sphere' });
-            core.setLocalScale(0.06, 0.06, 0.06);
+            core.setLocalScale(0.04, 0.04, 0.04);
 
             const coreMaterial = new pc.StandardMaterial();
             const isTransition = hotspot.isTransition;
-            if (isTransition) {
-                coreMaterial.diffuse = new pc.Color(1, 0.85, 0.2);
-                coreMaterial.emissive = new pc.Color(0, 0, 0);
-                coreMaterial.emissiveIntensity = 0;
-            } else {
-                coreMaterial.emissive = new pc.Color(0.2, 0.8, 1);
-                coreMaterial.emissiveIntensity = 6;
-            }
+            coreMaterial.diffuse = isTransition ? new pc.Color(1, 0.85, 0.2) : coreMaterial.diffuse;
+            coreMaterial.emissive = new pc.Color(0, 0, 0);
+            coreMaterial.emissiveIntensity = 0;
             coreMaterial.opacity = 1.0;
             coreMaterial.blendType = pc.BLEND_NORMAL;
             coreMaterial.update();
@@ -838,19 +833,13 @@ class NurseryScene extends Scene {
 
             const glow = new pc.Entity(`hotspot-glow-${hotspot.id}`);
             glow.addComponent('render', { type: 'sphere' });
-            glow.setLocalScale(0.14, 0.14, 0.14);
+            glow.setLocalScale(0.08, 0.08, 0.08);
 
             const glowMaterial = new pc.StandardMaterial();
-            if (isTransition) {
-                glowMaterial.diffuse = new pc.Color(1, 0.85, 0.2);
-                glowMaterial.emissive = new pc.Color(0, 0, 0);
-                glowMaterial.emissiveIntensity = 0;
-            } else {
-                glowMaterial.emissive = new pc.Color(0.1, 0.6, 1);
-                glowMaterial.emissiveIntensity = 0.8;
-            }
+            glowMaterial.emissive = new pc.Color(0, 0, 0);
+            glowMaterial.emissiveIntensity = 0;
             glowMaterial.opacity = 0.4;
-            glowMaterial.blendType = pc.BLEND_ADDITIVE;
+            glowMaterial.blendType = pc.BLEND_NORMAL;
             glowMaterial.depthWrite = false;
             glowMaterial.cull = pc.CULLFACE_NONE;
             glowMaterial.update();
@@ -859,12 +848,12 @@ class NurseryScene extends Scene {
 
             const halo = new pc.Entity(`hotspot-halo-${hotspot.id}`);
             halo.addComponent('render', { type: 'sphere' });
-            halo.setLocalScale(0.45, 0.45, 0.45);
+            halo.setLocalScale(0.15, 0.15, 0.15);
             const haleMaterial = new pc.StandardMaterial();
-            haleMaterial.emissive = new pc.Color(1, 0.85, 0.2);
-            haleMaterial.emissiveIntensity = 0.5;
+            haleMaterial.emissive = new pc.Color(0, 0, 0);
+            haleMaterial.emissiveIntensity = 0;
             haleMaterial.opacity = 0.12;
-            haleMaterial.blendType = pc.BLEND_ADDITIVE;
+            haleMaterial.blendType = pc.BLEND_NORMAL;
             haleMaterial.depthWrite = false;
             haleMaterial.cull = pc.CULLFACE_NONE;
             haleMaterial.update();
@@ -1114,17 +1103,17 @@ class NurseryScene extends Scene {
                 const halo = group.haloEntity;
                 if (!this._highlightedOnce) { if (window.DEV_MODE) console.log('[Glow] Highlighted hotspot pulse activated'); this._highlightedOnce = true; }
                 if (core) {
-                    const s = 0.12 + tripleSpeedPulse * 0.06;
+                    const s = 0.04 + tripleSpeedPulse * 0.02;
                     core.setLocalScale(s, s, s);
                 }
                 if (glow) {
-                    const s = 0.30 + tripleSpeedPulse * 0.12;
+                    const s = 0.08 + tripleSpeedPulse * 0.04;
                     glow.setLocalScale(s, s, s);
                     glow.render.meshInstances[0].material.opacity = 0.5;
                 }
                 if (halo) {
                     halo.enabled = true;
-                    const s = 0.45 + (Math.sin(Date.now() * 0.005 + Math.PI/4) * 0.5 + 0.5) * 0.08;
+                    const s = 0.15 + (Math.sin(Date.now() * 0.005 + Math.PI/4) * 0.5 + 0.5) * 0.03;
                     halo.setLocalScale(s, s, s);
                     halo.render.meshInstances[0].material.opacity = 0.25;
                 }
@@ -1132,11 +1121,11 @@ class NurseryScene extends Scene {
                 const core = group.coreEntity;
                 const glow = group.glowEntity;
                 if (core) {
-                    const s = 0.05 + pulse * 0.02;
+                    const s = 0.03 + pulse * 0.01;
                     core.setLocalScale(s, s, s);
                 }
                 if (glow) {
-                    const s = 0.12 + pulse * 0.04;
+                    const s = 0.06 + pulse * 0.02;
                     glow.setLocalScale(s, s, s);
                 }
             }
