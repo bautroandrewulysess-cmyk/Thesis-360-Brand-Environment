@@ -43,6 +43,15 @@ class RoasteryScene extends Scene {
                 isTransition: false
             },
             {
+                id: 'coffee-roasting',
+                position: new pc.Vec3(0.566, 1.8, -0.740),
+                label: 'Coffee Roasting',
+                description: '',
+                isVideo: true,
+                videoSrc: `${R2_BASE}/roasting.mp4`,
+                isTransition: false
+            },
+            {
                 id: 'green-bean-packs',
                 position: new pc.Vec3(-0.471, 0.9, 0.389),
                 label: 'Green Bean Packs',
@@ -881,18 +890,24 @@ class RoasteryScene extends Scene {
             group.glowEntity = glow;
             this.hotspotEntities.push(group);
 
+            // Visibility: hide video hotspots until quiz is passed
+            if (hotspot.isVideo) {
+                group.enabled = this.quizPassed;
+            }
+
             this.registerInteractiveObject(group, () => {
                 this.onHotspotClick(hotspot, group);
             });
 
-            if (hotspot.isTransition) {
+            // Create label for transition hotspots and video hotspots
+            if (hotspot.isTransition || hotspot.isVideo) {
                 const label = document.createElement('div');
                 label.className = 'hotspot-label';
-                label.textContent = 'To Cafe';
+                label.textContent = hotspot.label;
                 label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none;`;
                 document.body.appendChild(label);
                 group.labelElement = label;
-                console.warn(`[roastery] Created label: "To Cafe" for hotspot "${hotspot.id}"`);
+                console.warn(`[roastery] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
             }
         });
     }
@@ -918,15 +933,32 @@ class RoasteryScene extends Scene {
             return;
         }
 
-        if (hotspot.type === 'video' && hotspot.videoSrc) {
-            this.dom.popupVideo.src = hotspot.videoSrc;
-            this.dom.popupVideo.play();
-            this.dom.videoPopup.classList.add('active');
-        } else {
-            document.getElementById('hotspot-title').textContent = hotspot.label;
-            document.getElementById('hotspot-description').textContent = hotspot.description;
-            this.dom.hotspotPopup.classList.add('active');
+        if (hotspot.isVideo && hotspot.videoSrc) {
+            // Guard against overlap: ignore if video is already pending or VO is playing
+            if (this.videoPending) return;
+            if (this.voAudio && !this.voAudio.paused) return;
+
+            // Pause ambient, play video with fade in/out
+            this.pauseAmbient();
+            this.showVideoPopup(hotspot.videoSrc, {
+                required: false,
+                caption: hotspot.label,
+                onFinish: () => {
+                    this.resumeAmbient();
+                }
+            });
+
+            // Apply fade in/out to popup
+            const popup = document.getElementById('video-popup');
+            if (popup) {
+                popup.style.transition = 'opacity 0.5s ease-in-out';
+            }
+            return;
         }
+
+        document.getElementById('hotspot-title').textContent = hotspot.label;
+        document.getElementById('hotspot-description').textContent = hotspot.description;
+        this.dom.hotspotPopup.classList.add('active');
     }
 
     async onLoad() {
@@ -1154,11 +1186,18 @@ class RoasteryScene extends Scene {
             }
         });
 
-        // Update transition hotspot labels (only when actually visible)
+        // Update video hotspot visibility when quiz is passed
+        this.hotspotEntities.forEach(group => {
+            if (group.hotspotData?.isVideo) {
+                group.enabled = this.quizPassed;
+            }
+        });
+
+        // Update transition and video hotspot labels (only when actually visible)
         const shouldShowLabels = this.quizPassed && !window.journeyComplete;
         if (shouldShowLabels) {
             this.hotspotEntities.forEach(group => {
-                if (group.labelElement && group.hotspotData?.isTransition) {
+                if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isVideo)) {
                     const worldPos = group.getPosition();
                     const screen = this.worldToScreen(worldPos);
                     const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
