@@ -1051,6 +1051,7 @@ class StreetViewScene extends Scene {
                 arrow.destroy();
             });
             this.arrowEntities = [];
+            this.arrowLabels.forEach(l => l.remove());
             this.arrowLabels = [];
 
             // Dispose preloaded assets

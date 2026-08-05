@@ -950,13 +950,14 @@ class Scene {
             }
             video.pause();
             video.currentTime = 0;
-            video.src = '';
+            video.removeAttribute('src');
             video.load();
         };
 
         const onVideoEnd = async () => {
             videoEnded = true;
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
+            video.removeEventListener('error', onVideoError);
             await cleanupVideo();
             this.resumeAmbient();
             this.videoPending = false;
