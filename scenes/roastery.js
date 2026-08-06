@@ -1029,7 +1029,7 @@ class RoasteryScene extends Scene {
 
             this.isVoFinished = false;
             this.playVoWithSubtitles('roasting');
-            this.initAmbient(assetUrl('Music/cafeExteriorAmbienceSound.mp3'), 0.4);
+            this.initAmbient(assetUrl('Music/roasteryJazz.mp3'), 0.15);
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisCafeInterior_optimized.sog`, 'cafe-interior-splat');
             }

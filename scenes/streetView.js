@@ -544,7 +544,7 @@ class StreetViewScene extends Scene {
             layers: layer ? [layer.id] : undefined
         });
         disc.setLocalPosition(0, -12, 0);
-        disc.setLocalScale(-10, 0.1, 10);
+        disc.setLocalScale(10, 0.1, 10);
 
         const canvas = this.createNadirTextureCanvas();
         const texture = new pc.Texture(app.graphicsDevice, {
@@ -562,6 +562,10 @@ class StreetViewScene extends Scene {
         mat.emissive = new pc.Color(1, 1, 1);
         mat.diffuseMap = texture;
         mat.emissiveMap = texture;
+        mat.diffuseMapTiling = new pc.Vec2(-1, 1);
+        mat.diffuseMapOffset = new pc.Vec2(1, 0);
+        mat.emissiveMapTiling = new pc.Vec2(-1, 1);
+        mat.emissiveMapOffset = new pc.Vec2(1, 0);
         mat.update();
 
         disc.render.meshInstances[0].material = mat;
