@@ -776,11 +776,19 @@ class StreetViewScene extends Scene {
                 caption: 'Meet the farmer',
                 onFinish: () => {
                     console.warn('[FarmerInterview] onFinish callback fired');
+                    if (this.ambientGain && this.audioContext) {
+                        this.ambientGain.gain.setTargetAtTime(0.8, this.audioContext.currentTime, 0.3);
+                    }
                     this.isInputLocked = false;
                     for (let arrow of this.arrowEntities) arrow.enabled = true;
                     if (required) this.createArrows();
                 }
             });
+            if (video && this.ambientGain && this.audioContext) {
+                video.addEventListener('play', () => {
+                    this.ambientGain.gain.setTargetAtTime(0.3, this.audioContext.currentTime, 0.3);
+                }, { once: true });
+            }
             if (video) {
                 const checkReadyState = () => {
                     console.warn('[FarmerInterview] readyState:', video.readyState, 'duration:', video.duration, 'src:', video.src);

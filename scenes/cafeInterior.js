@@ -1147,6 +1147,10 @@ class CafeInteriorScene extends Scene {
                 if (!window.journeyComplete) {
                     this.preloadSplat(`${R2_BASE}/thesisNursery_optimized.sog`, 'nursery-splat');
                 }
+                if (!window.ownerInterviewPreloaded) {
+                    window.ownerInterviewPreloaded = true;
+                    fetch(`${R2_BASE}/ownerInterview.mp4`, { mode: 'cors' }).catch(() => {});
+                }
             }
 
             const startVoOnInteraction = () => {

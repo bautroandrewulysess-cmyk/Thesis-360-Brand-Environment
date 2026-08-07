@@ -198,6 +198,7 @@ class SceneManager {
         appState.isTransitioning = true;
         const loadingScreen = document.getElementById('loading-screen');
         let loadSuccess = false;
+        let loadingScreenShownAt = null;
 
         try {
             debugLog(`Switching to scene: ${sceneName}`);
@@ -206,6 +207,7 @@ class SceneManager {
 
             // Show loading screen before loading new scene
             if (loadingScreen) {
+                loadingScreenShownAt = Date.now();
                 loadingScreen.classList.remove('hidden');
                 showLoadingTrivia(sceneName);
             }
@@ -248,6 +250,15 @@ class SceneManager {
                 }, 4000);
             }
         } finally {
+            // Enforce minimum loading screen duration of 2000ms
+            if (loadingScreenShownAt && loadingScreen) {
+                const elapsedMs = Date.now() - loadingScreenShownAt;
+                const remainingMs = Math.max(0, 2000 - elapsedMs);
+                if (remainingMs > 0) {
+                    await new Promise(resolve => setTimeout(resolve, remainingMs));
+                }
+            }
+
             // Always fade in, even on failure
             try {
                 await fadeIn();
