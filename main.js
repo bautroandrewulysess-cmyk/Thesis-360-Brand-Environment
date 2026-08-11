@@ -2,7 +2,7 @@
 // CORE PLAYCANVAS SETUP
 // ============================================================================
 
-const R2_BASE = 'https://pub-d9a52e1dd2124a6a8a669ef46ee0f58d.r2.dev';
+const R2_BASE = 'https://assets.granjaalegre.com';
 const SUBTITLE_VERSION = 3;
 window.R2_BASE = R2_BASE;
 
