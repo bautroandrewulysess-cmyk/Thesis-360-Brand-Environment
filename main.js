@@ -84,6 +84,9 @@ window._preloadedSplats = {};
 // Track if this is the first scene load in this session
 let isFirstSceneLoad = true;
 
+// Track if scene change was initiated by popstate to avoid pushing duplicate state
+let isSceneChangeFromPopstate = false;
+
 // Loading screen trivia
 const loadingTrivia = [
   "Coffee seedlings spend six to twelve months in polybags before they're strong enough to be planted.",
@@ -199,6 +202,7 @@ class SceneManager {
         const loadingScreen = document.getElementById('loading-screen');
         let loadSuccess = false;
         let loadingScreenShownAt = null;
+        const wasFirstSceneLoad = isFirstSceneLoad;
 
         try {
             debugLog(`Switching to scene: ${sceneName}`);
@@ -223,6 +227,11 @@ class SceneManager {
                     cameraEntity.setLocalPosition(spawnPosition[0], spawnPosition[1], spawnPosition[2]);
                 }
                 appState.nextSceneName = null;
+                // Push scene change to history (skip if this came from a popstate event)
+                if (!isSceneChangeFromPopstate) {
+                    history.pushState({view:'experience', scene:sceneName}, '', `#experience/${sceneName}`);
+                }
+                isSceneChangeFromPopstate = false;
             } else {
                 // Show error message for failed load
                 const errorMsg = document.getElementById('nav-prompt');
@@ -250,10 +259,11 @@ class SceneManager {
                 }, 4000);
             }
         } finally {
-            // Enforce minimum loading screen duration of 2000ms
+            // Enforce minimum loading screen duration (3000ms for first scene, 2000ms for others)
             if (loadingScreenShownAt && loadingScreen) {
                 const elapsedMs = Date.now() - loadingScreenShownAt;
-                const remainingMs = Math.max(0, 2000 - elapsedMs);
+                const minDurationMs = wasFirstSceneLoad ? 3000 : 2000;
+                const remainingMs = Math.max(0, minDurationMs - elapsedMs);
                 if (remainingMs > 0) {
                     await new Promise(resolve => setTimeout(resolve, remainingMs));
                 }
@@ -1635,6 +1645,9 @@ async function startup() {
         // Load cafe interior scene (registered by cafeInterior.js)
         await sceneManager.loadScene('cafe-interior');
 
+        // Push initial History state for the experience
+        history.pushState({view:'experience', scene:'cafe-interior'}, '', '#experience');
+
         hideLoadingScreen();
 
         debugLog('Application started');
@@ -1652,6 +1665,30 @@ async function initializeApp() {
 
 window.addEventListener('start360Experience', () => {
     initializeApp();
+});
+
+// Handle browser back button for History API
+window.addEventListener('popstate', async (e) => {
+    const state = e.state;
+    if (state?.view === 'experience' && state?.scene) {
+        // Navigate to the scene from history (flag prevents pushing duplicate state)
+        isSceneChangeFromPopstate = true;
+        await sceneManager.switchTo(state.scene);
+    } else {
+        // Back button went past the experience entry — return to landing page
+        document.getElementById('canvas')?.style.display = 'none';
+        document.getElementById('loading-screen')?.classList.add('hidden');
+        document.getElementById('fade-overlay')?.classList.remove('active');
+        document.getElementById('video-popup')?.classList.remove('active');
+        document.getElementById('hotspot-popup')?.classList.remove('active');
+        document.getElementById('quiz-overlay')?.style.display = 'none';
+        document.getElementById('completion-panel')?.style.display = 'none';
+        document.getElementById('travel-menu')?.style.display = 'none';
+        document.getElementById('nav-prompt')?.style.display = 'none';
+        app.pause?.();
+        window.journeyComplete = false;
+        hasStarted = false;
+    }
 });
 
 // ============================================================================

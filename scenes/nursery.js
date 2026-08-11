@@ -1132,39 +1132,41 @@ class NurseryScene extends Scene {
         });
 
         // Update transition hotspot labels (only when actually visible)
-        const shouldShowLabels = this.quizPassed && !window.journeyComplete;
-        if (shouldShowLabels) {
-            this.hotspotEntities.forEach(group => {
-                if (group.labelElement && group.hotspotData?.isTransition) {
-                    const worldPos = group.getPosition();
-                    const screen = this.worldToScreen(worldPos);
-                    const camPos = cameraEntity.getPosition();
-                    const camFwd = cameraEntity.forward;
-                    const toHotspot = new pc.Vec3().sub2(worldPos, camPos);
-                    const isBehind = toHotspot.dot(camFwd) <= 0;
-                    const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
-                    const newDisplay = isBehind || isOffScreen ? 'none' : 'block';
-                    if (group._labelDisplay !== newDisplay) {
-                        group.labelElement.style.display = newDisplay;
-                        group._labelDisplay = newDisplay;
+        if (!document.body.classList.contains('video-open')) {
+            const shouldShowLabels = this.quizPassed && !window.journeyComplete;
+            if (shouldShowLabels) {
+                this.hotspotEntities.forEach(group => {
+                    if (group.labelElement && group.hotspotData?.isTransition) {
+                        const worldPos = group.getPosition();
+                        const screen = this.worldToScreen(worldPos);
+                        const camPos = cameraEntity.getPosition();
+                        const camFwd = cameraEntity.forward;
+                        const toHotspot = new pc.Vec3().sub2(worldPos, camPos);
+                        const isBehind = toHotspot.dot(camFwd) <= 0;
+                        const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
+                        const newDisplay = isBehind || isOffScreen ? 'none' : 'block';
+                        if (group._labelDisplay !== newDisplay) {
+                            group.labelElement.style.display = newDisplay;
+                            group._labelDisplay = newDisplay;
+                        }
+                        if (group._labelX !== screen.x) {
+                            group.labelElement.style.left = `${screen.x}px`;
+                            group._labelX = screen.x;
+                        }
+                        if (group._labelY !== screen.y) {
+                            group.labelElement.style.top = `${screen.y - 50}px`;
+                            group._labelY = screen.y;
+                        }
                     }
-                    if (group._labelX !== screen.x) {
-                        group.labelElement.style.left = `${screen.x}px`;
-                        group._labelX = screen.x;
+                });
+            } else if (this.hotspotEntities.some(g => g.labelElement && g._labelDisplay !== 'none')) {
+                this.hotspotEntities.forEach(group => {
+                    if (group.labelElement && group._labelDisplay !== 'none') {
+                        group.labelElement.style.display = 'none';
+                        group._labelDisplay = 'none';
                     }
-                    if (group._labelY !== screen.y) {
-                        group.labelElement.style.top = `${screen.y - 50}px`;
-                        group._labelY = screen.y;
-                    }
-                }
-            });
-        } else if (this.hotspotEntities.some(g => g.labelElement && g._labelDisplay !== 'none')) {
-            this.hotspotEntities.forEach(group => {
-                if (group.labelElement && group._labelDisplay !== 'none') {
-                    group.labelElement.style.display = 'none';
-                    group._labelDisplay = 'none';
-                }
-            });
+                });
+            }
         }
 
         if (this.activeHotspotEntity) {
