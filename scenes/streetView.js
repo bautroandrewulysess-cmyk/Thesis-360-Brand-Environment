@@ -562,10 +562,10 @@ class StreetViewScene extends Scene {
         mat.emissive = new pc.Color(1, 1, 1);
         mat.diffuseMap = texture;
         mat.emissiveMap = texture;
-        mat.diffuseMapTiling = new pc.Vec2(-1, 1);
-        mat.diffuseMapOffset = new pc.Vec2(1, 0);
-        mat.emissiveMapTiling = new pc.Vec2(-1, 1);
-        mat.emissiveMapOffset = new pc.Vec2(1, 0);
+        mat.diffuseMapTiling = new pc.Vec2(1, -1);
+        mat.diffuseMapOffset = new pc.Vec2(0, 1);
+        mat.emissiveMapTiling = new pc.Vec2(1, -1);
+        mat.emissiveMapOffset = new pc.Vec2(0, 1);
         mat.update();
 
         disc.render.meshInstances[0].material = mat;
@@ -593,7 +593,7 @@ class StreetViewScene extends Scene {
 
         posData.arrows.forEach((arrow, index) => {
             if (arrow.label === 'To Dryer' && !window.journeyComplete) return;
-            if (this.currentPosition === 'farm1-1' && arrow.target === 'toFarm14' && this.farmVoStarted && !window.journeyComplete) return;
+            if (this.currentPosition === 'farm1-1' && arrow.label === 'Next View' && this.farmVoStarted && !window.journeyComplete) return;
             // Parse yaw and pitch (default pitch -18° if not specified)
             const yawDeg = arrow.yaw;
             const pitchDeg = arrow.pitch !== undefined ? arrow.pitch : -18;

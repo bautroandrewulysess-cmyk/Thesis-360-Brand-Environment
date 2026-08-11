@@ -8,6 +8,21 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.png">
 
+    <meta name="description" content="Step inside Granja Alegre — a 360° journey through a Bukidnon coffee farm, from seedling to cup. Explore the nursery, farm, roastery, and café of Alegre Café & Roastery.">
+    <meta name="keywords" content="Granja Alegre, Alegre Cafe, Bukidnon coffee, Philippine coffee farm, Pangantucan, 360 experience, coffee tour">
+    <link rel="canonical" href="https://granjaalegre.com/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://granjaalegre.com/">
+    <meta property="og:title" content="Granja Alegre | 360° Coffee Experience">
+    <meta property="og:description" content="A 360° journey through a Bukidnon coffee farm, from seedling to cup.">
+    <meta property="og:image" content="https://granjaalegre.com/og-image.jpg">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Granja Alegre | 360° Coffee Experience">
+    <meta name="twitter:description" content="A 360° journey through a Bukidnon coffee farm, from seedling to cup.">
+    <meta name="twitter:image" content="https://granjaalegre.com/og-image.jpg">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://assets.granjaalegre.com" crossorigin>
@@ -381,6 +396,11 @@
         }
 
         #debug-info.active { display: block; }
+
+        body.video-open .hotspot-label,
+        body.video-open #nav-prompt {
+            display: none !important;
+        }
 
         #hotspot-popup.active {
             display: block !important;
@@ -818,7 +838,10 @@
                 const scene = e.target.dataset.scene;
                 const pos = e.target.dataset.pos;
                 if (scene === 'street-view' && pos && pos !== 'spawn') {
-                    await window.ThesisApp.sceneManager.switchTo(scene);
+                    const isAlreadyInStreetView = window.ThesisApp.sceneManager.currentScene?.name === 'street-view';
+                    if (!isAlreadyInStreetView) {
+                        await window.ThesisApp.sceneManager.switchTo(scene);
+                    }
                     const streetViewScene = window.ThesisApp.sceneManager.currentScene;
                     if (streetViewScene && streetViewScene.transitionToPosition) {
                         await streetViewScene.transitionToPosition(pos);

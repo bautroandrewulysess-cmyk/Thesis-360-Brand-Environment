@@ -1021,11 +1021,13 @@ class Scene {
         }, { once: true });
 
         popup.style.display = 'flex';
+        document.body.classList.add('video-open');
         setTimeout(() => popup.style.opacity = '1', 50);
     }
 
     hideVideoPopup() {
         const popup = document.getElementById('video-popup');
+        document.body.classList.remove('video-open');
         if (popup) {
             popup.style.opacity = '0';
             setTimeout(() => {
@@ -1041,11 +1043,11 @@ class Scene {
 
         if (window._preloadedSplats[assetName]) {
             const cachedAsset = window._preloadedSplats[assetName];
-            if (cachedAsset.resource) {
+            if (cachedAsset.resource && cachedAsset.ready) {
                 console.warn(`[Preload] Using cached splat: ${assetName}`);
                 return cachedAsset;
             } else {
-                console.warn(`[Preload] Cached splat invalid (no resource), discarding: ${assetName}`);
+                console.warn(`[Preload] Cached splat invalid (no resource/ready), discarding: ${assetName}`);
                 delete window._preloadedSplats[assetName];
             }
         }
