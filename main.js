@@ -1676,15 +1676,24 @@ window.addEventListener('popstate', async (e) => {
         await sceneManager.switchTo(state.scene);
     } else {
         // Back button went past the experience entry — return to landing page
-        document.getElementById('canvas')?.style.display = 'none';
-        document.getElementById('loading-screen')?.classList.add('hidden');
-        document.getElementById('fade-overlay')?.classList.remove('active');
-        document.getElementById('video-popup')?.classList.remove('active');
-        document.getElementById('hotspot-popup')?.classList.remove('active');
-        document.getElementById('quiz-overlay')?.style.display = 'none';
-        document.getElementById('completion-panel')?.style.display = 'none';
-        document.getElementById('travel-menu')?.style.display = 'none';
-        document.getElementById('nav-prompt')?.style.display = 'none';
+        const canvas = document.getElementById('canvas');
+        if (canvas) canvas.style.display = 'none';
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) loadingScreen.classList.add('hidden');
+        const fadeOverlay = document.getElementById('fade-overlay');
+        if (fadeOverlay) fadeOverlay.classList.remove('active');
+        const videoPopup = document.getElementById('video-popup');
+        if (videoPopup) videoPopup.classList.remove('active');
+        const hotspotPopup = document.getElementById('hotspot-popup');
+        if (hotspotPopup) hotspotPopup.classList.remove('active');
+        const quizOverlay = document.getElementById('quiz-overlay');
+        if (quizOverlay) quizOverlay.style.display = 'none';
+        const completionPanel = document.getElementById('completion-panel');
+        if (completionPanel) completionPanel.style.display = 'none';
+        const travelMenu = document.getElementById('travel-menu');
+        if (travelMenu) travelMenu.style.display = 'none';
+        const navPrompt = document.getElementById('nav-prompt');
+        if (navPrompt) navPrompt.style.display = 'none';
         app.pause?.();
         window.journeyComplete = false;
         hasStarted = false;
