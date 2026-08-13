@@ -217,6 +217,16 @@ class NurseryScene extends Scene {
                 if (e.key === 'Escape') this.cancelTransform();
             };
             window.addEventListener('keydown', this.onTransformKey);
+
+            // VO Resume Key (N) — Phase 1b dev (temporary until marker/miniquiz handlers built)
+            this.onKeyN = (e) => {
+                if (e.key !== 'n' && e.key !== 'N') return;
+                if (this.voGateType === 'marker' || this.voGateType === 'miniquiz') {
+                    console.log(`[Dev] Resuming VO from ${this.voGateType} gate (N key)`);
+                    this.resumeVoSequence();
+                }
+            };
+            window.addEventListener('keydown', this.onKeyN);
         }
     }
 
@@ -229,6 +239,7 @@ class NurseryScene extends Scene {
         if (this.onKeyB) window.removeEventListener('keydown', this.onKeyB);
         if (this.onKeyDuplicate) window.removeEventListener('keydown', this.onKeyDuplicate);
         if (this.onTransformKey) window.removeEventListener('keydown', this.onTransformKey);
+        if (this.onKeyN) window.removeEventListener('keydown', this.onKeyN);
     }
 
     handleKeyDown(event) {
@@ -968,6 +979,29 @@ class NurseryScene extends Scene {
                 popupVideo: document.getElementById('popup-video')
             };
 
+            // Create temp resume button for VO sequence gating (Phase 1b dev tool)
+            this.resumeButton = document.createElement('button');
+            this.resumeButton.id = 'vo-resume-button';
+            this.resumeButton.textContent = 'Continue (Space)';
+            this.resumeButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 12px 24px;
+                font-size: 16px;
+                background-color: rgba(76, 175, 80, 0.9);
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                display: none;
+                z-index: 1000;
+                font-weight: bold;
+            `;
+            this.resumeButton.addEventListener('click', () => this.resumeVoSequence());
+            document.body.appendChild(this.resumeButton);
+
             // Setup collision box editor listeners
             this.setupEditorPanelListeners();
 
@@ -984,7 +1018,10 @@ class NurseryScene extends Scene {
             window.addEventListener('click', fallbackAudioStart);
 
             this.isVoFinished = false;
-            this.playVoWithSubtitles('nursery');
+            this.playVoSequence('nursery').then(() => {
+                console.log('[Nursery] VO sequence complete');
+                this.isVoFinished = true;
+            });
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisRoastery_optimized.sog`, 'roastery-splat');
             }
@@ -1062,6 +1099,12 @@ class NurseryScene extends Scene {
                 this.dom.videoPopup.classList.remove('active');
             }
 
+            // Clean up resume button (Phase 1b dev)
+            if (this.resumeButton && this.resumeButton.parentNode) {
+                this.resumeButton.parentNode.removeChild(this.resumeButton);
+                this.resumeButton = null;
+            }
+
             // Clear global event listener flags so they can be re-registered on next load
             window._boxCopyBtnInit = false;
             window._debugBoxesToggleInit = false;
@@ -1078,6 +1121,15 @@ class NurseryScene extends Scene {
 
     update(deltaTime) {
         if (!this.isLoaded) return;
+
+        // Update resume button visibility based on gate state (Phase 1b dev)
+        if (this.resumeButton) {
+            if (this.voGateType) {
+                this.resumeButton.style.display = 'block';
+            } else {
+                this.resumeButton.style.display = 'none';
+            }
+        }
 
         // Display camera position — throttled to 10x per second (not every frame)
         const camPos = cameraEntity.getLocalPosition();

@@ -473,11 +473,15 @@ class Scene {
         this.videoPending = false;
         this.storedAmbientGain = null;
         this.isVoFinished = false;
+        this.voSequenceIndex = 0;
+        this.voSequenceRunning = false;
+        this.voGateType = null; // Set to gate type when paused at a gate ('marker'|'miniquiz'|'quiz'|null)
     }
 
     async onLoad() {
         debugLog(`${this.name} onLoad called`);
         this.quizTriggered = false;
+        this.voSequenceIndex = 0;
     }
 
     async onUnload() {
@@ -539,9 +543,13 @@ class Scene {
         return null; // Override in subclasses to return scene-appropriate prompt text
     }
 
-    onQuizPassed() {
+    async onQuizPassed() {
         this.quizPassed = true;
         this.highlightTransitionHotspot();
+
+        // Play held postquiz segments (farm, harvesting, roasting have them; others have none)
+        await this.resumeVoSequence();
+
         const navText = this.getNavPromptText();
         if (navText) this.showNavPrompt(navText);
     }
@@ -568,145 +576,149 @@ class Scene {
         }
     }
 
-    playVoWithSubtitles(audioKey) {
+    playVoWithSubtitles(audioKey, isQuizEligible = false) {
         if (window.journeyComplete) {
             return Promise.resolve();
         }
 
-        this.stopVo();
+        return new Promise((resolve) => {
+            this.stopVo();
 
-        const lang = window.currentLanguage || 'en';
-        const audioPath = assetUrl(`VO/${audioKey}.mp3`);
-        const langVttPath = `${assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
-        const fallbackVttPath = `${assetUrl(`Subtitles/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
+            const lang = window.currentLanguage || 'en';
+            const audioPath = assetUrl(`VO/${audioKey}.mp3`);
+            const langVttPath = `${assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
+            const fallbackVttPath = `${assetUrl(`Subtitles/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
 
-        // Force-hide native browser captions to prevent duplicate overlay texts
-        if (!document.getElementById('hide-native-cues')) {
-            const style = document.createElement('style');
-            style.id = 'hide-native-cues';
-            style.innerHTML = `
-                ::cue { display: none !important; opacity: 0 !important; color: transparent !important; background: transparent !important; }
-                audio::-webkit-media-text-track-container, video::-webkit-media-text-track-container { display: none !important; }
-            `;
-            document.head.appendChild(style);
-        }
-
-        const audio = document.createElement('audio');
-        audio.crossOrigin = 'anonymous';
-        audio.src = audioPath;
-        audio.preload = 'auto';
-        audio.hidden = true;
-
-        const track = document.createElement('track');
-        track.kind = 'subtitles';
-        track.srclang = 'en';
-        track.src = langVttPath;
-        track.default = true;
-        audio.appendChild(track);
-
-        document.body.appendChild(audio);
-        this.voAudio = audio;
-
-        const textTrack = audio.textTracks[0];
-        if (textTrack) {
-            textTrack.mode = 'hidden';
-        }
-
-        const cuechangeHandler = () => {
-            const subtitleBar = document.getElementById('subtitle-bar');
-            if (!subtitleBar) return;
-            if (textTrack.activeCues && textTrack.activeCues.length > 0) {
-                subtitleBar.textContent = textTrack.activeCues[0].text;
-                subtitleBar.style.display = 'block';
-            } else {
-                subtitleBar.style.display = 'none';
+            // Force-hide native browser captions to prevent duplicate overlay texts
+            if (!document.getElementById('hide-native-cues')) {
+                const style = document.createElement('style');
+                style.id = 'hide-native-cues';
+                style.innerHTML = `
+                    ::cue { display: none !important; opacity: 0 !important; color: transparent !important; background: transparent !important; }
+                    audio::-webkit-media-text-track-container, video::-webkit-media-text-track-container { display: none !important; }
+                `;
+                document.head.appendChild(style);
             }
-        };
-        if (textTrack) {
-            textTrack.addEventListener('cuechange', cuechangeHandler);
-            this.voAudioCuechangeHandler = cuechangeHandler;
-        }
 
-        track.addEventListener('error', () => {
-            if (lang !== 'en') {
-                console.warn(`[VO] Subtitle load failed for ${langVttPath}, trying fallback ${fallbackVttPath}`);
-                track.src = fallbackVttPath;
+            const audio = document.createElement('audio');
+            audio.crossOrigin = 'anonymous';
+            audio.src = audioPath;
+            audio.preload = 'auto';
+            audio.hidden = true;
+
+            const track = document.createElement('track');
+            track.kind = 'subtitles';
+            track.srclang = 'en';
+            track.src = langVttPath;
+            track.default = true;
+            audio.appendChild(track);
+
+            document.body.appendChild(audio);
+            this.voAudio = audio;
+
+            const textTrack = audio.textTracks[0];
+            if (textTrack) {
+                textTrack.mode = 'hidden';
             }
-        });
 
-        const triggerQuiz = (path) => {
-            const requiresEnded = path === 'ended';
-            const audioEndedCheck = requiresEnded ? audio.ended === true : true;
-            if (this.quiz && !window.journeyComplete && !this.quizTriggered && this.isVoFinished === true && audioEndedCheck) {
-                this.quizTriggered = true;
-                console.warn(`[VO] Quiz triggered via ${path}`);
-                const hookMethod = this[`onVoFinished_${audioKey}`];
-                if (typeof hookMethod === 'function') {
-                    hookMethod.call(this);
+            const cuechangeHandler = () => {
+                const subtitleBar = document.getElementById('subtitle-bar');
+                if (!subtitleBar) return;
+                if (textTrack.activeCues && textTrack.activeCues.length > 0) {
+                    subtitleBar.textContent = textTrack.activeCues[0].text;
+                    subtitleBar.style.display = 'block';
                 } else {
-                    setTimeout(() => {
-                        this.showQuiz(this.quiz, () => {
-                            this.onQuizPassed();
-                        });
-                    }, 1000);
+                    subtitleBar.style.display = 'none';
                 }
+            };
+            if (textTrack) {
+                textTrack.addEventListener('cuechange', cuechangeHandler);
+                this.voAudioCuechangeHandler = cuechangeHandler;
             }
-        };
 
-        audio.addEventListener('ended', () => {
-            this.clearSubtitles();
-            this.isVoFinished = true;
-            triggerQuiz('ended');
-        });
+            track.addEventListener('error', () => {
+                if (lang !== 'en') {
+                    console.warn(`[VO] Subtitle load failed for ${langVttPath}, trying fallback ${fallbackVttPath}`);
+                    track.src = fallbackVttPath;
+                }
+            });
 
-        audio.addEventListener('pause', () => this.clearSubtitles());
+            const triggerQuiz = (path) => {
+                if (!isQuizEligible) return;
+                const requiresEnded = path === 'ended';
+                const audioEndedCheck = requiresEnded ? audio.ended === true : true;
+                if (this.quiz && !window.journeyComplete && !this.quizTriggered && this.isVoFinished === true && audioEndedCheck) {
+                    this.quizTriggered = true;
+                    console.warn(`[VO] Quiz triggered via ${path}`);
+                    const hookMethod = this[`onVoFinished_${audioKey}`];
+                    if (typeof hookMethod === 'function') {
+                        hookMethod.call(this);
+                    } else {
+                        setTimeout(() => {
+                            this.showQuiz(this.quiz, () => {
+                                this.onQuizPassed();
+                            });
+                        }, 1000);
+                    }
+                }
+            };
 
-        audio.addEventListener('error', () => {
-            console.warn(`[VO] Audio fetch failed for ${audioPath}`);
-            this.clearSubtitles();
-            this.isVoFinished = true;
-            triggerQuiz('audio-error');
-        });
-
-        setTimeout(() => {
-            audio.play().catch(err => {
-                console.warn('[VO] Autoplay blocked:', err.message);
+            audio.addEventListener('ended', () => {
                 this.clearSubtitles();
                 this.isVoFinished = true;
-                triggerQuiz('autoplay-blocked');
+                triggerQuiz('ended');
+                resolve();
             });
-        }, 300);
 
-        let safetyTimeoutHandle;
-        let timeoutArmed = false;
-        const armSafetyTimeout = () => {
-            if (timeoutArmed || !isFinite(audio.duration) || audio.duration <= 0) {
-                return;
-            }
-            timeoutArmed = true;
-            if (safetyTimeoutHandle) clearTimeout(safetyTimeoutHandle);
-            const remainingTime = (audio.duration - audio.currentTime) * 1000 + 2000;
-            safetyTimeoutHandle = setTimeout(() => {
-                if (!audio.paused && audio.currentTime < audio.duration - 1) {
-                    console.warn('[VO] Safety timeout fired but audio still playing, re-arming');
-                    timeoutArmed = false;
-                    armSafetyTimeout();
+            audio.addEventListener('pause', () => this.clearSubtitles());
+
+            audio.addEventListener('error', () => {
+                console.warn(`[VO] Audio fetch failed for ${audioPath}`);
+                this.clearSubtitles();
+                this.isVoFinished = true;
+                triggerQuiz('audio-error');
+                resolve();
+            });
+
+            setTimeout(() => {
+                audio.play().catch(err => {
+                    console.warn('[VO] Autoplay blocked:', err.message);
+                    this.clearSubtitles();
+                    this.isVoFinished = true;
+                    triggerQuiz('autoplay-blocked');
+                    resolve();
+                });
+            }, 300);
+
+            let safetyTimeoutHandle;
+            let timeoutArmed = false;
+            const armSafetyTimeout = () => {
+                if (timeoutArmed || !isFinite(audio.duration) || audio.duration <= 0) {
                     return;
                 }
-                if (!this.isVoFinished) {
-                    this.isVoFinished = true;
-                    this.clearSubtitles();
-                    console.warn('[VO] Quiz triggered via safety-timeout');
-                    triggerQuiz('safety-timeout');
-                }
-            }, remainingTime);
-        };
-        audio.addEventListener('playing', armSafetyTimeout);
-        audio.addEventListener('loadedmetadata', armSafetyTimeout);
-        audio.addEventListener('durationchange', armSafetyTimeout);
-
-
-        return audio;
+                timeoutArmed = true;
+                if (safetyTimeoutHandle) clearTimeout(safetyTimeoutHandle);
+                const remainingTime = (audio.duration - audio.currentTime) * 1000 + 2000;
+                safetyTimeoutHandle = setTimeout(() => {
+                    if (!audio.paused && audio.currentTime < audio.duration - 1) {
+                        console.warn('[VO] Safety timeout fired but audio still playing, re-arming');
+                        timeoutArmed = false;
+                        armSafetyTimeout();
+                        return;
+                    }
+                    if (!this.isVoFinished) {
+                        this.isVoFinished = true;
+                        this.clearSubtitles();
+                        console.warn('[VO] Quiz triggered via safety-timeout');
+                        triggerQuiz('safety-timeout');
+                        resolve();
+                    }
+                }, remainingTime);
+            };
+            audio.addEventListener('playing', armSafetyTimeout);
+            audio.addEventListener('loadedmetadata', armSafetyTimeout);
+            audio.addEventListener('durationchange', armSafetyTimeout);
+        });
     }
 
     stopVo() {
@@ -1074,6 +1086,77 @@ class Scene {
                 resolve(splatAsset);
             });
         });
+    }
+
+    async playVoSequence(sceneKey) {
+        if (this.voSequenceRunning) return;
+        const lang = window.currentLanguage || 'en';
+        const segments = window.VoSegments?.[sceneKey]?.[lang];
+        if (!segments || segments.length === 0) {
+            console.warn(`[VO] No segments found for ${sceneKey}/${lang}`);
+            return;
+        }
+
+        this.voSequenceRunning = true;
+        try {
+            while (this.voSequenceIndex < segments.length) {
+                const segment = segments[this.voSequenceIndex];
+                const gateType = segment.gate?.type;
+
+                // Skip postquiz segments if quiz hasn't passed yet
+                if (gateType === 'postquiz' && !this.quizPassed) {
+                    this.voSequenceIndex++;
+                    continue;
+                }
+
+                const isQuizSegment = gateType === 'quiz';
+                console.log(`[VO] Playing segment ${this.voSequenceIndex + 1}/${segments.length}: ${segment.id}`);
+                await this.playVoWithSubtitles(segment.id, isQuizSegment);
+
+                if (gateType === 'marker' || gateType === 'miniquiz') {
+                    console.log(`[VO] Paused at ${gateType} gate`);
+                    this.voGateType = gateType;
+                    break;
+                } else if (gateType === 'quiz') {
+                    console.log(`[VO] Reached quiz gate (terminal)`);
+                    break;
+                } else {
+                    this.voSequenceIndex++;
+                }
+            }
+            // If we exited the loop normally (all segments played), clear gate type
+            if (this.voSequenceIndex >= segments.length) {
+                this.voGateType = null;
+            }
+        } finally {
+            this.voSequenceRunning = false;
+        }
+    }
+
+    async resumeVoSequence() {
+        if (!window.VoSegments?.[this.name]) {
+            console.warn(`[VO] No segments defined for ${this.name}, cannot resume`);
+            return;
+        }
+
+        const lang = window.currentLanguage || 'en';
+        const segments = window.VoSegments[this.name][lang];
+        if (this.voSequenceIndex >= segments.length) return;
+
+        this.voSequenceIndex++;
+        this.voGateType = null; // Clear gate type when resuming
+
+        // If we just passed a quiz, check for postquiz segments
+        if (this.quizPassed) {
+            while (this.voSequenceIndex < segments.length && segments[this.voSequenceIndex].gate?.type === 'postquiz') {
+                const segment = segments[this.voSequenceIndex];
+                console.log(`[VO] Playing postquiz segment: ${segment.id}`);
+                await this.playVoWithSubtitles(segment.id, false);
+                this.voSequenceIndex++;
+            }
+        }
+
+        await this.playVoSequence(this.name);
     }
 
     update(deltaTime) {
