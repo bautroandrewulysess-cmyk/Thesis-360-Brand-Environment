@@ -1012,6 +1012,17 @@ class CafeInteriorScene extends Scene {
         }
     }
 
+    onLoadingScreenDismissed() {
+        this.initAmbient(assetUrl('Music/cafeJazz.mp3'), 0.1);
+        this.isVoFinished = false;
+        if (this.isReturnVisit) {
+            this.quiz = [window.PendingQuizzes.backToTheCafe, window.PendingQuizzes.finalChallenge];
+            this.playVoSequence('backToCafe');
+        } else {
+            this.playVoSequence('cafeInterior');
+        }
+    }
+
     onVoFinished_brandStory() {
         // Quiz is now shown by onGateMarkerClick for the ownerInterview gate
         // This callback is kept for backwards compatibility if needed
@@ -1077,7 +1088,8 @@ class CafeInteriorScene extends Scene {
                     this.highlightLabel.style.display = 'none';
                     this.highlightLabel = null;
                 }
-
+                // Make this gate hotspot replayable (keep it present)
+                hotspot.isGateMarker = false;
                 this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: true,
@@ -1199,26 +1211,7 @@ class CafeInteriorScene extends Scene {
             // Reset quiz for this load
             this.quizPassed = false;
 
-            // Start ambient early so it's playing before VO begins
-            this.initAmbient(assetUrl('Music/cafeJazz.mp3'), 0.1);
-
-            // Branch on return visit
-            this.isVoFinished = false;
-            if (this.isReturnVisit) {
-                this.quiz = [window.PendingQuizzes.backToTheCafe, window.PendingQuizzes.finalChallenge];
-                // Delay VO by ~1s to let ambient establish atmosphere
-                setTimeout(() => this.playVoSequence('backToCafe'), 1000);
-            } else {
-                // First visit: play cafeInterior sequence (segment 04 + quiz gate)
-                setTimeout(() => this.playVoSequence('cafeInterior'), 1000);
-                if (!window.journeyComplete) {
-                    this.preloadSplat(`${R2_BASE}/thesisNursery_optimized.sog`, 'nursery-splat');
-                }
-                if (!window.ownerInterviewPreloaded) {
-                    window.ownerInterviewPreloaded = true;
-                    fetch(`${R2_BASE}/ownerInterview.mp4`, { mode: 'cors' }).catch(() => {});
-                }
-            }
+            // (Deferred) ambient and VO start will run after loading screen dismissal
 
             const startVoOnInteraction = () => {
                 if (this.voAudio && this.voAudio.paused && this.voAudio.currentTime === 0) {

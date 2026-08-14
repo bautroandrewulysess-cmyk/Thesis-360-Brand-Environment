@@ -990,9 +990,7 @@ class RoasteryScene extends Scene {
             // Setup collision box editor listeners
             this.setupEditorPanelListeners();
 
-            this.isVoFinished = false;
-            this.playVoSequence('roasting');
-            this.initAmbient(assetUrl('Music/roasteryJazz.mp3'), 0.05);
+            // (Deferred) start VO and ambient after loading screen dismissal
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisCafeInterior_optimized.sog`, 'cafe-interior-splat');
             }
@@ -1093,8 +1091,8 @@ class RoasteryScene extends Scene {
                     this.highlightLabel.style.display = 'none';
                     this.highlightLabel = null;
                 }
-                // Disable the orb after clicking
-                entity.enabled = false;
+                // Keep the orb present but mark it as no longer a gate (replayable)
+                hotspot.isGateMarker = false;
 
                 this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
@@ -1141,6 +1139,12 @@ class RoasteryScene extends Scene {
 
     onQuizPassed() {
         super.onQuizPassed();
+    }
+
+    onLoadingScreenDismissed() {
+        this.isVoFinished = false;
+        this.playVoSequence('roasting');
+        this.initAmbient(assetUrl('Music/roasteryJazz.mp3'), 0.05);
     }
 
     async onUnload() {

@@ -1130,7 +1130,12 @@ class Scene {
             if (onFinish) onFinish();
         };
 
-        video.addEventListener('ended', onVideoEnd, { once: true });
+        if (narrationId && this.voAudio) {
+            video.loop = true; // Loop the video visually while narration plays
+            this.voAudio.addEventListener('ended', onVideoEnd, { once: true }); // Close popup when VO ends
+        } else {
+            video.addEventListener('ended', onVideoEnd, { once: true });
+        }
         video.addEventListener('error', onVideoError, { once: true });
 
         fallbackTimeoutHandle = setTimeout(async () => {
@@ -1321,7 +1326,7 @@ class Scene {
         const button = document.createElement('button');
         button.className = 'gate-marker-button';
         button.textContent = this.getGateMarkerLabel(gate.ref);
-        button.style.cssText = `position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:14px 28px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; z-index:1010; outline:none; animation:gate-marker-pulse 2s ease-in-out infinite;`;
+        button.style.cssText = `position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:14px 28px; background:#050505; border:1px solid #f4d03f; color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; z-index:1010; outline:none; animation:gate-marker-pulse 2s ease-in-out infinite; box-shadow: 0 0 15px rgba(244,208,63,0.3);`;
 
         // Guard against double-clicks and drag-clicks
         let clicked = false;
@@ -1345,10 +1350,10 @@ class Scene {
 
         // Hover effects
         button.addEventListener('mouseenter', () => {
-            if (!clicked) button.style.background = 'rgba(244,208,63,0.25)';
+            if (!clicked) button.style.background = '#1a1a1a';
         });
         button.addEventListener('mouseleave', () => {
-            if (!clicked) button.style.background = 'rgba(244,208,63,0.15)';
+            if (!clicked) button.style.background = '#050505';
         });
         button.addEventListener('click', handleClick);
 
