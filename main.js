@@ -565,6 +565,13 @@ class Scene {
         this.voSequenceRunning = false;
         this.voGateType = null; // Set to gate type when paused at a gate ('marker'|'miniquiz'|'quiz'|null)
         this.voSceneKey = null; // voData.js key for the active segment sequence (e.g. 'nursery', 'farm', 'brandStory')
+
+        // Dev key handlers (only bound if DEV_MODE)
+        if (window.DEV_MODE) {
+            this.onKeyVoSkip = (e) => this.handleVoSkip(e);
+            this.onKeyVoReplay = (e) => this.handleVoReplay(e);
+            this.onKeyVoResume = (e) => this.handleVoResume(e);
+        }
     }
 
     async onLoad() {
@@ -572,6 +579,13 @@ class Scene {
         this.quizTriggered = false;
         this.voSequenceIndex = 0;
         this.voSceneKey = null;
+
+        // Register dev VO shortcuts
+        if (window.DEV_MODE) {
+            window.addEventListener('keydown', this.onKeyVoSkip);
+            window.addEventListener('keydown', this.onKeyVoReplay);
+            window.addEventListener('keydown', this.onKeyVoResume);
+        }
     }
 
     async onUnload() {
@@ -580,6 +594,13 @@ class Scene {
         this.hideNavPrompt();
         this.despawnGateMarker();
         this.hideMiniQuiz();
+
+        // Unregister dev VO shortcuts
+        if (window.DEV_MODE) {
+            if (this.onKeyVoSkip) window.removeEventListener('keydown', this.onKeyVoSkip);
+            if (this.onKeyVoReplay) window.removeEventListener('keydown', this.onKeyVoReplay);
+            if (this.onKeyVoResume) window.removeEventListener('keydown', this.onKeyVoResume);
+        }
 
         // Unregister ALL objects registered via this scene's wrapper
         for (let entity of this.registeredWithRaycaster) {
@@ -1484,6 +1505,70 @@ class Scene {
         const quizContainer = document.getElementById('mini-quiz-overlay');
         if (quizContainer) {
             quizContainer.style.display = 'none';
+        }
+    }
+
+    // Dev VO shortcuts (only registered if DEV_MODE)
+    handleVoSkip(e) {
+        if (e.shiftKey && e.key === 'ArrowRight') {
+            e.preventDefault();
+            if (!this.voSceneKey) return; // No active sequence
+
+            const lang = window.currentLanguage || 'en';
+            const segments = window.VoSegments?.[this.voSceneKey]?.[lang];
+            if (!segments || this.voSequenceIndex >= segments.length) return;
+
+            const segment = segments[this.voSequenceIndex];
+            const gateType = segment.gate?.type;
+
+            // Stop current audio and clear subtitles
+            this.stopVo();
+            this.clearSubtitles();
+
+            // Trigger the segment's end behavior
+            if (gateType === 'marker') {
+                this.resumeVoSequence();
+            } else if (gateType === 'miniquiz') {
+                this.resumeVoSequence();
+            } else if (gateType === 'quiz') {
+                // Skip quiz by marking it as passed
+                this.isVoFinished = true;
+                this.quizTriggered = true;
+                this.onQuizPassed();
+            } else {
+                // 'none' or 'sting' gate - just advance
+                this.voSequenceIndex++;
+                this.playVoSequence(this.voSceneKey);
+            }
+        }
+    }
+
+    handleVoReplay(e) {
+        if (e.shiftKey && e.key === 'ArrowLeft') {
+            e.preventDefault();
+            if (!this.voSceneKey) return; // No active sequence
+
+            const lang = window.currentLanguage || 'en';
+            const segments = window.VoSegments?.[this.voSceneKey]?.[lang];
+            if (!segments || this.voSequenceIndex >= segments.length) return;
+
+            // Stop current audio and clear subtitles
+            this.stopVo();
+            this.clearSubtitles();
+
+            // Replay current segment
+            const segment = segments[this.voSequenceIndex];
+            this.playVoWithSubtitles(segment.id, segment.gate?.type === 'quiz').catch(() => {});
+        }
+    }
+
+    handleVoResume(e) {
+        if (e.shiftKey && e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!this.voSceneKey) return; // No active sequence
+
+            // Resume past the current gate (equivalent to clicking the gate button)
+            this.resumeVoSequence();
         }
     }
 
