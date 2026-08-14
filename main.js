@@ -476,12 +476,14 @@ class Scene {
         this.voSequenceIndex = 0;
         this.voSequenceRunning = false;
         this.voGateType = null; // Set to gate type when paused at a gate ('marker'|'miniquiz'|'quiz'|null)
+        this.voSceneKey = null; // voData.js key for the active segment sequence (e.g. 'nursery', 'farm', 'brandStory')
     }
 
     async onLoad() {
         debugLog(`${this.name} onLoad called`);
         this.quizTriggered = false;
         this.voSequenceIndex = 0;
+        this.voSceneKey = null;
     }
 
     async onUnload() {
@@ -547,8 +549,10 @@ class Scene {
         this.quizPassed = true;
         this.highlightTransitionHotspot();
 
-        // Play held postquiz segments (farm, harvesting, roasting have them; others have none)
-        await this.resumeVoSequence();
+        // Play held postquiz segments only if a segment sequence is active for this scene
+        if (this.voSceneKey) {
+            await this.resumeVoSequence();
+        }
 
         const navText = this.getNavPromptText();
         if (navText) this.showNavPrompt(navText);
@@ -1090,6 +1094,7 @@ class Scene {
 
     async playVoSequence(sceneKey) {
         if (this.voSequenceRunning) return;
+        this.voSceneKey = sceneKey;
         const lang = window.currentLanguage || 'en';
         const segments = window.VoSegments?.[sceneKey]?.[lang];
         if (!segments || segments.length === 0) {
@@ -1103,7 +1108,9 @@ class Scene {
                 const segment = segments[this.voSequenceIndex];
                 const gateType = segment.gate?.type;
 
-                // Skip postquiz segments if quiz hasn't passed yet
+                // Skip postquiz segments if quiz hasn't passed yet. Assumption: postquiz segments
+                // always come after quiz gates in voData.js, so they're unreachable until quiz fires.
+                // If the order ever changes, this destructive skip would lose segments.
                 if (gateType === 'postquiz' && !this.quizPassed) {
                     this.voSequenceIndex++;
                     continue;
@@ -1124,9 +1131,10 @@ class Scene {
                     this.voSequenceIndex++;
                 }
             }
-            // If we exited the loop normally (all segments played), clear gate type
+            // If we exited the loop normally (all segments played), clear gate type and sequence key
             if (this.voSequenceIndex >= segments.length) {
                 this.voGateType = null;
+                this.voSceneKey = null;
             }
         } finally {
             this.voSequenceRunning = false;
@@ -1134,13 +1142,18 @@ class Scene {
     }
 
     async resumeVoSequence() {
-        if (!window.VoSegments?.[this.name]) {
-            console.warn(`[VO] No segments defined for ${this.name}, cannot resume`);
+        if (!this.voSceneKey) {
+            console.warn(`[VO] No active segment sequence, cannot resume`);
+            return;
+        }
+
+        if (!window.VoSegments?.[this.voSceneKey]) {
+            console.warn(`[VO] No segments defined for ${this.voSceneKey}, cannot resume`);
             return;
         }
 
         const lang = window.currentLanguage || 'en';
-        const segments = window.VoSegments[this.name][lang];
+        const segments = window.VoSegments[this.voSceneKey][lang];
         if (this.voSequenceIndex >= segments.length) return;
 
         this.voSequenceIndex++;
@@ -1156,7 +1169,7 @@ class Scene {
             }
         }
 
-        await this.playVoSequence(this.name);
+        await this.playVoSequence(this.voSceneKey);
     }
 
     update(deltaTime) {
