@@ -322,6 +322,75 @@ function fadeIn() {
     });
 }
 
+// Shared VO playback: plays audio with subtitles (used by both Scene class and brand story overlay)
+function playVoSegment(audioKey, subtitleElement, onEnded) {
+    return new Promise((resolve) => {
+        const lang = window.currentLanguage || 'en';
+        const audioPath = assetUrl(`VO/${audioKey}.mp3`);
+        const langVttPath = `${assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
+        const fallbackVttPath = `${assetUrl(`Subtitles/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
+
+        const audio = document.createElement('audio');
+        audio.crossOrigin = 'anonymous';
+        audio.src = audioPath;
+        audio.preload = 'auto';
+        audio.hidden = true;
+
+        // Create track for subtitle loading
+        const track = document.createElement('track');
+        track.kind = 'subtitles';
+        track.srclang = 'en';
+        track.src = langVttPath;
+        track.default = true;
+        audio.appendChild(track);
+
+        document.body.appendChild(audio);
+
+        const textTrack = audio.textTracks[0];
+        if (textTrack) {
+            textTrack.mode = 'hidden';
+        }
+
+        const cuechangeHandler = () => {
+            if (subtitleElement && textTrack.activeCues && textTrack.activeCues.length > 0) {
+                subtitleElement.textContent = textTrack.activeCues[0].text;
+            } else if (subtitleElement) {
+                subtitleElement.textContent = '';
+            }
+        };
+        if (textTrack) {
+            textTrack.addEventListener('cuechange', cuechangeHandler);
+        }
+
+        track.addEventListener('error', () => {
+            if (lang !== 'en') {
+                console.warn(`[VO] Subtitle load failed for ${langVttPath}, trying fallback`);
+                track.src = fallbackVttPath;
+            }
+        });
+
+        const handleEnd = () => {
+            audio.removeEventListener('ended', handleEnd);
+            audio.removeEventListener('error', handleEnd);
+            if (subtitleElement) subtitleElement.textContent = '';
+            audio.remove();
+            if (onEnded) onEnded();
+            resolve();
+        };
+
+        audio.addEventListener('ended', handleEnd);
+        audio.addEventListener('error', () => {
+            console.warn(`[VO] Audio failed for ${audioKey}`);
+            handleEnd();
+        });
+
+        audio.play().catch(e => {
+            console.warn(`[VO] Autoplay failed: ${e.name}`);
+            handleEnd();
+        });
+    });
+}
+
 function showLoadingTrivia(targetScene) {
     const triviaEl = document.getElementById('loading-trivia-text');
     if (!triviaEl) return;

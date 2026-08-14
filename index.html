@@ -968,17 +968,11 @@
                 const segmentId = segments[index];
                 const gateData = gates[index];
 
-                // Play the VO segment with subtitles
-                const vo = new Audio(assetUrl(`VO/${segmentId}.mp3`));
-                vo.crossOrigin = 'anonymous';
                 subtitles.innerHTML = ''; // Clear previous subtitles
                 gateContainer.innerHTML = ''; // Clear previous gate button
-                let isPlaying = true;
-                let autoplayBlocked = false;
 
-                const onSegmentEnd = async () => {
-                    isPlaying = false;
-                    vo.pause();
+                // Use shared VO playback function for audio + subtitles
+                playVoSegment(segmentId, subtitles, async () => {
                     // Show gate button for this segment
                     const btn = document.createElement('button');
                     btn.textContent = gateData.label;
@@ -1009,77 +1003,10 @@
                         clicked = true;
                         btn.disabled = true;
                         btn.style.opacity = '0.5';
-                        // Play gate video (placeholder: heroLoop.mp4)
-                        const video = document.getElementById('video-popup');
-                        const videoEl = document.getElementById('popup-video');
-                        if (video && videoEl) {
-                            videoEl.src = assetUrl('Videos/heroLoop.mp4');
-                            video.style.display = 'flex';
-                            video.style.opacity = '1';
-                            document.body.classList.add('video-open');
-                            videoEl.play().catch(() => {});
-                            const onVideoEnd = () => {
-                                videoEl.removeEventListener('ended', onVideoEnd);
-                                videoEl.removeEventListener('error', onVideoEnd);
-                                video.style.opacity = '0';
-                                setTimeout(() => {
-                                    video.style.display = 'none';
-                                    document.body.classList.remove('video-open');
-                                    playBrandStorySegment(index + 1);
-                                }, 800);
-                            };
-                            const onVideoError = () => {
-                                videoEl.removeEventListener('ended', onVideoEnd);
-                                videoEl.removeEventListener('error', onVideoError);
-                                video.style.display = 'none';
-                                document.body.classList.remove('video-open');
-                                playBrandStorySegment(index + 1);
-                            };
-                            videoEl.addEventListener('ended', onVideoEnd);
-                            videoEl.addEventListener('error', onVideoError);
-                        } else {
-                            playBrandStorySegment(index + 1);
-                        }
+                        // Skip placeholder video, advance immediately to next segment
+                        playBrandStorySegment(index + 1);
                     });
                     gateContainer.appendChild(btn);
-                };
-
-                vo.addEventListener('ended', onSegmentEnd);
-                vo.addEventListener('error', () => {
-                    console.warn(`[BrandStory] Audio load failed for ${segmentId}`);
-                    autoplayBlocked = true;
-                    onSegmentEnd();
-                });
-
-                // Use TextTrack for subtitles (shared .vtt player system)
-                const track = document.createElement('track');
-                track.kind = 'subtitles';
-                track.srclang = 'en';
-                track.src = assetUrl(`Subtitles/${segmentId}.vtt?v=${SUBTITLE_VERSION}`);
-                track.default = true;
-                vo.appendChild(track);
-
-                const textTrack = vo.textTracks[0];
-                if (textTrack) {
-                    textTrack.mode = 'hidden';
-                    const cuechangeHandler = () => {
-                        if (isPlaying && textTrack.activeCues && textTrack.activeCues.length > 0) {
-                            subtitles.textContent = textTrack.activeCues[0].text;
-                        } else {
-                            subtitles.textContent = '';
-                        }
-                    };
-                    textTrack.addEventListener('cuechange', cuechangeHandler);
-                }
-
-                // Append to DOM to help with autoplay
-                document.body.appendChild(vo);
-
-                // Play audio
-                vo.play().catch(e => {
-                    console.warn('[BrandStory] Autoplay failed:', e.name);
-                    autoplayBlocked = true;
-                    onSegmentEnd();
                 });
             };
 
