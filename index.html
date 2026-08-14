@@ -1051,13 +1051,26 @@
                     onSegmentEnd();
                 });
 
-                // Fetch and display subtitles if available
-                try {
-                    const subtitleText = await fetch(assetUrl(`VO/${segmentId}.txt`)).then(r => r.text()).catch(() => '');
-                    if (subtitleText && isPlaying) {
-                        subtitles.textContent = subtitleText;
-                    }
-                } catch (e) {}
+                // Use TextTrack for subtitles (shared .vtt player system)
+                const track = document.createElement('track');
+                track.kind = 'subtitles';
+                track.srclang = 'en';
+                track.src = assetUrl(`Subtitles/${segmentId}.vtt?v=${SUBTITLE_VERSION}`);
+                track.default = true;
+                vo.appendChild(track);
+
+                const textTrack = vo.textTracks[0];
+                if (textTrack) {
+                    textTrack.mode = 'hidden';
+                    const cuechangeHandler = () => {
+                        if (isPlaying && textTrack.activeCues && textTrack.activeCues.length > 0) {
+                            subtitles.textContent = textTrack.activeCues[0].text;
+                        } else {
+                            subtitles.textContent = '';
+                        }
+                    };
+                    textTrack.addEventListener('cuechange', cuechangeHandler);
+                }
 
                 // Append to DOM to help with autoplay
                 document.body.appendChild(vo);

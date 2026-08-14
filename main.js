@@ -1186,15 +1186,15 @@ class Scene {
 
     getGateMarkerLabel(gateRef) {
         const labels = {
-            'mapZoom': 'Learn More',
-            'aerial': 'Learn More',
-            'farmerMontage': 'Learn More',
-            'ownerInterview': 'Learn More',
-            'treePhoto': 'Learn More',
-            'roasterVideo': 'Learn More',
-            'brewingPOV': 'Learn More',
-            'polybag': 'Learn More',
-            'monitoring': 'Learn More'
+            'mapZoom': 'View the map',
+            'aerial': 'See the landscape',
+            'farmerMontage': 'Meet the farmer',
+            'ownerInterview': 'Hear the story behind Granja Alegre',
+            'treePhoto': 'See the trees',
+            'roasterVideo': 'Watch the roaster',
+            'brewingPOV': 'See the brewing',
+            'polybag': 'Get a closer look at the seedlings',
+            'monitoring': 'Learn about monitoring'
         };
         return labels[gateRef] || 'Watch';
     }
@@ -1321,7 +1321,7 @@ class Scene {
         // Question
         const question = document.createElement('div');
         question.textContent = questionData.question;
-        question.style.cssText = `font-size:1.1rem; margin-bottom:25px; line-height:1.5;`;
+        question.style.cssText = `font-size:1.1rem; margin-bottom:25px; line-height:1.5; text-align:center;`;
         card.appendChild(question);
 
         // Answer options
@@ -1349,10 +1349,10 @@ class Scene {
                 }, 1000);
             } else {
                 answered = false;
-                card.style.backgroundColor = 'rgba(244,67,54,0.2)';
+                card.style.backgroundColor = 'rgba(139, 107, 107, 0.15)';
                 const clueMsg = document.createElement('div');
                 clueMsg.textContent = `Wrong. ${questionData.clue}`;
-                clueMsg.style.cssText = `color:#f44336; margin-top:15px; font-size:0.9rem; font-style:italic; line-height:1.4;`;
+                clueMsg.style.cssText = `color:#a68585; margin-top:15px; font-size:0.9rem; font-style:italic; line-height:1.4;`;
                 card.appendChild(clueMsg);
             }
         };
