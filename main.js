@@ -490,6 +490,8 @@ class Scene {
         debugLog(`${this.name} onUnload called`);
 
         this.hideNavPrompt();
+        this.despawnGateMarker();
+        this.hideMiniQuiz();
 
         // Unregister ALL objects registered via this scene's wrapper
         for (let entity of this.registeredWithRaycaster) {
@@ -1121,9 +1123,18 @@ class Scene {
                 console.log(`[VO] Playing segment ${this.voSequenceIndex + 1}/${segments.length}: ${segment.id}`);
                 await this.playVoWithSubtitles(segment.id, isQuizSegment);
 
-                if (gateType === 'marker' || gateType === 'miniquiz') {
-                    console.log(`[VO] Paused at ${gateType} gate`);
+                if (gateType === 'marker') {
+                    console.log(`[VO] Paused at marker gate`);
                     this.voGateType = gateType;
+                    this.spawnGateMarker(segment.gate);
+                    break;
+                } else if (gateType === 'miniquiz') {
+                    console.log(`[VO] Paused at miniquiz gate`);
+                    this.voGateType = gateType;
+                    const quizData = this.getMiniQuizData?.(segment.gate.ref);
+                    if (quizData) {
+                        this.showMiniQuiz(segment.gate.ref, quizData);
+                    }
                     break;
                 } else if (gateType === 'quiz') {
                     console.log(`[VO] Reached quiz gate (terminal)`);
@@ -1171,6 +1182,213 @@ class Scene {
         }
 
         await this.playVoSequence(this.voSceneKey);
+    }
+
+    spawnGateMarker(gate) {
+        if (!this.container || !cameraEntity) return;
+
+        // Clean up any existing marker
+        this.despawnGateMarker();
+
+        // Compute marker position: 2m in front of camera at eye height
+        const camPos = cameraEntity.getPosition();
+        const camFwd = cameraEntity.forward;
+        const markerWorldPos = new pc.Vec3().addScale(camPos, 1).addScale(camFwd, 2);
+
+        // Create marker group entity
+        this.gateMarkerEntity = new pc.Entity('gate-marker');
+        this.gateMarkerEntity.setPosition(markerWorldPos);
+        this.container.addChild(this.gateMarkerEntity);
+
+        // Core sphere (gold, emissive)
+        const core = new pc.Entity('gate-marker-core');
+        core.addComponent('render', { type: 'sphere' });
+        core.setLocalScale(0.06, 0.06, 0.06);
+
+        const coreMaterial = new pc.StandardMaterial();
+        coreMaterial.diffuse = new pc.Color(1, 0.85, 0.2); // Gold
+        coreMaterial.emissive = new pc.Color(1, 0.85, 0.2);
+        coreMaterial.emissiveIntensity = 3;
+        coreMaterial.opacity = 1.0;
+        coreMaterial.blendType = pc.BLEND_NORMAL;
+        coreMaterial.update();
+        core.render.meshInstances[0].material = coreMaterial;
+        this.gateMarkerEntity.addChild(core);
+        this.gateMarkerEntity.coreEntity = core;
+
+        // Glow sphere (translucent)
+        const glow = new pc.Entity('gate-marker-glow');
+        glow.addComponent('render', { type: 'sphere' });
+        glow.setLocalScale(0.12, 0.12, 0.12);
+
+        const glowMaterial = new pc.StandardMaterial();
+        glowMaterial.emissive = new pc.Color(1, 0.85, 0.2);
+        glowMaterial.emissiveIntensity = 2;
+        glowMaterial.opacity = 0.4;
+        glowMaterial.blendType = pc.BLEND_NORMAL;
+        glowMaterial.depthWrite = false;
+        glowMaterial.cull = pc.CULLFACE_NONE;
+        glowMaterial.update();
+        glow.render.meshInstances[0].material = glowMaterial;
+        this.gateMarkerEntity.addChild(glow);
+        this.gateMarkerEntity.glowEntity = glow;
+
+        // DOM label
+        const label = document.createElement('div');
+        label.className = 'gate-marker-label';
+        label.textContent = gate.ref || 'Gate';
+        label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
+        document.body.appendChild(label);
+        this.gateMarkerEntity.labelElement = label;
+
+        // Store gate ref for click handler
+        this.gateMarkerEntity.gateRef = gate.ref;
+
+        // Register for clicks
+        this.registerInteractiveObject(this.gateMarkerEntity, () => {
+            this.onGateMarkerClick(gate);
+        }, 0.15);
+    }
+
+    despawnGateMarker() {
+        if (this.gateMarkerEntity) {
+            if (this.gateMarkerEntity.labelElement && this.gateMarkerEntity.labelElement.parentNode) {
+                this.gateMarkerEntity.labelElement.parentNode.removeChild(this.gateMarkerEntity.labelElement);
+            }
+            this.unregisterInteractiveObject(this.gateMarkerEntity);
+            if (this.gateMarkerEntity.parent) {
+                this.gateMarkerEntity.parent.removeChild(this.gateMarkerEntity);
+            }
+            this.gateMarkerEntity = null;
+        }
+    }
+
+    onGateMarkerClick(gate) {
+        this.despawnGateMarker();
+
+        // Handle based on gate ref — for now, play placeholder video
+        if (gate.ref) {
+            const videoMap = {
+                polybag: 'heroLoop.mp4'
+            };
+            const videoSrc = videoMap[gate.ref];
+            if (videoSrc && this.dom && this.dom.popupVideo && this.dom.videoPopup) {
+                const video = this.dom.popupVideo;
+                video.src = assetUrl(`Videos/${videoSrc}`);
+                video.play();
+                this.dom.videoPopup.classList.add('active');
+                document.body.classList.add('video-open');
+
+                // Resume sequence when video ends
+                const onVideoEnd = () => {
+                    video.removeEventListener('ended', onVideoEnd);
+                    this.dom.videoPopup.classList.remove('active');
+                    document.body.classList.remove('video-open');
+                    this.resumeVoSequence();
+                };
+                video.addEventListener('ended', onVideoEnd);
+            } else {
+                this.resumeVoSequence();
+            }
+        } else {
+            this.resumeVoSequence();
+        }
+    }
+
+    showMiniQuiz(gateRef, questionData) {
+        if (!questionData) return;
+
+        // Create or reuse quiz container
+        let quizContainer = document.getElementById('mini-quiz-overlay');
+        if (!quizContainer) {
+            quizContainer = document.createElement('div');
+            quizContainer.id = 'mini-quiz-overlay';
+            quizContainer.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:950; display:flex; align-items:center; justify-content:center;`;
+            document.body.appendChild(quizContainer);
+        }
+
+        // Clear previous content
+        quizContainer.innerHTML = '';
+        quizContainer.style.display = 'flex';
+
+        // Create quiz card
+        const card = document.createElement('div');
+        card.style.cssText = `background:rgba(30,30,30,0.95); border:1px solid rgba(244,208,63,0.3); border-radius:12px; padding:40px; max-width:500px; width:90%; color:#f4f4f4; font-family:'Inter',sans-serif;`;
+
+        // Question
+        const question = document.createElement('div');
+        question.textContent = questionData.question;
+        question.style.cssText = `font-size:1.1rem; margin-bottom:25px; line-height:1.5;`;
+        card.appendChild(question);
+
+        // Answer options
+        const optionsContainer = document.createElement('div');
+        optionsContainer.style.cssText = `display:flex; flex-direction:column; gap:12px;`;
+
+        const correctAnswer = questionData.correct;
+        const options = [questionData.a, questionData.b].sort(() => Math.random() - 0.5); // Shuffle
+
+        const handleAnswer = (answer, isCorrect) => {
+            if (isCorrect) {
+                card.style.backgroundColor = 'rgba(76,175,80,0.2)';
+                const confirmMsg = document.createElement('div');
+                confirmMsg.textContent = 'Correct!';
+                confirmMsg.style.cssText = `color:#4caf50; font-weight:bold; text-align:center; margin-top:20px;`;
+                card.appendChild(confirmMsg);
+
+                // Disable all buttons
+                Array.from(optionsContainer.querySelectorAll('button')).forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+
+                setTimeout(() => {
+                    quizContainer.style.display = 'none';
+                    this.resumeVoSequence();
+                }, 1000);
+            } else {
+                card.style.backgroundColor = 'rgba(244,67,54,0.2)';
+                const clueMsg = document.createElement('div');
+                clueMsg.textContent = `Wrong. ${questionData.clue}`;
+                clueMsg.style.cssText = `color:#f44336; margin-top:15px; font-size:0.9rem; font-style:italic; line-height:1.4;`;
+                card.appendChild(clueMsg);
+
+                // Disable this button
+                Array.from(optionsContainer.querySelectorAll('button')).forEach(btn => {
+                    if (btn.textContent === answer) {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                    }
+                });
+            }
+        };
+
+        options.forEach(option => {
+            const btn = document.createElement('button');
+            btn.textContent = option;
+            btn.style.cssText = `padding:12px 16px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4f4f4; border-radius:6px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.95rem; transition:all 0.2s; text-align:left;`;
+            btn.addEventListener('mouseenter', () => {
+                if (!btn.disabled) btn.style.background = 'rgba(244,208,63,0.3)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                if (!btn.disabled) btn.style.background = 'rgba(244,208,63,0.15)';
+            });
+            btn.addEventListener('click', () => {
+                const isCorrect = option === correctAnswer;
+                handleAnswer(option, isCorrect);
+            });
+            optionsContainer.appendChild(btn);
+        });
+
+        card.appendChild(optionsContainer);
+        quizContainer.appendChild(card);
+    }
+
+    hideMiniQuiz() {
+        const quizContainer = document.getElementById('mini-quiz-overlay');
+        if (quizContainer) {
+            quizContainer.style.display = 'none';
+        }
     }
 
     update(deltaTime) {

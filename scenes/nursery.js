@@ -217,16 +217,6 @@ class NurseryScene extends Scene {
                 if (e.key === 'Escape') this.cancelTransform();
             };
             window.addEventListener('keydown', this.onTransformKey);
-
-            // VO Resume Key (N) — Phase 1b dev (temporary until marker/miniquiz handlers built)
-            this.onKeyN = (e) => {
-                if (e.key !== 'n' && e.key !== 'N') return;
-                if (this.voGateType === 'marker' || this.voGateType === 'miniquiz') {
-                    console.log(`[Dev] Resuming VO from ${this.voGateType} gate (N key)`);
-                    this.resumeVoSequence();
-                }
-            };
-            window.addEventListener('keydown', this.onKeyN);
         }
     }
 
@@ -239,7 +229,6 @@ class NurseryScene extends Scene {
         if (this.onKeyB) window.removeEventListener('keydown', this.onKeyB);
         if (this.onKeyDuplicate) window.removeEventListener('keydown', this.onKeyDuplicate);
         if (this.onTransformKey) window.removeEventListener('keydown', this.onTransformKey);
-        if (this.onKeyN) window.removeEventListener('keydown', this.onKeyN);
     }
 
     handleKeyDown(event) {
@@ -821,6 +810,19 @@ class NurseryScene extends Scene {
         return 'Look for the golden marker to go to the farm';
     }
 
+    getMiniQuizData(gateRef) {
+        const miniQuizzes = {
+            flowers: {
+                question: 'What forms after the white coffee flowers fall?',
+                a: 'Small green coffee cherries',
+                b: 'Small brown coffee cherries',
+                correct: 'Small green coffee cherries',
+                clue: 'Think about color. Coffee cherries start out unripe — they only turn red much later.'
+            }
+        };
+        return miniQuizzes[gateRef] || null;
+    }
+
     createHotspots() {
         this.hotspots.forEach(hotspot => {
             const group = new pc.Entity(`hotspot-${hotspot.id}`);
@@ -980,29 +982,6 @@ class NurseryScene extends Scene {
                 popupVideo: document.getElementById('popup-video')
             };
 
-            // Create temp resume button for VO sequence gating (Phase 1b dev tool)
-            this.resumeButton = document.createElement('button');
-            this.resumeButton.id = 'vo-resume-button';
-            this.resumeButton.textContent = 'Continue (Space)';
-            this.resumeButton.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                padding: 12px 24px;
-                font-size: 16px;
-                background-color: rgba(76, 175, 80, 0.9);
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                display: none;
-                z-index: 1000;
-                font-weight: bold;
-            `;
-            this.resumeButton.addEventListener('click', () => this.resumeVoSequence());
-            document.body.appendChild(this.resumeButton);
-
             // Setup collision box editor listeners
             this.setupEditorPanelListeners();
 
@@ -1097,12 +1076,6 @@ class NurseryScene extends Scene {
                 this.dom.videoPopup.classList.remove('active');
             }
 
-            // Clean up resume button (Phase 1b dev)
-            if (this.resumeButton && this.resumeButton.parentNode) {
-                this.resumeButton.parentNode.removeChild(this.resumeButton);
-                this.resumeButton = null;
-            }
-
             // Clear global event listener flags so they can be re-registered on next load
             window._boxCopyBtnInit = false;
             window._debugBoxesToggleInit = false;
@@ -1120,12 +1093,28 @@ class NurseryScene extends Scene {
     update(deltaTime) {
         if (!this.isLoaded) return;
 
-        // Update resume button visibility based on gate state (Phase 1b dev)
-        if (this.resumeButton) {
-            if (this.voGateType) {
-                this.resumeButton.style.display = 'block';
-            } else {
-                this.resumeButton.style.display = 'none';
+        // Update marker label (position and visibility)
+        if (this.gateMarkerEntity && this.gateMarkerEntity.labelElement) {
+            const videoOpen = document.body.classList.contains('video-open');
+            const worldPos = this.gateMarkerEntity.getPosition();
+            const screen = this.worldToScreen(worldPos);
+            const camPos = cameraEntity.getPosition();
+            const camFwd = cameraEntity.forward;
+            const toMarker = new pc.Vec3().sub2(worldPos, camPos);
+            const isBehind = toMarker.dot(camFwd) <= 0;
+            const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
+            const newDisplay = (videoOpen || isBehind || isOffScreen) ? 'none' : 'block';
+            if (this.gateMarkerEntity._labelDisplay !== newDisplay) {
+                this.gateMarkerEntity.labelElement.style.display = newDisplay;
+                this.gateMarkerEntity._labelDisplay = newDisplay;
+            }
+            if (this.gateMarkerEntity._labelX !== screen.x) {
+                this.gateMarkerEntity.labelElement.style.left = `${screen.x}px`;
+                this.gateMarkerEntity._labelX = screen.x;
+            }
+            if (this.gateMarkerEntity._labelY !== screen.y) {
+                this.gateMarkerEntity.labelElement.style.top = `${screen.y - 50}px`;
+                this.gateMarkerEntity._labelY = screen.y;
             }
         }
 
@@ -1180,6 +1169,21 @@ class NurseryScene extends Scene {
                 }
             }
         });
+
+        // Pulse gate marker if it exists
+        if (this.gateMarkerEntity) {
+            const pulse = Math.sin(Date.now() * 0.003) * 0.5 + 0.5;
+            const core = this.gateMarkerEntity.coreEntity;
+            const glow = this.gateMarkerEntity.glowEntity;
+            if (core) {
+                const s = 0.03 + pulse * 0.01;
+                core.setLocalScale(s, s, s);
+            }
+            if (glow) {
+                const s = 0.06 + pulse * 0.02;
+                glow.setLocalScale(s, s, s);
+            }
+        }
 
         // Update transition hotspot labels (only when actually visible)
         if (!document.body.classList.contains('video-open')) {
