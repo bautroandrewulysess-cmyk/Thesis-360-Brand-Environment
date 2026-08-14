@@ -582,6 +582,7 @@ class Scene {
 
         // Register dev VO shortcuts
         if (window.DEV_MODE) {
+            console.log('[VO Shortcuts] Registering Shift+A/S/D shortcuts');
             window.addEventListener('keydown', this.onKeyVoSkip);
             window.addEventListener('keydown', this.onKeyVoReplay);
             window.addEventListener('keydown', this.onKeyVoResume);
@@ -1511,6 +1512,7 @@ class Scene {
     // Dev VO shortcuts (only registered if DEV_MODE)
     handleVoSkip(e) {
         if (e.shiftKey && e.key === 'a') {
+            console.log('[VO] Shift+A skip triggered');
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
@@ -1545,6 +1547,7 @@ class Scene {
 
     handleVoReplay(e) {
         if (e.shiftKey && e.key === 's') {
+            console.log('[VO] Shift+S replay triggered');
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
@@ -1564,6 +1567,7 @@ class Scene {
 
     handleVoResume(e) {
         if (e.shiftKey && e.key === 'd') {
+            console.log('[VO] Shift+D resume triggered');
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 

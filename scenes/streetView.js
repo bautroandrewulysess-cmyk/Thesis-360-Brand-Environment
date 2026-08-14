@@ -624,6 +624,8 @@ class StreetViewScene extends Scene {
 
         posData.arrows.forEach((arrow, index) => {
             if (arrow.label === 'To Dryer' && !window.journeyComplete) return;
+            // Hide back arrow at toFarm14 after farmer interview is shown
+            if (this.currentPosition === 'toFarm14' && arrow.label === 'Go Back' && !this.toFarm14FirstArrival && !window.journeyComplete) return;
             // Suppress 'Next View' at farm1-1 during VO, but only if there are other forward arrows
             if (this.currentPosition === 'farm1-1' && arrow.label === 'Next View' && this.farmVoStarted && !window.journeyComplete) {
                 const forwardArrows = posData.arrows.filter(a => !a.label.includes('Back'));
@@ -948,13 +950,14 @@ class StreetViewScene extends Scene {
                 console.error('[DiscValues] Error updating disc values:', e);
             }
             this.checkFarmerInterviewAtToFarm14();
-            if (positionKey === 'toFarm10' && !window.farmerInterviewPreloaded) {
-                window.farmerInterviewPreloaded = true;
-                fetch(`${R2_BASE}/farmerInterview.mp4`, { mode: 'cors' }).catch(() => {});
-            }
 
             // Journey to farm: position-specific VO triggers
             if (positionKey === 'toFarm1') {
+                // Preload farmer interview video at start of toFarm chain
+                if (!window.farmerInterviewPreloaded) {
+                    window.farmerInterviewPreloaded = true;
+                    fetch(`${R2_BASE}/farmerInterview.mp4`, { mode: 'cors' }).catch(() => {});
+                }
                 this.playVoWithSubtitles('journeyToFarm_en_02', false);
             } else if (positionKey === 'toFarm7') {
                 this.playVoWithSubtitles('journeyToFarm_en_05', false);
@@ -1260,7 +1263,14 @@ class StreetViewScene extends Scene {
                 this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#f4d03f; padding:14px 24px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.95rem; white-space:nowrap; z-index:100; font-weight:500;';
                 document.body.appendChild(this.farmHintElement);
                 this.farmHintElement.lastText = '';
-                this.farmHintElement.variantIndex = 0;
+                this.farmHintElement.lastPosition = null;
+                this.farmHintElement.hintChoiceIndex = 0;
+            }
+
+            // Update hint only when position changes
+            if (this.farmHintElement.lastPosition !== this.currentPosition) {
+                this.farmHintElement.lastPosition = this.currentPosition;
+                this.farmHintElement.hintChoiceIndex = Math.floor(Math.random() * 4); // Pick random hint per position
             }
 
             // Calculate distance-based hint
@@ -1282,23 +1292,21 @@ class StreetViewScene extends Scene {
                 // Provide hint based on distance
                 if (yawDistance < 15 && pitchDistance < 15) {
                     const closeHints = ['There it is!', 'You found it!', 'Right there!'];
-                    hintText = closeHints[this.farmHintElement.variantIndex % closeHints.length];
+                    hintText = closeHints[this.farmHintElement.hintChoiceIndex % closeHints.length];
                 } else if (yawDistance < 45) {
                     const closingHints = ['Getting closer', 'You\'re on it', 'Very close now'];
-                    hintText = closingHints[this.farmHintElement.variantIndex % closingHints.length];
+                    hintText = closingHints[this.farmHintElement.hintChoiceIndex % closingHints.length];
                 } else if (yawDiff < 0) {
                     const leftHints = ['Look right', 'Shift right', 'Keep turning right'];
-                    hintText = leftHints[this.farmHintElement.variantIndex % leftHints.length];
+                    hintText = leftHints[this.farmHintElement.hintChoiceIndex % leftHints.length];
                 } else {
                     const rightHints = ['Look left', 'Shift left', 'Keep turning left'];
-                    hintText = rightHints[this.farmHintElement.variantIndex % rightHints.length];
+                    hintText = rightHints[this.farmHintElement.hintChoiceIndex % rightHints.length];
                 }
-                this.farmHintElement.variantIndex++;
             } else {
                 // At farm1-1, 1-2, 1-3, 1-5, guide toward farm1-4
                 const progressHints = ['Keep searching', 'Move forward', 'Look around', 'Explore more'];
-                hintText = progressHints[this.farmHintElement.variantIndex % progressHints.length];
-                this.farmHintElement.variantIndex++;
+                hintText = progressHints[this.farmHintElement.hintChoiceIndex % progressHints.length];
             }
 
             if (this.farmHintElement.lastText !== hintText) {

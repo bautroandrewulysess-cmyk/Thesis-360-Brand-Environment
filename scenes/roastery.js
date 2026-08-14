@@ -980,7 +980,7 @@ class RoasteryScene extends Scene {
 
             this.isVoFinished = false;
             this.playVoSequence('roasting');
-            this.initAmbient(assetUrl('Music/roasteryJazz.mp3'), 0.1);
+            this.initAmbient(assetUrl('Music/roasteryJazz.mp3'), 0.05);
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisCafeInterior_optimized.sog`, 'cafe-interior-splat');
             }
@@ -1031,6 +1031,28 @@ class RoasteryScene extends Scene {
         }
         // Otherwise, use the base class implementation
         super.spawnGateMarker(gate);
+    }
+
+    highlightTransitionHotspot() {
+        if (this.hotspotEntities) {
+            const transitionHotspot = this.hotspotEntities.find(h => h.hotspotData?.isTransition);
+            if (transitionHotspot) {
+                this.hotspotHighlight = true;
+                this.highlightedHotspot = transitionHotspot;
+                transitionHotspot.isHighlighted = true;
+                // Scale up and set to gold
+                const core = transitionHotspot.coreEntity;
+                if (core) core.setLocalScale(0.08, 0.08, 0.08);
+                const glow = transitionHotspot.glowEntity;
+                if (glow) {
+                    glow.setLocalScale(0.18, 0.18, 0.18);
+                    const glowMat = glow.render.meshInstances[0].material;
+                    glowMat.emissive = new pc.Color(1, 0.85, 0.2);
+                    glowMat.emissiveIntensity = 2;
+                    glowMat.update();
+                }
+            }
+        }
     }
 
     onHotspotClick(hotspot, entity) {

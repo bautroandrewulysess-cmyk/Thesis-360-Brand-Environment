@@ -78,13 +78,9 @@ class VideoScene extends Scene {
             }
 
             // Start VO + subtitles (auto-triggers quiz on end)
-            if (this.audioKey) {
-                // Use playVoSequence for segmented sequences like 'harvesting'
-                if (this.audioKey === 'harvesting') {
-                    await this.playVoSequence(this.audioKey);
-                } else {
-                    await this.playVoWithSubtitles(this.audioKey);
-                }
+            // For harvesting, defer VO until loading screen dismisses
+            if (this.audioKey && this.audioKey !== 'harvesting') {
+                await this.playVoWithSubtitles(this.audioKey);
             }
 
             // Set up 90-second fallback for harvest scene
@@ -157,6 +153,15 @@ class VideoScene extends Scene {
 
         // Otherwise use parent class implementation
         return super.playVoWithSubtitles(audioKey);
+    }
+
+    onLoadingScreenDismissed() {
+        // Start VO for harvesting after loading screen fades out
+        if (this.audioKey === 'harvesting') {
+            this.playVoSequence(this.audioKey).catch(e => {
+                console.error('[VideoScene] Failed to play VO sequence:', e);
+            });
+        }
     }
 
     getNavPromptText() {

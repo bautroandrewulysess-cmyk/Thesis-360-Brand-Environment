@@ -930,7 +930,7 @@ class NurseryScene extends Scene {
 
     async playDroneVideoThenTransition(spawnPosition) {
         // Play drone video with journeyToFarm_en_01 narration, cutting when VO ends (not when video ends)
-        const droneVideoUrl = assetUrl('Videos/droneTopViewCafeToFarmOverview.mp4');
+        const droneVideoUrl = assetUrl('Videos/droneWeb.mp4');
 
         // Create full-viewport video element for drone footage
         const video = document.createElement('video');
@@ -1038,7 +1038,7 @@ class NurseryScene extends Scene {
             });
 
             // Preload drone video so it's buffered when nursery→farm transition fires
-            this.preloadVideo(assetUrl('Videos/droneTopViewCafeToFarmOverview.mp4'));
+            this.preloadVideo(assetUrl('Videos/droneWeb.mp4'));
 
             // Create hotspots
             this.createHotspots();
