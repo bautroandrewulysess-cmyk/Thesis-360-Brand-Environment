@@ -1892,12 +1892,33 @@ const DevJump = {
     async jumpToScene(btn) {
         const sceneName = btn.dataset.scene;
         const isReturnVisit = btn.dataset.returnVisit === 'true';
+        const spawnPos = btn.dataset.position || 'spawn';
+
+        // Set properties before switching
         const scene = sceneManager.scenes[sceneName];
-        if (!scene) return;
-        scene.quizPassed = true;
-        if (isReturnVisit) scene.isReturnVisit = true;
-        else if (scene.isReturnVisit !== undefined) scene.isReturnVisit = false;
-        await sceneManager.switchTo(sceneName);
+        if (scene) {
+            scene.quizPassed = true;
+            if (isReturnVisit) scene.isReturnVisit = true;
+            else if (scene.isReturnVisit !== undefined) scene.isReturnVisit = false;
+        }
+
+        // Switch with spawn position
+        const spawnMap = {
+            'street-view': 'toFarm1',
+            'cafe-interior': 'spawn',
+            'cafe-exterior': 'spawn',
+            'nursery': 'spawn',
+            'roastery': 'spawn',
+            'video': 'spawn'
+        };
+        const finalPos = spawnPos !== 'spawn' ? spawnPos : spawnMap[sceneName];
+
+        try {
+            await sceneManager.switchTo(sceneName, finalPos);
+            console.log(`[DEV] Jumped to ${sceneName} at ${finalPos}`);
+        } catch (e) {
+            console.error(`[DEV] Failed to switch to ${sceneName}:`, e);
+        }
         this.closeMenu();
     },
 
@@ -1907,22 +1928,33 @@ const DevJump = {
         btn.addEventListener('click', () => this.jumpToPosition());
     },
 
-    jumpToPosition() {
+    async jumpToPosition() {
         const select = document.getElementById('dev-position-select');
         const key = select?.value;
         if (!key || key === '—') return;
         const streetScene = sceneManager.scenes['street-view'];
-        if (!streetScene) return;
+        if (!streetScene) {
+            console.error('[DEV] Street view scene not found');
+            return;
+        }
         if (appState.currentSceneName !== 'street-view') {
             streetScene.quizPassed = true;
-            sceneManager.switchTo('street-view').then(() => {
-                streetScene.transitionToPosition(key);
-                this.closeMenu();
-            });
+            try {
+                await sceneManager.switchTo('street-view', 'toFarm1');
+                await streetScene.transitionToPosition(key);
+                console.log(`[DEV] Jumped to position ${key}`);
+            } catch (e) {
+                console.error(`[DEV] Failed to jump to position ${key}:`, e);
+            }
         } else {
-            streetScene.transitionToPosition(key);
-            this.closeMenu();
+            try {
+                await streetScene.transitionToPosition(key);
+                console.log(`[DEV] Jumped to position ${key}`);
+            } catch (e) {
+                console.error(`[DEV] Failed to transition to ${key}:`, e);
+            }
         }
+        this.closeMenu();
     },
 
     attachJourneyHandlers() {
