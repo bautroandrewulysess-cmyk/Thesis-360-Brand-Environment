@@ -78,6 +78,7 @@ class StreetViewScene extends Scene {
         // Farm directional hint
         this.farmHintVisible = false;
         this.farmHintElement = null;
+        this.farm_en_01_Finished = false;
 
         // Position graph: 31 total positions
         this.positions = {
@@ -876,11 +877,13 @@ class StreetViewScene extends Scene {
             this.journeyIdleTimer = 0;
             this.journeyIdleTimerActive = false;
 
-            // Farm directional hint: show if farm_en_01 has finished
-            if (positionKey >= 'farm1-1' && positionKey <= 'farm1-5') {
-                if (this.voSequenceIndex > 0) {
-                    this.farmHintVisible = true;
-                }
+            // Farm directional hint: show if farm_en_01 has finished (numeric range check)
+            const isFarmRange = positionKey.startsWith('farm1-');
+            const farmIndex = isFarmRange ? parseInt(positionKey.split('-')[1]) : null;
+            const inFarmRange = isFarmRange && farmIndex >= 1 && farmIndex <= 5;
+
+            if (inFarmRange && this.farm_en_01_Finished) {
+                this.farmHintVisible = true;
             } else {
                 this.farmHintVisible = false;
                 if (this.farmHintElement) {
@@ -1260,6 +1263,14 @@ class StreetViewScene extends Scene {
             };
         }
         return null;
+    }
+
+    spawnGateMarker(gate) {
+        // Detect when farm_en_01 finishes by observing treePhoto gate spawn
+        if (gate.ref === 'treePhoto' && this.voSceneKey === 'farm_en') {
+            this.farm_en_01_Finished = true;
+        }
+        super.spawnGateMarker(gate);
     }
 }
 

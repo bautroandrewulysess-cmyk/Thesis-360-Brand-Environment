@@ -1276,6 +1276,10 @@ class Scene {
                 imagePopup.style.display = 'flex';
                 imagePopup.style.opacity = '1';
                 document.body.classList.add('video-open');
+                // Clear farm hint when photo opens
+                if (window.streetViewScene) {
+                    window.streetViewScene.farm_en_01_Finished = false;
+                }
 
                 const onClose = () => {
                     imagePopup.style.opacity = '0';
@@ -1358,8 +1362,12 @@ class Scene {
 
         const correctAnswer = questionData.correct;
         const options = [questionData.a, questionData.b].sort(() => Math.random() - 0.5); // Shuffle
+        let answered = false;
 
         const handleAnswer = (answer, isCorrect) => {
+            if (answered) return;
+            answered = true;
+
             if (isCorrect) {
                 card.style.backgroundColor = 'rgba(76,175,80,0.2)';
                 const confirmMsg = document.createElement('div');
@@ -1372,6 +1380,7 @@ class Scene {
                     this.resumeVoSequence();
                 }, 1000);
             } else {
+                answered = false;
                 card.style.backgroundColor = 'rgba(244,67,54,0.2)';
                 const clueMsg = document.createElement('div');
                 clueMsg.textContent = `Wrong. ${questionData.clue}`;
