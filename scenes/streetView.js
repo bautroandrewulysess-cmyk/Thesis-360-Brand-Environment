@@ -216,13 +216,13 @@ class StreetViewScene extends Scene {
                 photo: assetUrl('Photos (360)/Farm1/farm1 5.jpg'),
                 arrows: [
                     { label: 'To the Harvest', yaw: 0, targetScene: 'harvesting', spawnPosition: [0, 1.6, 0], isHarvestMarker: true },
-                    { label: 'Back', yaw: 180, pitch: 0, target: 'farm1-4' }
+                    { label: 'Back', yaw: -163.5, pitch: -39.5, target: 'farm1-4' }
                 ]
             },
             'farm1-closeup': {
                 photo: assetUrl('Photos (360)/Farm1/Close Up/farm1Closeup 1.jpg'),
                 arrows: [
-                    { label: 'Back', yaw: 0, pitch: 0, target: 'farm1-4' }
+                    { label: 'Back', yaw: -0.1, pitch: -33.2, target: 'farm1-4' }
                 ]
             },
 
@@ -779,6 +779,16 @@ class StreetViewScene extends Scene {
             console.log('[Farm Close-up] Orb clicked');
             this.currentPosition = 'farm1-closeup';
             await this.loadPosition('farm1-closeup');
+
+            // Force the camera to look at the exact starting angle
+            const targetYaw = 171;
+            const targetPitch = -9;
+            cameraEntity.setLocalEulerAngles(targetPitch, targetYaw, 0);
+            this.eulerAngles.yaw = targetYaw * Math.PI / 180;
+            this.eulerAngles.pitch = targetPitch * Math.PI / 180;
+
+            // Ensure the back disc is spawned
+            this.createArrows();
 
             // After position loads, resume the VO sequence to play farm_en_02
             console.log('[Farm Close-up] Resuming VO sequence');

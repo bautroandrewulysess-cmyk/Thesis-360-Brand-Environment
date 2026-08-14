@@ -48,17 +48,8 @@ class RoasteryScene extends Scene {
                 isTransition: false
             },
             {
-                id: 'coffee-roasting',
-                position: new pc.Vec3(0.566, 1.6, -0.740),
-                label: 'Coffee Roasting',
-                description: '',
-                isVideo: true,
-                videoSrc: `${R2_BASE}/roasting.mp4`,
-                isTransition: false
-            },
-            {
                 id: 'roasting-beans-transition',
-                position: new pc.Vec3(0.566, 1.8, -0.740),
+                position: new pc.Vec3(0.566, 1.3, -0.740),
                 label: 'Roasting Beans',
                 description: 'Watch the beans roast',
                 isVideo: true,
@@ -906,6 +897,8 @@ class RoasteryScene extends Scene {
             group.hotspotData = hotspot;
             group.coreEntity = core;
             group.glowEntity = glow;
+            // Hide gate marker on initial load; it will be enabled via spawnGateMarker when appropriate
+            if (hotspot.isGateMarker) group.enabled = false;
             this.hotspotEntities.push(group);
             console.log(`[roastery] Created hotspot: "${hotspot.id}" (transition=${hotspot.isTransition})`);
 
@@ -1147,17 +1140,6 @@ class RoasteryScene extends Scene {
 
     onQuizPassed() {
         super.onQuizPassed();
-        // Re-enable video hotspots now that quiz is passed
-        this.hotspotEntities.forEach(group => {
-            if (group.hotspotData?.isVideo && !group.hotspotData?.isGateMarker) {
-                group.enabled = true;
-                // Show label if it exists
-                if (group.labelElement) {
-                    group.labelElement.style.display = 'block';
-                }
-                console.log(`[Roastery] Re-enabled video hotspot: "${group.hotspotData.id}"`);
-            }
-        });
     }
 
     async onUnload() {
@@ -1285,23 +1267,16 @@ class RoasteryScene extends Scene {
         });
 
         // Update video hotspot visibility when quiz is passed
-        this.hotspotEntities.forEach(group => {
-            if (group.hotspotData?.isVideo) {
-                group.enabled = this.quizPassed;
-            }
-        });
+            // Video hotspots are shown/hidden based on quiz state when created; do not override here
 
         // Update transition, gate marker, and video hotspot labels (only when actually visible)
         if (!document.body.classList.contains('video-open')) {
             this.hotspotEntities.forEach(group => {
                 if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isGateMarker || group.hotspotData?.isVideo)) {
-                    const isVideoHotspot = group.hotspotData?.isVideo;
                     const isGateMarker = group.hotspotData?.isGateMarker;
                     let shouldShow;
                     if (isGateMarker) {
                         shouldShow = group.enabled;
-                    } else if (isVideoHotspot) {
-                        shouldShow = this.quizPassed && group.enabled;
                     } else {
                         shouldShow = this.quizPassed && !window.journeyComplete;
                     }
