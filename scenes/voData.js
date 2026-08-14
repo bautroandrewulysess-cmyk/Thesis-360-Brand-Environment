@@ -19,7 +19,7 @@ window.VoSegments = {
     cafeInterior: {
         en: [
             { id: 'brandStory_en_04', gate: { type: 'marker', ref: 'ownerInterview' }, dur: 24.75 },
-            { id: 'cafe-quiz-time', gate: { type: 'quiz' }, dur: 0 },
+            { id: 'quizTime_en_01', gate: { type: 'quiz' }, dur: 1.56 },
         ],
         bis: [], // TODO: Bisaya recordings not yet produced
     },
