@@ -818,7 +818,7 @@ class NurseryScene extends Scene {
     }
 
     getNavPromptText() {
-        return 'Follow the glowing marker to the farm';
+        return 'Look for the golden marker to go to the farm';
     }
 
     createHotspots() {
@@ -923,6 +923,7 @@ class NurseryScene extends Scene {
 
     async onLoad() {
         await super.onLoad();
+        ColorGrading.applyPreset('nursery');
 
         if (this.isLoaded) return;
 
@@ -1018,10 +1019,7 @@ class NurseryScene extends Scene {
             window.addEventListener('click', fallbackAudioStart);
 
             this.isVoFinished = false;
-            this.playVoSequence('nursery').then(() => {
-                console.log('[Nursery] VO sequence complete');
-                this.isVoFinished = true;
-            });
+            this.playVoSequence('nursery');
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisRoastery_optimized.sog`, 'roastery-splat');
             }

@@ -648,7 +648,6 @@ class Scene {
             });
 
             const triggerQuiz = (path) => {
-                if (!isQuizEligible) return;
                 const requiresEnded = path === 'ended';
                 const audioEndedCheck = requiresEnded ? audio.ended === true : true;
                 if (this.quiz && !window.journeyComplete && !this.quizTriggered && this.isVoFinished === true && audioEndedCheck) {
@@ -670,7 +669,7 @@ class Scene {
             audio.addEventListener('ended', () => {
                 this.clearSubtitles();
                 this.isVoFinished = true;
-                triggerQuiz('ended');
+                if (isQuizEligible) triggerQuiz('ended');
                 resolve();
             });
 
@@ -680,7 +679,7 @@ class Scene {
                 console.warn(`[VO] Audio fetch failed for ${audioPath}`);
                 this.clearSubtitles();
                 this.isVoFinished = true;
-                triggerQuiz('audio-error');
+                if (isQuizEligible) triggerQuiz('audio-error');
                 resolve();
             });
 
@@ -689,7 +688,7 @@ class Scene {
                     console.warn('[VO] Autoplay blocked:', err.message);
                     this.clearSubtitles();
                     this.isVoFinished = true;
-                    triggerQuiz('autoplay-blocked');
+                    if (isQuizEligible) triggerQuiz('autoplay-blocked');
                     resolve();
                 });
             }, 300);
@@ -713,8 +712,10 @@ class Scene {
                     if (!this.isVoFinished) {
                         this.isVoFinished = true;
                         this.clearSubtitles();
-                        console.warn('[VO] Quiz triggered via safety-timeout');
-                        triggerQuiz('safety-timeout');
+                        if (isQuizEligible) {
+                            console.warn('[VO] Quiz triggered via safety-timeout');
+                            triggerQuiz('safety-timeout');
+                        }
                         resolve();
                     }
                 }, remainingTime);
@@ -1207,7 +1208,26 @@ const ColorGrading = {
         gamma: 'SRGB',
         tonemapping: 'ACES'
     },
+    scenePresets: {
+        nursery: {
+            exposure: 1.55,
+            brightness: 0.95,
+            contrast: 1.1,
+            saturation: 1.7,
+            ambient: 1.15,
+            gamma: 'SRGB',
+            tonemapping: 'ACES'
+        }
+    },
     values: {},
+
+    applyPreset(sceneName) {
+        const preset = this.scenePresets[sceneName];
+        if (preset) {
+            this.values = { ...preset };
+            this.applyAll();
+        }
+    },
 
     init() {
         this.values = { ...this.defaults };
