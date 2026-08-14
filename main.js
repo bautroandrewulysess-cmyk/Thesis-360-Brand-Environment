@@ -1510,7 +1510,7 @@ class Scene {
 
     // Dev VO shortcuts (only registered if DEV_MODE)
     handleVoSkip(e) {
-        if (e.shiftKey && e.key === 'ArrowRight') {
+        if (e.shiftKey && e.key === 'a') {
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
@@ -1544,7 +1544,7 @@ class Scene {
     }
 
     handleVoReplay(e) {
-        if (e.shiftKey && e.key === 'ArrowLeft') {
+        if (e.shiftKey && e.key === 's') {
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
@@ -1563,7 +1563,7 @@ class Scene {
     }
 
     handleVoResume(e) {
-        if (e.shiftKey && e.key === 'ArrowDown') {
+        if (e.shiftKey && e.key === 'd') {
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
