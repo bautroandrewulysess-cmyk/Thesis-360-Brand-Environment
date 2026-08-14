@@ -50,7 +50,6 @@ class VideoScene extends Scene {
             this.videoElement.muted = true;
             this.videoElement.loop = true;
             this.videoElement.playsInline = true;
-            this.videoElement.crossOrigin = 'anonymous';
 
             if (this.videoSrc) {
                 this.videoElement.src = this.videoSrc;
@@ -175,15 +174,8 @@ class VideoScene extends Scene {
             clearTimeout(this.fallbackTimeoutHandle);
             console.log('[VideoScene] 90s fallback cleared after quiz pass');
         }
-        // Auto-advance for harvest scene (no continue button needed)
-        if (this.name === 'harvesting') {
-            console.log('[VideoScene] Auto-advancing to roastery');
-            setTimeout(() => {
-                sceneManager.switchTo(this.nextScene, this.nextSpawn);
-            }, 2000);
-        } else {
-            this.showForwardButton();
-        }
+        // Show Continue button for all scenes
+        this.showForwardButton();
     }
 
     showForwardButton() {

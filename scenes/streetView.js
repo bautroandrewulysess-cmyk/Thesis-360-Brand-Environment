@@ -736,7 +736,7 @@ class StreetViewScene extends Scene {
         orbEntity.addComponent('render', { type: 'sphere' });
 
         // Position to the lower-left side, clear of forward arrow line of sight
-        orbEntity.setLocalPosition(-1.5, -1.0, 1.5);
+        orbEntity.setLocalPosition(-1.5, -1.5, 1.5);
         orbEntity.setLocalScale(0.5, 0.5, 0.5);
 
         const layer = app.scene.layers.getLayerByName('Immediate') || app.scene.layers.getLayerByName('UI');

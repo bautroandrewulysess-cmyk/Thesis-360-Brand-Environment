@@ -1087,7 +1087,6 @@ class Scene {
         }
 
         video.volume = 1;
-        video.crossOrigin = 'anonymous';
         video.preload = 'auto';
         video.src = src;
         skipBtn.style.display = required ? 'none' : 'block';

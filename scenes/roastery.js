@@ -52,6 +52,16 @@ class RoasteryScene extends Scene {
                 isTransition: false
             },
             {
+                id: 'roasting-beans-transition',
+                position: new pc.Vec3(0.566, 1.45, -0.740),
+                label: 'Roasting Beans',
+                description: 'Return to the cafe.',
+                isTransition: true,
+                targetScene: 'cafe-interior',
+                spawnPosition: [0, 1.6, 0.9],
+                hiddenUntilQuizPass: true
+            },
+            {
                 id: 'green-bean-packs',
                 position: new pc.Vec3(-0.471, 0.9, 0.389),
                 label: 'Green Bean Packs',
@@ -891,8 +901,8 @@ class RoasteryScene extends Scene {
             this.hotspotEntities.push(group);
             console.log(`[roastery] Created hotspot: "${hotspot.id}" (transition=${hotspot.isTransition})`);
 
-            // Visibility: hide video hotspots until quiz is passed
-            if (hotspot.isVideo) {
+            // Visibility: hide video hotspots and transition hotspots until quiz is passed
+            if (hotspot.isVideo || hotspot.hiddenUntilQuizPass) {
                 group.enabled = this.quizPassed;
             }
 
@@ -1032,32 +1042,6 @@ class RoasteryScene extends Scene {
         }
         // Otherwise, use the base class implementation
         super.spawnGateMarker(gate);
-    }
-
-    highlightTransitionHotspot() {
-        if (this.hotspotEntities) {
-            const transitionHotspot = this.hotspotEntities.find(h => h.hotspotData?.isTransition);
-            if (transitionHotspot) {
-                console.log('[Roastery] ✓ Transition hotspot found:', transitionHotspot.hotspotData.id);
-                this.hotspotHighlight = true;
-                this.highlightedHotspot = transitionHotspot;
-                transitionHotspot.isHighlighted = true;
-                // Scale up and set to gold
-                const core = transitionHotspot.coreEntity;
-                if (core) core.setLocalScale(0.08, 0.08, 0.08);
-                const glow = transitionHotspot.glowEntity;
-                if (glow) {
-                    glow.setLocalScale(0.18, 0.18, 0.18);
-                    const glowMat = glow.render.meshInstances[0].material;
-                    glowMat.emissive = new pc.Color(1, 0.85, 0.2);
-                    glowMat.emissiveIntensity = 2;
-                    glowMat.update();
-                    console.log('[Roastery] ✓ Transition hotspot glow set to gold');
-                }
-            } else {
-                console.warn('[Roastery] ✗ Transition hotspot not found in', this.hotspotEntities.length, 'entities');
-            }
-        }
     }
 
     onHotspotClick(hotspot, entity) {
