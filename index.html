@@ -737,6 +737,17 @@
         </div>
     </div>
 
+    <!-- Brand Story Screen -->
+    <div id="brand-story-screen" style="display:none; opacity:0; transition:opacity 0.8s ease; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:1002; flex-direction:column; align-items:center; justify-content:center;">
+        <video id="brand-story-video" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.15;" autoplay muted loop playsinline crossorigin="anonymous">
+            <source src="https://assets.granjaalegre.com/heroLoop.mp4" type="video/mp4">
+        </video>
+        <div style="position:relative; z-index:1; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px;">
+            <div id="brand-story-subtitles" style="position:absolute; bottom:15%; width:100%; max-width:800px; text-align:center; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:1.1rem; line-height:1.6; padding:0 20px;"></div>
+            <div id="brand-story-gate" style="position:absolute; bottom:8%; width:100%; display:flex; justify-content:center;"></div>
+        </div>
+    </div>
+
     <!-- Language Select Overlay -->
     <div id="language-select" style="display:none; opacity:0; transition:opacity 0.8s ease; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:1003; align-items:center; justify-content:center; flex-direction:column;">
         <div style="position:relative; z-index:1; max-width:500px; width:90%; background:rgba(10,10,10,0.85); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:48px; text-align:center; font-family:'Inter',sans-serif; color:#f4f4f4;">
@@ -878,12 +889,14 @@
             contextScreen.style.display = 'flex';
             setTimeout(() => { contextScreen.style.opacity = '1'; }, 10);
 
-            // Preload café interior splat while context screen is shown
-            preloadSplat('brandStory');
+            // Preload café interior splat while context screen is shown (async, no await)
+            const R2_BASE = 'https://assets.granjaalegre.com';
+            fetch(`${R2_BASE}/thesisCafeInterior_optimized.sog`, { mode: 'cors' }).catch(() => {});
         });
 
         document.getElementById('context-begin-btn').addEventListener('click', () => {
             const contextScreen = document.getElementById('context-screen');
+            const brandStoryScreen = document.getElementById('brand-story-screen');
 
             gsap.to(contextScreen, {
                 opacity: 0,
@@ -891,10 +904,19 @@
                 ease: 'power2.inOut',
                 onComplete: () => {
                     contextScreen.style.display = 'none';
-                    // Set language and proceed directly to café interior (splat already preloaded)
                     window.currentLanguage = 'en';
                     try { sessionStorage.setItem('language', 'en'); } catch (e) {}
-                    proceedTo360();
+
+                    // Show Brand Story screen and start playback
+                    brandStoryScreen.style.display = 'flex';
+                    setTimeout(() => { brandStoryScreen.style.opacity = '1'; }, 10);
+
+                    // Start preloading café interior splat (during 40s of narration)
+                    const R2_BASE = 'https://assets.granjaalegre.com';
+                    fetch(`${R2_BASE}/thesisCafeInterior_optimized.sog`, { mode: 'cors' }).catch(() => {});
+
+                    // Trigger brand story playback
+                    window.startBrandStorySequence();
                 }
             });
         });
@@ -914,6 +936,104 @@
                 }
             });
         });
+
+        // Brand Story Screen
+        window.startBrandStorySequence = async () => {
+            const screen = document.getElementById('brand-story-screen');
+            const subtitles = document.getElementById('brand-story-subtitles');
+            const gateContainer = document.getElementById('brand-story-gate');
+            let brandStoryIndex = 0;
+            const segments = ['brandStory_en_01', 'brandStory_en_02', 'brandStory_en_03'];
+            const gates = [
+                { ref: 'mapZoom', label: 'Learn More' },
+                { ref: 'aerial', label: 'Learn More' },
+                { ref: 'farmerMontage', label: 'Learn More' }
+            ];
+
+            const playBrandStorySegment = async (index) => {
+                if (index >= segments.length) {
+                    // All segments done, transition to café interior
+                    gsap.to(screen, {
+                        opacity: 0,
+                        duration: 0.8,
+                        ease: 'power2.inOut',
+                        onComplete: () => {
+                            screen.style.display = 'none';
+                            proceedTo360();
+                        }
+                    });
+                    return;
+                }
+
+                const segmentId = segments[index];
+                const gateData = gates[index];
+
+                // Play the VO segment with subtitles
+                const vo = new Audio(assetUrl(`VO/${segmentId}.mp3`));
+                subtitles.innerHTML = ''; // Clear previous subtitles
+                gateContainer.innerHTML = ''; // Clear previous gate button
+                let isPlaying = true;
+
+                const onSegmentEnd = async () => {
+                    isPlaying = false;
+                    vo.pause();
+                    // Show gate button for this segment
+                    const btn = document.createElement('button');
+                    btn.textContent = gateData.label;
+                    btn.style.cssText = `padding:14px 28px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; outline:none;`;
+                    btn.addEventListener('mouseenter', () => {
+                        btn.style.background = 'rgba(244,208,63,0.25)';
+                    });
+                    btn.addEventListener('mouseleave', () => {
+                        btn.style.background = 'rgba(244,208,63,0.15)';
+                    });
+                    btn.addEventListener('click', async () => {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        // Play gate video (placeholder: heroLoop.mp4)
+                        const video = document.getElementById('video-popup');
+                        const videoEl = document.getElementById('popup-video');
+                        if (video && videoEl) {
+                            videoEl.src = assetUrl('Videos/heroLoop.mp4');
+                            video.style.display = 'flex';
+                            video.style.opacity = '1';
+                            document.body.classList.add('video-open');
+                            videoEl.play().catch(() => {});
+                            const onVideoEnd = () => {
+                                videoEl.removeEventListener('ended', onVideoEnd);
+                                video.style.opacity = '0';
+                                setTimeout(() => {
+                                    video.style.display = 'none';
+                                    document.body.classList.remove('video-open');
+                                    playBrandStorySegment(index + 1);
+                                }, 800);
+                            };
+                            videoEl.addEventListener('ended', onVideoEnd);
+                        } else {
+                            playBrandStorySegment(index + 1);
+                        }
+                    });
+                    gateContainer.appendChild(btn);
+                };
+
+                vo.addEventListener('ended', onSegmentEnd);
+                vo.addEventListener('error', onSegmentEnd);
+
+                // Fetch and display subtitles if available
+                try {
+                    const subtitleText = await fetch(assetUrl(`VO/${segmentId}.txt`)).then(r => r.text()).catch(() => '');
+                    if (subtitleText && isPlaying) {
+                        subtitles.textContent = subtitleText;
+                    }
+                } catch (e) {}
+
+                // Play audio
+                vo.play().catch(e => console.warn('[BrandStory] Autoplay failed:', e));
+            };
+
+            // Start with first segment
+            playBrandStorySegment(0);
+        };
 
         // Language toggle initialization and handlers
         const initializeLanguageToggle = () => {

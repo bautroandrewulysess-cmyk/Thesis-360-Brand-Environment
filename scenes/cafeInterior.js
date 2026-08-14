@@ -1186,6 +1186,9 @@ class CafeInteriorScene extends Scene {
                 // Delay VO by ~1s to let ambient establish atmosphere
                 setTimeout(() => this.playVoSequence('backToCafe'), 1000);
             } else {
+                // First visit: play only segment 04 (segments 01-03 were on the Brand Story screen)
+                // Skip to index 3 to play only the fourth segment
+                this.voSequenceIndex = 3;
                 setTimeout(() => this.playVoSequence('brandStory'), 1000);
                 if (!window.journeyComplete) {
                     this.preloadSplat(`${R2_BASE}/thesisNursery_optimized.sog`, 'nursery-splat');
