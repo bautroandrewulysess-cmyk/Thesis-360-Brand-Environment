@@ -79,7 +79,12 @@ class VideoScene extends Scene {
 
             // Start VO + subtitles (auto-triggers quiz on end)
             if (this.audioKey) {
-                await this.playVoWithSubtitles(this.audioKey);
+                // Use playVoSequence for segmented sequences like 'harvesting'
+                if (this.audioKey === 'harvesting') {
+                    await this.playVoSequence(this.audioKey);
+                } else {
+                    await this.playVoWithSubtitles(this.audioKey);
+                }
             }
 
             // Set up 90-second fallback for harvest scene

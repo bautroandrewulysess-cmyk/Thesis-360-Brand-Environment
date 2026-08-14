@@ -1093,30 +1093,7 @@ class NurseryScene extends Scene {
     update(deltaTime) {
         if (!this.isLoaded) return;
 
-        // Update marker label (position and visibility)
-        if (this.gateMarkerEntity && this.gateMarkerEntity.labelElement) {
-            const videoOpen = document.body.classList.contains('video-open');
-            const worldPos = this.gateMarkerEntity.getPosition();
-            const screen = this.worldToScreen(worldPos);
-            const camPos = cameraEntity.getPosition();
-            const camFwd = cameraEntity.forward;
-            const toMarker = new pc.Vec3().sub2(worldPos, camPos);
-            const isBehind = toMarker.dot(camFwd) <= 0;
-            const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
-            const newDisplay = (videoOpen || isBehind || isOffScreen) ? 'none' : 'block';
-            if (this.gateMarkerEntity._labelDisplay !== newDisplay) {
-                this.gateMarkerEntity.labelElement.style.display = newDisplay;
-                this.gateMarkerEntity._labelDisplay = newDisplay;
-            }
-            if (this.gateMarkerEntity._labelX !== screen.x) {
-                this.gateMarkerEntity.labelElement.style.left = `${screen.x}px`;
-                this.gateMarkerEntity._labelX = screen.x;
-            }
-            if (this.gateMarkerEntity._labelY !== screen.y) {
-                this.gateMarkerEntity.labelElement.style.top = `${screen.y - 50}px`;
-                this.gateMarkerEntity._labelY = screen.y;
-            }
-        }
+        this.updateGateMarker(deltaTime);
 
         // Display camera position — throttled to 10x per second (not every frame)
         const camPos = cameraEntity.getLocalPosition();
@@ -1169,21 +1146,6 @@ class NurseryScene extends Scene {
                 }
             }
         });
-
-        // Pulse gate marker if it exists
-        if (this.gateMarkerEntity) {
-            const pulse = Math.sin(Date.now() * 0.003) * 0.5 + 0.5;
-            const core = this.gateMarkerEntity.coreEntity;
-            const glow = this.gateMarkerEntity.glowEntity;
-            if (core) {
-                const s = 0.03 + pulse * 0.01;
-                core.setLocalScale(s, s, s);
-            }
-            if (glow) {
-                const s = 0.06 + pulse * 0.02;
-                glow.setLocalScale(s, s, s);
-            }
-        }
 
         // Update transition hotspot labels (only when actually visible)
         if (!document.body.classList.contains('video-open')) {

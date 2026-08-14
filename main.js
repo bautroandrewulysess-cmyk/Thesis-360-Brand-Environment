@@ -1266,10 +1266,41 @@ class Scene {
     onGateMarkerClick(gate) {
         this.despawnGateMarker();
 
-        // Handle based on gate ref — for now, play placeholder video
-        if (gate.ref) {
+        // Handle based on gate ref
+        if (gate.ref === 'treePhoto') {
+            const imagePopup = document.getElementById('image-popup');
+            const popupImage = document.getElementById('popup-image');
+            const closeBtn = document.getElementById('image-popup-close');
+            if (imagePopup && popupImage) {
+                popupImage.src = assetUrl('Photos (360)/Farm1/Close Up/farm1Closeup 1.jpg');
+                imagePopup.style.display = 'flex';
+                imagePopup.style.opacity = '1';
+                document.body.classList.add('video-open');
+
+                const onClose = () => {
+                    imagePopup.style.opacity = '0';
+                    setTimeout(() => {
+                        imagePopup.style.display = 'none';
+                        document.body.classList.remove('video-open');
+                        // Hide farm hint after photo is closed
+                        if (window.streetViewScene) {
+                            window.streetViewScene.farmHintVisible = false;
+                        }
+                        this.resumeVoSequence();
+                    }, 800);
+                };
+                closeBtn.onclick = onClose;
+            } else {
+                this.resumeVoSequence();
+            }
+        } else if (gate.ref) {
             const videoMap = {
-                polybag: 'heroLoop.mp4'
+                polybag: 'heroLoop.mp4',
+                mapZoom: 'heroLoop.mp4',
+                aerial: 'heroLoop.mp4',
+                farmerMontage: 'heroLoop.mp4',
+                ownerInterview: 'farmerInterview.mp4',
+                roasterVideo: 'roasting.mp4'
             };
             const videoSrc = videoMap[gate.ref];
             if (videoSrc && this.dom && this.dom.popupVideo && this.dom.videoPopup) {
@@ -1352,14 +1383,6 @@ class Scene {
                 clueMsg.textContent = `Wrong. ${questionData.clue}`;
                 clueMsg.style.cssText = `color:#f44336; margin-top:15px; font-size:0.9rem; font-style:italic; line-height:1.4;`;
                 card.appendChild(clueMsg);
-
-                // Disable this button
-                Array.from(optionsContainer.querySelectorAll('button')).forEach(btn => {
-                    if (btn.textContent === answer) {
-                        btn.disabled = true;
-                        btn.style.opacity = '0.5';
-                    }
-                });
             }
         };
 
@@ -1388,6 +1411,48 @@ class Scene {
         const quizContainer = document.getElementById('mini-quiz-overlay');
         if (quizContainer) {
             quizContainer.style.display = 'none';
+        }
+    }
+
+    updateGateMarker(deltaTime) {
+        if (!this.gateMarkerEntity) return;
+
+        // Update label positioning and visibility
+        if (this.gateMarkerEntity.labelElement) {
+            const videoOpen = document.body.classList.contains('video-open');
+            const worldPos = this.gateMarkerEntity.getPosition();
+            const screen = this.worldToScreen(worldPos);
+            const camPos = cameraEntity.getPosition();
+            const camFwd = cameraEntity.forward;
+            const toMarker = new pc.Vec3().sub2(worldPos, camPos);
+            const isBehind = toMarker.dot(camFwd) <= 0;
+            const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
+            const newDisplay = (videoOpen || isBehind || isOffScreen) ? 'none' : 'block';
+            if (this.gateMarkerEntity._labelDisplay !== newDisplay) {
+                this.gateMarkerEntity.labelElement.style.display = newDisplay;
+                this.gateMarkerEntity._labelDisplay = newDisplay;
+            }
+            if (this.gateMarkerEntity._labelX !== screen.x) {
+                this.gateMarkerEntity.labelElement.style.left = `${screen.x}px`;
+                this.gateMarkerEntity._labelX = screen.x;
+            }
+            if (this.gateMarkerEntity._labelY !== screen.y) {
+                this.gateMarkerEntity.labelElement.style.top = `${screen.y - 50}px`;
+                this.gateMarkerEntity._labelY = screen.y;
+            }
+        }
+
+        // Pulse animation
+        const pulse = Math.sin(Date.now() * 0.003) * 0.5 + 0.5;
+        const core = this.gateMarkerEntity.coreEntity;
+        const glow = this.gateMarkerEntity.glowEntity;
+        if (core) {
+            const s = 0.03 + pulse * 0.01;
+            core.setLocalScale(s, s, s);
+        }
+        if (glow) {
+            const s = 0.06 + pulse * 0.02;
+            glow.setLocalScale(s, s, s);
         }
     }
 

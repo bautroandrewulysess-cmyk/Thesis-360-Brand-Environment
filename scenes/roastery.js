@@ -912,55 +912,6 @@ class RoasteryScene extends Scene {
         });
     }
 
-    onHotspotClick(hotspot, entity) {
-        this.activeHotspotEntity = entity;
-
-        if (hotspot.isTransition) {
-            if (!this.canTransition()) {
-                this.showVoWarning('Please wait for the narration and complete the quiz.');
-                return;
-            }
-            if (!this.isVoFinished && !window.journeyComplete) { this.showVoWarning(); return; }
-            if (!this.quizPassed && !window.journeyComplete) {
-                this.showVoWarning('Please complete the quiz first.');
-                return;
-            }
-            // Set return visit flag before switching to cafe-interior (only if not in free-roam)
-            if (hotspot.targetScene === 'cafe-interior' && !window.journeyComplete) {
-                sceneManager.scenes['cafe-interior'].isReturnVisit = true;
-            }
-            sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
-            return;
-        }
-
-        if (hotspot.isVideo && hotspot.videoSrc) {
-            // Guard against overlap: ignore if video is already pending or VO is playing
-            if (this.videoPending) return;
-            if (this.voAudio && !this.voAudio.paused) return;
-
-            // Pause ambient, play video with fade in/out
-            this.pauseAmbient();
-            this.showVideoPopup(hotspot.videoSrc, {
-                required: false,
-                caption: hotspot.label,
-                onFinish: () => {
-                    this.resumeAmbient();
-                }
-            });
-
-            // Apply fade in/out to popup
-            const popup = document.getElementById('video-popup');
-            if (popup) {
-                popup.style.transition = 'opacity 0.5s ease-in-out';
-            }
-            return;
-        }
-
-        document.getElementById('hotspot-title').textContent = hotspot.label;
-        document.getElementById('hotspot-description').textContent = hotspot.description;
-        this.dom.hotspotPopup.classList.add('active');
-    }
-
     async onLoad() {
         console.log('[Roastery] onLoad called');
         await super.onLoad();
@@ -1028,7 +979,7 @@ class RoasteryScene extends Scene {
             this.setupEditorPanelListeners();
 
             this.isVoFinished = false;
-            this.playVoWithSubtitles('roasting');
+            this.playVoSequence('roasting');
             this.initAmbient(assetUrl('Music/roasteryJazz.mp3'), 0.1);
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisCafeInterior_optimized.sog`, 'cafe-interior-splat');
@@ -1064,6 +1015,85 @@ class RoasteryScene extends Scene {
         }
         this.isLoaded = true;
         console.log('[Roastery] onLoad completed successfully');
+    }
+
+    spawnGateMarker(gate) {
+        // For roasterVideo, don't spawn a marker — use the existing hotspot
+        if (gate.ref === 'roasterVideo') {
+            return;
+        }
+        // Otherwise, use the base class implementation
+        super.spawnGateMarker(gate);
+    }
+
+    onHotspotClick(hotspot, entity) {
+        this.activeHotspotEntity = entity;
+
+        if (hotspot.isTransition) {
+            if (!this.canTransition()) {
+                this.showVoWarning('Please wait for the narration and complete the quiz.');
+                return;
+            }
+            if (!this.isVoFinished && !window.journeyComplete) { this.showVoWarning(); return; }
+            if (!this.quizPassed && !window.journeyComplete) {
+                this.showVoWarning('Please complete the quiz first.');
+                return;
+            }
+            // Set return visit flag before switching to cafe-interior (only if not in free-roam)
+            if (hotspot.targetScene === 'cafe-interior' && !window.journeyComplete) {
+                sceneManager.scenes['cafe-interior'].isReturnVisit = true;
+            }
+            sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
+            return;
+        }
+
+        if (hotspot.isVideo && hotspot.videoSrc) {
+            // Guard against overlap: ignore if video is already pending or VO is playing
+            if (this.videoPending) return;
+            if (this.voAudio && !this.voAudio.paused) return;
+
+            // If this is the roasterVideo (marker gate), resume the VO sequence
+            if (hotspot.id === 'coffee-roasting' && this.voSceneKey === 'roasting' && !this.isVoFinished) {
+                this.pauseAmbient();
+                this.showVideoPopup(hotspot.videoSrc, {
+                    required: false,
+                    caption: hotspot.label,
+                    onFinish: () => {
+                        this.resumeAmbient();
+                    }
+                });
+
+                // Apply fade in/out to popup
+                const popup = document.getElementById('video-popup');
+                if (popup) {
+                    popup.style.transition = 'opacity 0.5s ease-in-out';
+                }
+                // Resume sequence after video opens
+                this.resumeVoSequence();
+                return;
+            }
+
+            // Normal video hotspot click
+            this.pauseAmbient();
+            this.showVideoPopup(hotspot.videoSrc, {
+                required: false,
+                caption: hotspot.label,
+                onFinish: () => {
+                    this.resumeAmbient();
+                }
+            });
+
+            // Apply fade in/out to popup
+            const popup = document.getElementById('video-popup');
+            if (popup) {
+                popup.style.transition = 'opacity 0.5s ease-in-out';
+            }
+            return;
+        }
+
+        document.getElementById('hotspot-title').textContent = hotspot.label;
+        document.getElementById('hotspot-description').textContent = hotspot.description;
+        this.dom.hotspotPopup.classList.add('active');
     }
 
     async onUnload() {

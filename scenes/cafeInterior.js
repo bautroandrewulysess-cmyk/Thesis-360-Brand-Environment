@@ -1007,6 +1007,15 @@ class CafeInteriorScene extends Scene {
         });
     }
 
+    spawnGateMarker(gate) {
+        // For brewingPOV, don't spawn a marker — use the existing hotspot
+        if (gate.ref === 'brewingPOV') {
+            return;
+        }
+        // Otherwise, use the base class implementation
+        super.spawnGateMarker(gate);
+    }
+
     onHotspotClick(hotspot, entity) {
         this.activeHotspotEntity = entity;
 
@@ -1031,7 +1040,28 @@ class CafeInteriorScene extends Scene {
             if (this.videoPending) return;
             if (this.voAudio && !this.voAudio.paused) return;
 
-            // Pause ambient, play video with fade in/out
+            // If this is the brewingPOV (marker gate in backToCafe sequence), resume the VO sequence
+            if (hotspot.id === 'coffee-brewing' && this.voSceneKey === 'backToCafe' && !this.isVoFinished) {
+                this.pauseAmbient();
+                this.showVideoPopup(hotspot.videoSrc, {
+                    required: false,
+                    caption: hotspot.label,
+                    onFinish: () => {
+                        this.resumeAmbient();
+                    }
+                });
+
+                // Apply fade in/out to popup
+                const popup = document.getElementById('video-popup');
+                if (popup) {
+                    popup.style.transition = 'opacity 0.5s ease-in-out';
+                }
+                // Resume sequence after video opens
+                this.resumeVoSequence();
+                return;
+            }
+
+            // Normal video hotspot click
             this.pauseAmbient();
             this.showVideoPopup(hotspot.videoSrc, {
                 required: false,
@@ -1141,9 +1171,9 @@ class CafeInteriorScene extends Scene {
             if (this.isReturnVisit) {
                 this.quiz = [window.PendingQuizzes.backToTheCafe, window.PendingQuizzes.finalChallenge];
                 // Delay VO by ~1s to let ambient establish atmosphere
-                setTimeout(() => this.playVoWithSubtitles('backToTheCafe'), 1000);
+                setTimeout(() => this.playVoSequence('backToCafe'), 1000);
             } else {
-                setTimeout(() => this.playVoWithSubtitles('brandStory'), 1000);
+                setTimeout(() => this.playVoSequence('brandStory'), 1000);
                 if (!window.journeyComplete) {
                     this.preloadSplat(`${R2_BASE}/thesisNursery_optimized.sog`, 'nursery-splat');
                 }

@@ -67,6 +67,18 @@ class StreetViewScene extends Scene {
             feedback: 'Correct! Healthy coffee trees begin with healthy soil. Preparing the planting hole with organic fertilizer gives young trees the best possible start.'
         };
 
+        // Journey to farm
+        this.journeyVideoPlayed = false;
+        this.journeyIdleTimer = 0;
+        this.journeyIdleTimerActive = false;
+        this.journeyEncouragementPlayedAt03 = new Set();
+        this.journeyEncouragementPlayedAt04 = new Set();
+        this.journeyEncouragementPlayedAt06 = false;
+
+        // Farm directional hint
+        this.farmHintVisible = false;
+        this.farmHintElement = null;
+
         // Position graph: 31 total positions
         this.positions = {
             // === Cafe → Farm main walk (14 positions) ===
@@ -852,6 +864,31 @@ class StreetViewScene extends Scene {
                 window.farmerInterviewPreloaded = true;
                 fetch(`${R2_BASE}/farmerInterview.mp4`, { mode: 'cors' }).catch(() => {});
             }
+
+            // Journey to farm: position-specific VO triggers
+            if (positionKey === 'toFarm1') {
+                this.playVoWithSubtitles('journeyToFarm_en_02', false);
+            } else if (positionKey === 'toFarm7') {
+                this.playVoWithSubtitles('journeyToFarm_en_05', false);
+            }
+
+            // Reset idle timer on position change
+            this.journeyIdleTimer = 0;
+            this.journeyIdleTimerActive = false;
+
+            // Farm directional hint: show if farm_en_01 has finished
+            if (positionKey >= 'farm1-1' && positionKey <= 'farm1-5') {
+                if (this.voSequenceIndex > 0) {
+                    this.farmHintVisible = true;
+                }
+            } else {
+                this.farmHintVisible = false;
+                if (this.farmHintElement) {
+                    this.farmHintElement.remove();
+                    this.farmHintElement = null;
+                }
+            }
+
             this.updateCoordinateDisplay();
             this.preloadArrowTargets();
             await fadeIn();
@@ -881,7 +918,7 @@ class StreetViewScene extends Scene {
             if (positionKey === 'farm1-1' && !this.farmVoStarted) {
                 this.farmVoStarted = true;
                 this.isVoFinished = false;
-                this.playVoWithSubtitles('farm');
+                this.playVoSequence('farm');
             }
 
             // Dispose old asset before loading new one
@@ -1022,6 +1059,30 @@ class StreetViewScene extends Scene {
             // Preload next positions
             this.preloadArrowTargets();
 
+            // Journey to farm: on first entry, show drone video with voiceover
+            if (!this.journeyVideoPlayed && this.currentPosition === 'toFarm1') {
+                this.journeyVideoPlayed = true;
+                const videoPopup = document.getElementById('video-popup');
+                const popupVideo = document.getElementById('popup-video');
+                if (videoPopup && popupVideo) {
+                    popupVideo.src = assetUrl('Videos/droneTopViewCafeToFarmOverview.mp4');
+                    videoPopup.style.display = 'flex';
+                    popupVideo.play();
+                    this.playVoWithSubtitles('journeyToFarm_en_01', false);
+
+                    const onVideoEnd = () => {
+                        popupVideo.removeEventListener('ended', onVideoEnd);
+                        fadeOut().then(() => {
+                            videoPopup.style.display = 'none';
+                            return fadeIn();
+                        }).catch(() => {
+                            videoPopup.style.display = 'none';
+                        });
+                    };
+                    popupVideo.addEventListener('ended', onVideoEnd);
+                }
+            }
+
             this.attachEventListeners();
         } catch (error) {
             console.error('Street view load failed:', error);
@@ -1078,6 +1139,16 @@ class StreetViewScene extends Scene {
             this.preloadedAssets = {};
             this.preloadedAssetKeys = [];
 
+            // Clear journey to farm timers
+            this.journeyIdleTimer = 0;
+            this.journeyIdleTimerActive = false;
+
+            // Clear farm hint
+            if (this.farmHintElement) {
+                this.farmHintElement.remove();
+                this.farmHintElement = null;
+            }
+
             await super.onUnload();
         } catch (error) {
             console.error('Error unloading street view:', error);
@@ -1106,12 +1177,77 @@ class StreetViewScene extends Scene {
             arrow.setLocalScale(scale, 0.08, scale);
         });
 
+        // Farm directional hint
+        if (this.farmHintVisible && this.currentPosition >= 'farm1-1' && this.currentPosition <= 'farm1-5') {
+            if (!this.farmHintElement) {
+                this.farmHintElement = document.createElement('div');
+                this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:#f4d03f; padding:12px 20px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.9rem; white-space:nowrap; z-index:100;';
+                document.body.appendChild(this.farmHintElement);
+            }
+            const farmIndex = parseInt(this.currentPosition.split('-')[1]);
+            this.farmHintElement.textContent = farmIndex < 3 ? 'Keep moving forward' : farmIndex > 3 ? 'Go back' : '';
+            this.farmHintElement.style.display = this.farmHintElement.textContent ? 'block' : 'none';
+        } else {
+            if (this.farmHintElement) {
+                this.farmHintElement.style.display = 'none';
+            }
+        }
+
+        // Journey to farm: idle timer for encouragement lines
+        const pos = this.currentPosition;
+        if (pos >= 'toFarm1' && pos <= 'toFarm6') {
+            this.journeyIdleTimer += deltaTime;
+            if (this.journeyIdleTimer >= 8 && !this.journeyIdleTimerActive) {
+                // Don't play if VO or video already playing
+                if (!this.isVoFinished || document.body.classList.contains('video-open')) {
+                    return;
+                }
+                this.journeyIdleTimerActive = true;
+                if (!this.journeyEncouragementPlayedAt03.has(pos)) {
+                    this.playVoWithSubtitles('journeyToFarm_en_03', false);
+                    this.journeyEncouragementPlayedAt03.add(pos);
+                } else if (!this.journeyEncouragementPlayedAt04.has(pos)) {
+                    this.playVoWithSubtitles('journeyToFarm_en_04', false);
+                    this.journeyEncouragementPlayedAt04.add(pos);
+                }
+                this.journeyIdleTimer = 0;
+            }
+        } else if (pos >= 'toFarm8' && pos <= 'toFarm13') {
+            this.journeyIdleTimer += deltaTime;
+            if (this.journeyIdleTimer >= 8 && !this.journeyIdleTimerActive && !this.journeyEncouragementPlayedAt06) {
+                // Don't play if VO or video already playing
+                if (!this.isVoFinished || document.body.classList.contains('video-open')) {
+                    return;
+                }
+                this.journeyIdleTimerActive = true;
+                this.playVoWithSubtitles('journeyToFarm_en_06', false);
+                this.journeyEncouragementPlayedAt06 = true;
+                this.journeyIdleTimer = 0;
+            }
+        } else {
+            this.journeyIdleTimer = 0;
+            this.journeyIdleTimerActive = false;
+        }
+
         // Update coordinate display periodically
         this.coordUpdateTimer += deltaTime;
         if (this.coordUpdateTimer >= this.coordUpdateInterval) {
             this.updateCoordinateDisplay();
             this.coordUpdateTimer = 0;
         }
+    }
+
+    getMiniQuizData(gateRef) {
+        if (gateRef === 'monitoring') {
+            return {
+                question: 'Why are coffee trees regularly monitored?',
+                a: 'To make the coffee trees grow faster',
+                b: 'To find pests and diseases early',
+                correct: 'To find pests and diseases early',
+                clue: 'Monitoring doesn\'t change how fast a tree grows. Think about what a farmer is looking for.'
+            };
+        }
+        return null;
     }
 }
 
