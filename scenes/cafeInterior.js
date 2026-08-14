@@ -994,17 +994,8 @@ class CafeInteriorScene extends Scene {
     }
 
     onVoFinished_brandStory() {
-        this.showVideoPopup(`${R2_BASE}/ownerInterview.mp4`, {
-            required: true,
-            caption: 'Hear it from the owners',
-            onFinish: () => {
-                setTimeout(() => {
-                    this.showQuiz(this.quiz, () => {
-                        this.onQuizPassed();
-                    });
-                }, 1000);
-            }
-        });
+        // Quiz is now shown by onGateMarkerClick for the ownerInterview gate
+        // This callback is kept for backwards compatibility if needed
     }
 
     spawnGateMarker(gate) {
@@ -1099,6 +1090,20 @@ class CafeInteriorScene extends Scene {
         if (this.dom.hotspotPopup) this.dom.hotspotPopup.classList.add('active');
     }
 
+    onGateMarkerClick(gate) {
+        // For ownerInterview gate after segment 04, skip the gate video and go straight to quiz
+        if (gate.ref === 'ownerInterview' && this.voSceneKey === 'brandStory') {
+            this.despawnGateMarker();
+            setTimeout(() => {
+                this.showQuiz(this.quiz, () => {
+                    this.onQuizPassed();
+                });
+            }, 500);
+            return;
+        }
+        // Otherwise use parent implementation
+        super.onGateMarkerClick(gate);
+    }
 
     async onLoad() {
         await super.onLoad();
