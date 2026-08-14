@@ -1272,6 +1272,15 @@ class StreetViewScene extends Scene {
         }
         super.spawnGateMarker(gate);
     }
+
+    onGateMarkerClick(gate) {
+        // Clear farm hint when treePhoto is opened
+        if (gate.ref === 'treePhoto') {
+            this.farm_en_01_Finished = false;
+            this.farmHintVisible = false;
+        }
+        super.onGateMarkerClick(gate);
+    }
 }
 
 // Register the street view scene

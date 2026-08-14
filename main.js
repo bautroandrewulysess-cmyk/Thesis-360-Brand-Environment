@@ -1276,10 +1276,6 @@ class Scene {
                 imagePopup.style.display = 'flex';
                 imagePopup.style.opacity = '1';
                 document.body.classList.add('video-open');
-                // Clear farm hint when photo opens
-                if (window.streetViewScene) {
-                    window.streetViewScene.farm_en_01_Finished = false;
-                }
 
                 const onClose = () => {
                     imagePopup.style.opacity = '0';
