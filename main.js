@@ -189,8 +189,16 @@ class SceneManager {
 
     async switchTo(sceneName, spawnPosition = null) {
         if (appState.isTransitioning || appState.isLoadingScene) {
-            console.warn('switchTo blocked — already transitioning');
-            return;
+            console.warn(`[SceneManager] Queued switch to ${sceneName} — waiting for current transition`);
+            // Wait for current transition to complete
+            await new Promise(resolve => {
+                const checkInterval = setInterval(() => {
+                    if (!appState.isTransitioning && !appState.isLoadingScene) {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }
+                }, 100);
+            });
         }
 
         if (appState.currentSceneName === sceneName) {
@@ -213,6 +221,8 @@ class SceneManager {
             if (loadingScreen) {
                 loadingScreenShownAt = Date.now();
                 loadingScreen.classList.remove('hidden');
+                loadingScreen.style.opacity = '1';
+                loadingScreen.style.pointerEvents = 'auto';
                 showLoadingTrivia(sceneName);
             }
 
@@ -279,6 +289,8 @@ class SceneManager {
             // Hide loading screen
             if (loadingScreen) {
                 loadingScreen.classList.add('hidden');
+                loadingScreen.style.opacity = '0';
+                loadingScreen.style.pointerEvents = 'none';
             }
 
             // Signal to active scene that loading screen has been dismissed — allows VO to start after loading
@@ -311,18 +323,16 @@ const fadeTransitionDuration = config.fadeTransitionDuration * 1000;
 function fadeOut() {
     return new Promise((resolve) => {
         fadeOverlay.classList.add('active');
+        fadeOverlay.style.opacity = '1';
         setTimeout(resolve, fadeTransitionDuration);
     });
 }
 
 function fadeIn() {
     return new Promise((resolve) => {
-        console.log('[Fade] fadeIn called, removing active class from overlay');
         fadeOverlay.classList.remove('active');
-        setTimeout(() => {
-            console.log('[Fade] fadeIn transition complete');
-            resolve();
-        }, fadeTransitionDuration);
+        fadeOverlay.style.opacity = '0';
+        setTimeout(resolve, fadeTransitionDuration);
     });
 }
 
@@ -1903,7 +1913,11 @@ const DevJump = {
         if (wrapper && wrapper.style.display !== 'none') {
             wrapper.style.display = 'none';
             const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) loadingScreen.classList.remove('hidden');
+            if (loadingScreen) {
+                loadingScreen.classList.remove('hidden');
+                loadingScreen.style.opacity = '1';
+                loadingScreen.style.pointerEvents = 'auto';
+            }
             const canvas = document.getElementById('canvas');
             if (canvas) canvas.style.display = 'block';
             console.log('[DEV] Hiding landing wrapper');
@@ -1929,13 +1943,8 @@ const DevJump = {
         const finalPos = spawnPos !== 'spawn' ? spawnPos : spawnMap[sceneName];
 
         try {
-            console.log(`[DEV] About to switch to ${sceneName} at ${finalPos}`);
             await sceneManager.switchTo(sceneName, finalPos);
             console.log(`[DEV] Jumped to ${sceneName} at ${finalPos}`);
-            const pos = cameraEntity.getLocalPosition();
-            console.log(`[DEV] Camera type:`, typeof pos, 'Camera:',  pos?.x, pos?.y, pos?.z);
-            console.log(`[DEV] App enabled:`, app.enabled, 'Rendering:', app.isRunning?.());
-            console.log(`[DEV] Canvas visible:`, canvas.style.display, 'Size:', canvas.clientWidth, 'x', canvas.clientHeight);
         } catch (e) {
             console.error(`[DEV] Failed to switch to ${sceneName}:`, e);
         }
@@ -1963,7 +1972,11 @@ const DevJump = {
         if (wrapper && wrapper.style.display !== 'none') {
             wrapper.style.display = 'none';
             const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) loadingScreen.classList.remove('hidden');
+            if (loadingScreen) {
+                loadingScreen.classList.remove('hidden');
+                loadingScreen.style.opacity = '1';
+                loadingScreen.style.pointerEvents = 'auto';
+            }
             const canvas = document.getElementById('canvas');
             if (canvas) canvas.style.display = 'block';
             console.log('[DEV] Hiding landing wrapper');
