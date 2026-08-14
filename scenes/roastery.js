@@ -63,7 +63,7 @@ class RoasteryScene extends Scene {
                 description: 'Watch the beans roast',
                 isVideo: true,
                 videoSrc: `${R2_BASE}/roasting.mp4`,
-                isGateMark: true
+                isGateMarker: true
             },
             {
                 id: 'green-bean-packs',
