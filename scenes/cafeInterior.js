@@ -52,10 +52,11 @@ class CafeInteriorScene extends Scene {
             },
             {
                 id: 'coffee-brewing',
-                position: new pc.Vec3(0.140, 1.450, -0.660),
-                label: 'Coffee Brewing',
+                position: new pc.Vec3(0.140, 1.490, -0.660),
+                label: 'Brewing Video',
                 description: '',
                 isVideo: true,
+                isGateMarker: true,
                 videoSrc: `${R2_BASE}/brewing.mp4`,
                 isTransition: false
             },
@@ -953,6 +954,8 @@ class CafeInteriorScene extends Scene {
             group.hotspotData = hotspot;
             group.coreEntity = core;
             group.glowEntity = glow;
+            // Hide gate markers on initial load; they'll be enabled via spawnGateMarker
+            if (hotspot.isGateMarker) group.enabled = false;
             this.hotspotEntities.push(group);
 
             // Visibility: hide video hotspots until quiz is passed
@@ -1062,7 +1065,7 @@ class CafeInteriorScene extends Scene {
             if (this.voAudio && !this.voAudio.paused) return;
 
             // If this is the brewingPOV (marker gate in backToCafe sequence), resume the VO sequence
-            if (hotspot.id === 'coffee-brewing' && this.voSceneKey === 'backToCafe' && !this.isVoFinished) {
+            if (hotspot.id === 'coffee-brewing' && this.voSceneKey === 'backToCafe') {
                 // Unhighlight the hotspot
                 const glowMat = entity.glowEntity.render.meshInstances[0].material;
                 glowMat.emissive = new pc.Color(0, 0, 0);
@@ -1079,6 +1082,7 @@ class CafeInteriorScene extends Scene {
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: false,
                     caption: hotspot.label,
+                    volume: 0.15,
                     onFinish: () => {
                         this.resumeAmbient();
                     }
@@ -1395,9 +1399,9 @@ class CafeInteriorScene extends Scene {
             }
         });
 
-        // Update video hotspot visibility when quiz is passed
+        // Update video hotspot visibility when quiz is passed (do not hide gate markers)
         this.hotspotEntities.forEach(group => {
-            if (group.hotspotData?.isVideo) {
+            if (group.hotspotData?.isVideo && !group.hotspotData?.isGateMarker) {
                 group.enabled = this.quizPassed;
             }
         });
@@ -1405,9 +1409,10 @@ class CafeInteriorScene extends Scene {
         // Update transition and video hotspot labels (only when actually visible)
         if (!document.body.classList.contains('video-open')) {
             this.hotspotEntities.forEach(group => {
-                if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isVideo)) {
-                    const isVideoHotspot = group.hotspotData?.isVideo;
-                    const shouldShow = isVideoHotspot ? (this.quizPassed && group.enabled) : (this.quizPassed && !window.journeyComplete);
+                    if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isVideo)) {
+                        const isVideoHotspot = group.hotspotData?.isVideo;
+                        const isGateMarker = group.hotspotData?.isGateMarker;
+                        const shouldShow = (isVideoHotspot && !isGateMarker) ? (this.quizPassed && group.enabled) : (this.quizPassed && !window.journeyComplete);
                     if (shouldShow) {
                         const worldPos = group.getPosition();
                         const screen = this.worldToScreen(worldPos);

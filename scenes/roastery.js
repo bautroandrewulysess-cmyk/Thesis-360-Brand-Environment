@@ -42,7 +42,7 @@ class RoasteryScene extends Scene {
             },
             {
                 id: 'roasting-machine',
-                position: new pc.Vec3(0.566, 1.3, -0.740),
+                position: new pc.Vec3(0.566, 1.5, -0.740),
                 label: 'Roasting Machine',
                 description: 'The roaster applies controlled heat to green coffee beans, moving them through drying, first crack, and development — the stages that build the sugars, acids, and oils responsible for flavour and aroma. Roast time and temperature are adjusted to draw out each bean\'s best character before cooling and packaging.',
                 isTransition: false
