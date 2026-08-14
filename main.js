@@ -1870,6 +1870,28 @@ if (DEV_MODE) {
 }
 
 // ============================================================================
+// OVERLAY MANAGEMENT
+// ============================================================================
+
+function dismissAllOverlays() {
+    const overlays = [
+        'landing-wrapper',
+        'context-screen',
+        'brand-story-screen',
+        'quiz-overlay'
+    ];
+
+    overlays.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = 'none';
+            el.style.opacity = '0';
+            el.style.pointerEvents = 'none';
+        }
+    });
+}
+
+// ============================================================================
 // DEV TOOL — REMOVE BEFORE SUBMISSION
 // ============================================================================
 
@@ -1908,20 +1930,16 @@ const DevJump = {
         const isReturnVisit = btn.dataset.returnVisit === 'true';
         const spawnPos = btn.dataset.position || 'spawn';
 
-        // Hide landing wrapper if app not initialized
-        const wrapper = document.getElementById('landing-wrapper');
-        if (wrapper && wrapper.style.display !== 'none') {
-            wrapper.style.display = 'none';
-            const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) {
-                loadingScreen.classList.remove('hidden');
-                loadingScreen.style.opacity = '1';
-                loadingScreen.style.pointerEvents = 'auto';
-            }
-            const canvas = document.getElementById('canvas');
-            if (canvas) canvas.style.display = 'block';
-            console.log('[DEV] Hiding landing wrapper');
+        // Dismiss all overlays and show canvas
+        dismissAllOverlays();
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.classList.remove('hidden');
+            loadingScreen.style.opacity = '1';
+            loadingScreen.style.pointerEvents = 'auto';
         }
+        const canvas = document.getElementById('canvas');
+        if (canvas) canvas.style.display = 'block';
 
         // Set properties before switching
         const scene = sceneManager.scenes[sceneName];
@@ -1967,20 +1985,16 @@ const DevJump = {
             return;
         }
 
-        // Hide landing wrapper
-        const wrapper = document.getElementById('landing-wrapper');
-        if (wrapper && wrapper.style.display !== 'none') {
-            wrapper.style.display = 'none';
-            const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) {
-                loadingScreen.classList.remove('hidden');
-                loadingScreen.style.opacity = '1';
-                loadingScreen.style.pointerEvents = 'auto';
-            }
-            const canvas = document.getElementById('canvas');
-            if (canvas) canvas.style.display = 'block';
-            console.log('[DEV] Hiding landing wrapper');
+        // Dismiss all overlays and show canvas
+        dismissAllOverlays();
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.classList.remove('hidden');
+            loadingScreen.style.opacity = '1';
+            loadingScreen.style.pointerEvents = 'auto';
         }
+        const canvas = document.getElementById('canvas');
+        if (canvas) canvas.style.display = 'block';
 
         if (appState.currentSceneName !== 'street-view') {
             streetScene.quizPassed = true;
