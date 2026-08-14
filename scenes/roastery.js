@@ -889,6 +889,7 @@ class RoasteryScene extends Scene {
             group.coreEntity = core;
             group.glowEntity = glow;
             this.hotspotEntities.push(group);
+            console.log(`[roastery] Created hotspot: "${hotspot.id}" (transition=${hotspot.isTransition})`);
 
             // Visibility: hide video hotspots until quiz is passed
             if (hotspot.isVideo) {
@@ -1037,6 +1038,7 @@ class RoasteryScene extends Scene {
         if (this.hotspotEntities) {
             const transitionHotspot = this.hotspotEntities.find(h => h.hotspotData?.isTransition);
             if (transitionHotspot) {
+                console.log('[Roastery] ✓ Transition hotspot found:', transitionHotspot.hotspotData.id);
                 this.hotspotHighlight = true;
                 this.highlightedHotspot = transitionHotspot;
                 transitionHotspot.isHighlighted = true;
@@ -1050,7 +1052,10 @@ class RoasteryScene extends Scene {
                     glowMat.emissive = new pc.Color(1, 0.85, 0.2);
                     glowMat.emissiveIntensity = 2;
                     glowMat.update();
+                    console.log('[Roastery] ✓ Transition hotspot glow set to gold');
                 }
+            } else {
+                console.warn('[Roastery] ✗ Transition hotspot not found in', this.hotspotEntities.length, 'entities');
             }
         }
     }
