@@ -8,12 +8,18 @@
 //   sting     standalone cue, not part of any sequence
 
 window.VoSegments = {
-    brandStory: {
+    brandStoryIntro: {
         en: [
             { id: 'brandStory_en_01', gate: { type: 'marker', ref: 'mapZoom' }, dur: 33.52 },
             { id: 'brandStory_en_02', gate: { type: 'marker', ref: 'aerial' }, dur: 19.25 },
             { id: 'brandStory_en_03', gate: { type: 'marker', ref: 'farmerMontage' }, dur: 15.93 },
+        ],
+        bis: [], // TODO: Bisaya recordings not yet produced
+    },
+    cafeInterior: {
+        en: [
             { id: 'brandStory_en_04', gate: { type: 'marker', ref: 'ownerInterview' }, dur: 24.75 },
+            { id: 'cafe-quiz-time', gate: { type: 'quiz' }, dur: 0 },
         ],
         bis: [], // TODO: Bisaya recordings not yet produced
     },

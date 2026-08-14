@@ -1207,12 +1207,24 @@ class Scene {
         const button = document.createElement('button');
         button.className = 'gate-marker-button';
         button.textContent = this.getGateMarkerLabel(gate.ref);
-        button.style.cssText = `position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:14px 28px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; z-index:910; outline:none; animation:gate-marker-pulse 2s ease-in-out infinite;`;
+        button.style.cssText = `position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:14px 28px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; z-index:1010; outline:none; animation:gate-marker-pulse 2s ease-in-out infinite;`;
 
-        // Guard against double-clicks
+        // Guard against double-clicks and drag-clicks
         let clicked = false;
-        const handleClick = () => {
+        let pointerDownX = 0;
+        let pointerDownY = 0;
+
+        button.addEventListener('pointerdown', (e) => {
+            pointerDownX = e.clientX;
+            pointerDownY = e.clientY;
+        });
+
+        const handleClick = (e) => {
             if (clicked) return;
+            // Guard against drag: only fire if pointer moved < 5px
+            const dx = Math.abs(e.clientX - pointerDownX);
+            const dy = Math.abs(e.clientY - pointerDownY);
+            if (dx > 5 || dy > 5) return;
             clicked = true;
             this.onGateMarkerClick(gate);
         };
@@ -1273,33 +1285,10 @@ class Scene {
                 roasterVideo: 'roasting.mp4'
             };
             const videoSrc = videoMap[gate.ref];
-            if (videoSrc && this.dom && this.dom.popupVideo && this.dom.videoPopup) {
-                const video = this.dom.popupVideo;
-                video.src = assetUrl(`Videos/${videoSrc}`);
-                this.dom.videoPopup.classList.add('active');
-                document.body.classList.add('video-open');
-
-                const onVideoEnd = () => {
-                    video.removeEventListener('ended', onVideoEnd);
-                    video.removeEventListener('error', onVideoError);
-                    this.dom.videoPopup.classList.remove('active');
-                    document.body.classList.remove('video-open');
-                    this.resumeVoSequence();
-                };
-
-                const onVideoError = () => {
-                    video.removeEventListener('ended', onVideoEnd);
-                    video.removeEventListener('error', onVideoError);
-                    this.dom.videoPopup.classList.remove('active');
-                    document.body.classList.remove('video-open');
-                    this.resumeVoSequence();
-                };
-
-                video.addEventListener('ended', onVideoEnd);
-                video.addEventListener('error', onVideoError);
-                video.play().catch(() => {
-                    // If play() fails, trigger error handler
-                    onVideoError();
+            if (videoSrc) {
+                this.showVideoPopup(assetUrl(`Videos/${videoSrc}`), {
+                    required: true,
+                    onFinish: () => this.resumeVoSequence()
                 });
             } else {
                 this.resumeVoSequence();

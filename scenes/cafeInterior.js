@@ -1090,20 +1090,6 @@ class CafeInteriorScene extends Scene {
         if (this.dom.hotspotPopup) this.dom.hotspotPopup.classList.add('active');
     }
 
-    onGateMarkerClick(gate) {
-        // For ownerInterview gate after segment 04, skip the gate video and go straight to quiz
-        if (gate.ref === 'ownerInterview' && this.voSceneKey === 'brandStory') {
-            this.despawnGateMarker();
-            setTimeout(() => {
-                this.showQuiz(this.quiz, () => {
-                    this.onQuizPassed();
-                });
-            }, 500);
-            return;
-        }
-        // Otherwise use parent implementation
-        super.onGateMarkerClick(gate);
-    }
 
     async onLoad() {
         await super.onLoad();
@@ -1191,10 +1177,8 @@ class CafeInteriorScene extends Scene {
                 // Delay VO by ~1s to let ambient establish atmosphere
                 setTimeout(() => this.playVoSequence('backToCafe'), 1000);
             } else {
-                // First visit: play only segment 04 (segments 01-03 were on the Brand Story screen)
-                // Skip to index 3 to play only the fourth segment
-                this.voSequenceIndex = 3;
-                setTimeout(() => this.playVoSequence('brandStory'), 1000);
+                // First visit: play cafeInterior sequence (segment 04 + quiz gate)
+                setTimeout(() => this.playVoSequence('cafeInterior'), 1000);
                 if (!window.journeyComplete) {
                     this.preloadSplat(`${R2_BASE}/thesisNursery_optimized.sog`, 'nursery-splat');
                 }
