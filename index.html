@@ -649,13 +649,12 @@
         <div style="position:relative; z-index:1; max-width:900px; width:90%; max-height:85vh; overflow-y:auto; background:rgba(10,10,10,0.85); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:48px; font-family:'Inter',sans-serif; color:#f4f4f4;">
             <h2 style="font-family:'Oswald',sans-serif; font-size:2.2rem; margin:0 0 32px 0; font-weight:400; letter-spacing:1px;">How to Explore</h2>
 
-            <div style="display:flex; flex-direction:column; gap:32px;">
-                <!-- Larger items: Move, Look, Markers -->
-
-                <!-- Move -->
-                <div style="display:flex; gap:24px; align-items:flex-start;">
-                    <div style="flex-shrink:0;">
-                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block;">
+            <div style="display:flex; flex-direction:column; gap:40px; align-items:center;">
+                <!-- Top row: Move and Look (two-up, large) -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px; width:100%;">
+                    <!-- Move -->
+                    <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block; margin-bottom:16px;">
                             <!-- W key -->
                             <rect x="26" y="4" width="14" height="14" rx="2" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
                             <text x="33" y="16" font-family="Inter" font-size="10" font-weight="500" text-anchor="middle" fill="#f4f4f4">W</text>
@@ -670,17 +669,13 @@
                             <rect x="42" y="22" width="14" height="14" rx="2" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
                             <text x="49" y="34" font-family="Inter" font-size="10" font-weight="500" text-anchor="middle" fill="#f4f4f4">D</text>
                         </svg>
-                    </div>
-                    <div style="flex-grow:1; padding-top:4px;">
                         <h3 style="margin:0 0 8px 0; font-size:1.25rem; font-weight:500;">Move</h3>
                         <p style="margin:0; font-size:1rem; line-height:1.6; color:#d0d0d0;">W, A, S, D to walk. W forward, S back, A and D side to side.</p>
                     </div>
-                </div>
 
-                <!-- Look -->
-                <div style="display:flex; gap:24px; align-items:flex-start;">
-                    <div style="flex-shrink:0;">
-                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block;">
+                    <!-- Look -->
+                    <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block; margin-bottom:16px;">
                             <!-- Mouse outline -->
                             <path d="M 25 15 L 25 55 Q 25 65 35 65 L 45 65 Q 55 65 55 55 L 55 25 Q 55 15 45 15 L 35 15 Q 25 15 25 25 Z" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
                             <!-- Mouse wheel -->
@@ -688,59 +683,47 @@
                             <!-- Click indicator -->
                             <path d="M 30 40 Q 35 35 40 40 Q 45 35 50 40" fill="none" stroke="#f4f4f4" stroke-width="1.5" stroke-linecap="round"/>
                         </svg>
-                    </div>
-                    <div style="flex-grow:1; padding-top:4px;">
                         <h3 style="margin:0 0 8px 0; font-size:1.25rem; font-weight:500;">Look</h3>
                         <p style="margin:0; font-size:1rem; line-height:1.6; color:#d0d0d0;">Click and drag to look around, a full 360° in any direction.</p>
                     </div>
                 </div>
 
-                <!-- Markers -->
-                <div style="display:flex; gap:24px; align-items:flex-start;">
-                    <div style="flex-shrink:0;">
-                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block;">
+                <!-- Bottom row: Markers, Gold markers, Discs (three-up, small) -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px; width:100%; border-top:1px solid rgba(255,255,255,0.1); padding-top:24px;">
+                    <!-- Markers -->
+                    <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+                        <svg width="60" height="60" viewBox="0 0 80 80" style="display:block; margin-bottom:12px;">
                             <!-- Blue marker circle -->
                             <circle cx="40" cy="35" r="14" fill="none" stroke="#6eb5ff" stroke-width="2"/>
                             <circle cx="40" cy="35" r="6" fill="none" stroke="#6eb5ff" stroke-width="2"/>
                             <!-- Pulsing effect lines -->
                             <circle cx="40" cy="35" r="20" fill="none" stroke="#6eb5ff" stroke-width="1" opacity="0.5"/>
                         </svg>
-                    </div>
-                    <div style="flex-grow:1; padding-top:4px;">
-                        <h3 style="margin:0 0 8px 0; font-size:1.25rem; font-weight:500;">Markers</h3>
-                        <p style="margin:0; font-size:1rem; line-height:1.6; color:#d0d0d0;">Blue markers reveal something about where you're standing. Click to learn more.</p>
-                    </div>
-                </div>
-
-                <!-- Smaller items: Gold markers, Discs -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1);">
-                    <div style="display:flex; gap:16px;">
-                        <div style="flex-shrink:0;">
-                            <svg width="60" height="60" viewBox="0 0 60 60" style="display:block;">
-                                <!-- Gold marker circle -->
-                                <circle cx="30" cy="25" r="10" fill="none" stroke="#f4d03f" stroke-width="1.5"/>
-                                <circle cx="30" cy="25" r="4" fill="none" stroke="#f4d03f" stroke-width="1.5"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Gold markers</h3>
-                            <p style="margin:0; font-size:0.95rem; line-height:1.5; color:#d0d0d0;">Take you somewhere new. They appear once you've finished exploring a place.</p>
-                        </div>
+                        <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Markers</h3>
+                        <p style="margin:0; font-size:0.9rem; line-height:1.5; color:#d0d0d0;">Blue markers reveal something about where you're standing. Click to learn more.</p>
                     </div>
 
-                    <div style="display:flex; gap:16px;">
-                        <div style="flex-shrink:0;">
-                            <svg width="60" height="60" viewBox="0 0 60 60" style="display:block;">
-                                <!-- Green disc -->
-                                <circle cx="20" cy="30" r="8" fill="none" stroke="#5ec962" stroke-width="1.5"/>
-                                <!-- White disc -->
-                                <circle cx="40" cy="30" r="8" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Discs</h3>
-                            <p style="margin:0; font-size:0.95rem; line-height:1.5; color:#d0d0d0;">On the farm path, click the green disc ahead to move forward, the white disc behind you to step back.</p>
-                        </div>
+                    <!-- Gold markers -->
+                    <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+                        <svg width="60" height="60" viewBox="0 0 60 60" style="display:block; margin-bottom:12px;">
+                            <!-- Gold marker circle -->
+                            <circle cx="30" cy="25" r="10" fill="none" stroke="#f4d03f" stroke-width="1.5"/>
+                            <circle cx="30" cy="25" r="4" fill="none" stroke="#f4d03f" stroke-width="1.5"/>
+                        </svg>
+                        <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Gold markers</h3>
+                        <p style="margin:0; font-size:0.9rem; line-height:1.5; color:#d0d0d0;">Take you somewhere new. They appear once you've finished exploring a place.</p>
+                    </div>
+
+                    <!-- Discs -->
+                    <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+                        <svg width="60" height="60" viewBox="0 0 60 60" style="display:block; margin-bottom:12px;">
+                            <!-- Green disc -->
+                            <circle cx="20" cy="30" r="8" fill="none" stroke="#5ec962" stroke-width="1.5"/>
+                            <!-- White disc -->
+                            <circle cx="40" cy="30" r="8" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
+                        </svg>
+                        <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Discs</h3>
+                        <p style="margin:0; font-size:0.9rem; line-height:1.5; color:#d0d0d0;">Click the green disc ahead to move forward, the white disc behind to step back.</p>
                     </div>
                 </div>
             </div>
@@ -889,11 +872,13 @@
 
             contextScreen.style.display = 'flex';
             setTimeout(() => { contextScreen.style.opacity = '1'; }, 10);
+
+            // Preload café interior splat while context screen is shown
+            preloadSplat('brandStory');
         });
 
         document.getElementById('context-begin-btn').addEventListener('click', () => {
             const contextScreen = document.getElementById('context-screen');
-            const languageSelect = document.getElementById('language-select');
 
             gsap.to(contextScreen, {
                 opacity: 0,
@@ -901,8 +886,10 @@
                 ease: 'power2.inOut',
                 onComplete: () => {
                     contextScreen.style.display = 'none';
-                    languageSelect.style.display = 'flex';
-                    setTimeout(() => { languageSelect.style.opacity = '1'; }, 10);
+                    // Set language and proceed directly to café interior (splat already preloaded)
+                    window.currentLanguage = 'en';
+                    try { sessionStorage.setItem('language', 'en'); } catch (e) {}
+                    proceedTo360();
                 }
             });
         });

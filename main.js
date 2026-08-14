@@ -1193,7 +1193,8 @@ class Scene {
         // Compute marker position: 2m in front of camera at eye height
         const camPos = cameraEntity.getPosition();
         const camFwd = cameraEntity.forward;
-        const markerWorldPos = new pc.Vec3().addScale(camPos, 1).addScale(camFwd, 2);
+        const offset = new pc.Vec3().copy(camFwd).mulScalar(2);
+        const markerWorldPos = new pc.Vec3().copy(camPos).add(offset);
 
         // Create marker group entity
         this.gateMarkerEntity = new pc.Entity('gate-marker');

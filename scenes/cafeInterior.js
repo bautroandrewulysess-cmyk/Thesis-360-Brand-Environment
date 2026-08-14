@@ -1008,8 +1008,15 @@ class CafeInteriorScene extends Scene {
     }
 
     spawnGateMarker(gate) {
-        // For brewingPOV, don't spawn a marker — use the existing hotspot
+        // For brewingPOV, don't spawn a marker — highlight the existing hotspot
         if (gate.ref === 'brewingPOV') {
+            const hotspotGroup = this.hotspotEntities.find(h => h.hotspotData?.id === 'coffee-brewing');
+            if (hotspotGroup) {
+                const glowMat = hotspotGroup.glowEntity.render.meshInstances[0].material;
+                glowMat.emissive = new pc.Color(1, 0.85, 0.2);
+                glowMat.emissiveIntensity = 2;
+                glowMat.update();
+            }
             return;
         }
         // Otherwise, use the base class implementation
@@ -1042,6 +1049,12 @@ class CafeInteriorScene extends Scene {
 
             // If this is the brewingPOV (marker gate in backToCafe sequence), resume the VO sequence
             if (hotspot.id === 'coffee-brewing' && this.voSceneKey === 'backToCafe' && !this.isVoFinished) {
+                // Unhighlight the hotspot
+                const glowMat = entity.glowEntity.render.meshInstances[0].material;
+                glowMat.emissive = new pc.Color(0, 0, 0);
+                glowMat.emissiveIntensity = 0;
+                glowMat.update();
+
                 this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: false,
