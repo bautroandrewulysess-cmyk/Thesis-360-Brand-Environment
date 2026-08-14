@@ -1267,7 +1267,7 @@ class StreetViewScene extends Scene {
 
     spawnGateMarker(gate) {
         // Detect when farm_en_01 finishes by observing treePhoto gate spawn
-        if (gate.ref === 'treePhoto' && this.voSceneKey === 'farm_en') {
+        if (gate.ref === 'treePhoto' && this.voSceneKey === 'farm') {
             this.farm_en_01_Finished = true;
         }
         super.spawnGateMarker(gate);

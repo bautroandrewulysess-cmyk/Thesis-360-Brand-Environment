@@ -1282,10 +1282,6 @@ class Scene {
                     setTimeout(() => {
                         imagePopup.style.display = 'none';
                         document.body.classList.remove('video-open');
-                        // Hide farm hint after photo is closed
-                        if (window.streetViewScene) {
-                            window.streetViewScene.farmHintVisible = false;
-                        }
                         this.resumeVoSequence();
                     }, 800);
                 };
