@@ -910,10 +910,10 @@ class RoasteryScene extends Scene {
             console.log(`[roastery] Created hotspot: "${hotspot.id}" (transition=${hotspot.isTransition})`);
 
             // Visibility: hide video hotspots until quiz is passed; gate markers start disabled and are enabled by spawnGateMarker
-            if (hotspot.isVideo) {
-                group.enabled = this.quizPassed;
-            } else if (hotspot.isGateMarker) {
+            if (hotspot.isGateMarker) {
                 group.enabled = false;
+            } else if (hotspot.isVideo) {
+                group.enabled = this.quizPassed;
             }
 
             this.registerInteractiveObject(group, () => {
@@ -1090,7 +1090,7 @@ class RoasteryScene extends Scene {
             if (this.voAudio && !this.voAudio.paused) return;
 
             // If this is the roasterVideo gate marker (roasting-beans-transition), play video and resume sequence
-            if (hotspot.isGateMark && this.voSceneKey === 'roasting' && !this.isVoFinished) {
+            if (hotspot.isGateMarker && this.voSceneKey === 'roasting' && !this.isVoFinished) {
                 // Unhighlight and hide the gate marker orb
                 const glowMat = entity.glowEntity.render.meshInstances[0].material;
                 glowMat.emissive = new pc.Color(0, 0, 0);
@@ -1151,7 +1151,7 @@ class RoasteryScene extends Scene {
         super.onQuizPassed();
         // Re-enable video hotspots now that quiz is passed
         this.hotspotEntities.forEach(group => {
-            if (group.hotspotData?.isVideo && !group.hotspotData?.isGateMark) {
+            if (group.hotspotData?.isVideo && !group.hotspotData?.isGateMarker) {
                 group.enabled = true;
                 // Show label if it exists
                 if (group.labelElement) {
