@@ -34,7 +34,7 @@ class RoasteryScene extends Scene {
             {
                 id: 'back-to-exterior',
                 position: new pc.Vec3(-1.116, 1.600, 1.233),
-                label: 'Back to Cafe Exterior',
+                label: 'Back to Cafe',
                 description: 'Return to the cafe garden.',
                 isTransition: true,
                 targetScene: 'cafe-interior',
@@ -1098,7 +1098,7 @@ class RoasteryScene extends Scene {
 
                 this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
-                    required: false,
+                    required: true,
                     caption: hotspot.label,
                     volume: 0.15,
                     onFinish: () => {

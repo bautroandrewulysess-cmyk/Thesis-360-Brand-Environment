@@ -53,7 +53,7 @@ class CafeInteriorScene extends Scene {
             {
                 id: 'coffee-brewing',
                 position: new pc.Vec3(0.140, 1.490, -0.660),
-                label: 'Brewing Video',
+                label: 'Brew Coffee',
                 description: '',
                 isVideo: true,
                 isGateMarker: true,
@@ -1080,21 +1080,20 @@ class CafeInteriorScene extends Scene {
 
                 this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
-                    required: false,
+                    required: true,
                     caption: hotspot.label,
                     volume: 0.15,
+                    narrationId: 'steps_en_01',
                     onFinish: () => {
                         this.resumeAmbient();
+                        this.resumeVoSequence();
                     }
                 });
 
-                // Apply fade in/out to popup
                 const popup = document.getElementById('video-popup');
                 if (popup) {
                     popup.style.transition = 'opacity 0.5s ease-in-out';
                 }
-                // Resume sequence after video opens
-                this.resumeVoSequence();
                 return;
             }
 
@@ -1412,7 +1411,12 @@ class CafeInteriorScene extends Scene {
                     if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isVideo)) {
                         const isVideoHotspot = group.hotspotData?.isVideo;
                         const isGateMarker = group.hotspotData?.isGateMarker;
-                        const shouldShow = (isVideoHotspot && !isGateMarker) ? (this.quizPassed && group.enabled) : (this.quizPassed && !window.journeyComplete);
+                        let shouldShow;
+                        if (isGateMarker) {
+                            shouldShow = group.enabled;
+                        } else {
+                            shouldShow = (isVideoHotspot) ? (this.quizPassed && group.enabled) : (this.quizPassed && !window.journeyComplete);
+                        }
                     if (shouldShow) {
                         const worldPos = group.getPosition();
                         const screen = this.worldToScreen(worldPos);
