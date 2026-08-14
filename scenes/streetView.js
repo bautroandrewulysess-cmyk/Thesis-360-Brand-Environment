@@ -640,7 +640,7 @@ class StreetViewScene extends Scene {
             arrowEntity.setLocalEulerAngles(0, 0, 0); // Flat orientation
             arrowEntity.setLocalScale(0.8, 0.04, 0.8);
 
-            // Material: cyan for forward, white for back arrows; gold for highlighted farm1-5 forward
+            // Material: green for forward, white for back arrows; gold for highlighted farm1-5 forward
             const isBackArrow = arrow.label === 'Back' || arrow.label === 'Go Back' || arrow.label.includes('Back');
             const isHarvestMarker = arrow.isHarvestMarker;
             const isFarm1_5ForwardArrow = this.currentPosition === 'farm1-5' && !isBackArrow && this.highlightFarm1_5Forward;
@@ -666,7 +666,7 @@ class StreetViewScene extends Scene {
             } else if (isBackArrow) {
                 mat.diffuse = new pc.Color(0.8, 0.8, 0.8);
             } else {
-                mat.diffuse = new pc.Color(0.1, 0.8, 0.3);
+                mat.diffuse = new pc.Color(0, 0.9, 0.1);
             }
 
             mat.update();

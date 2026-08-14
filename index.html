@@ -640,6 +640,130 @@
     </div>
 
     <div id="fade-overlay"></div>
+
+    <!-- Context Screen Overlay -->
+    <div id="context-screen" style="display:none; opacity:0; transition:opacity 0.8s ease; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:1002; align-items:center; justify-content:center; flex-direction:column;">
+        <video style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.15;" autoplay muted loop playsinline crossorigin="anonymous">
+            <source src="https://assets.granjaalegre.com/heroLoop.mp4" type="video/mp4">
+        </video>
+        <div style="position:relative; z-index:1; max-width:900px; width:90%; max-height:85vh; overflow-y:auto; background:rgba(10,10,10,0.85); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:48px; font-family:'Inter',sans-serif; color:#f4f4f4;">
+            <h2 style="font-family:'Oswald',sans-serif; font-size:2.2rem; margin:0 0 32px 0; font-weight:400; letter-spacing:1px;">How to Explore</h2>
+
+            <div style="display:flex; flex-direction:column; gap:32px;">
+                <!-- Larger items: Move, Look, Markers -->
+
+                <!-- Move -->
+                <div style="display:flex; gap:24px; align-items:flex-start;">
+                    <div style="flex-shrink:0;">
+                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block;">
+                            <!-- W key -->
+                            <rect x="26" y="4" width="14" height="14" rx="2" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
+                            <text x="33" y="16" font-family="Inter" font-size="10" font-weight="500" text-anchor="middle" fill="#f4f4f4">W</text>
+
+                            <!-- A, S, D keys -->
+                            <rect x="10" y="22" width="14" height="14" rx="2" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
+                            <text x="17" y="34" font-family="Inter" font-size="10" font-weight="500" text-anchor="middle" fill="#f4f4f4">A</text>
+
+                            <rect x="26" y="22" width="14" height="14" rx="2" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
+                            <text x="33" y="34" font-family="Inter" font-size="10" font-weight="500" text-anchor="middle" fill="#f4f4f4">S</text>
+
+                            <rect x="42" y="22" width="14" height="14" rx="2" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
+                            <text x="49" y="34" font-family="Inter" font-size="10" font-weight="500" text-anchor="middle" fill="#f4f4f4">D</text>
+                        </svg>
+                    </div>
+                    <div style="flex-grow:1; padding-top:4px;">
+                        <h3 style="margin:0 0 8px 0; font-size:1.25rem; font-weight:500;">Move</h3>
+                        <p style="margin:0; font-size:1rem; line-height:1.6; color:#d0d0d0;">W, A, S, D to walk. W forward, S back, A and D side to side.</p>
+                    </div>
+                </div>
+
+                <!-- Look -->
+                <div style="display:flex; gap:24px; align-items:flex-start;">
+                    <div style="flex-shrink:0;">
+                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block;">
+                            <!-- Mouse outline -->
+                            <path d="M 25 15 L 25 55 Q 25 65 35 65 L 45 65 Q 55 65 55 55 L 55 25 Q 55 15 45 15 L 35 15 Q 25 15 25 25 Z" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
+                            <!-- Mouse wheel -->
+                            <line x1="40" y1="20" x2="40" y2="30" stroke="#f4f4f4" stroke-width="1.5"/>
+                            <!-- Click indicator -->
+                            <path d="M 30 40 Q 35 35 40 40 Q 45 35 50 40" fill="none" stroke="#f4f4f4" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div style="flex-grow:1; padding-top:4px;">
+                        <h3 style="margin:0 0 8px 0; font-size:1.25rem; font-weight:500;">Look</h3>
+                        <p style="margin:0; font-size:1rem; line-height:1.6; color:#d0d0d0;">Click and drag to look around, a full 360° in any direction.</p>
+                    </div>
+                </div>
+
+                <!-- Markers -->
+                <div style="display:flex; gap:24px; align-items:flex-start;">
+                    <div style="flex-shrink:0;">
+                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block;">
+                            <!-- Blue marker circle -->
+                            <circle cx="40" cy="35" r="14" fill="none" stroke="#6eb5ff" stroke-width="2"/>
+                            <circle cx="40" cy="35" r="6" fill="none" stroke="#6eb5ff" stroke-width="2"/>
+                            <!-- Pulsing effect lines -->
+                            <circle cx="40" cy="35" r="20" fill="none" stroke="#6eb5ff" stroke-width="1" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <div style="flex-grow:1; padding-top:4px;">
+                        <h3 style="margin:0 0 8px 0; font-size:1.25rem; font-weight:500;">Markers</h3>
+                        <p style="margin:0; font-size:1rem; line-height:1.6; color:#d0d0d0;">Blue markers reveal something about where you're standing. Click to learn more.</p>
+                    </div>
+                </div>
+
+                <!-- Smaller items: Gold markers, Discs -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1);">
+                    <div style="display:flex; gap:16px;">
+                        <div style="flex-shrink:0;">
+                            <svg width="60" height="60" viewBox="0 0 60 60" style="display:block;">
+                                <!-- Gold marker circle -->
+                                <circle cx="30" cy="25" r="10" fill="none" stroke="#f4d03f" stroke-width="1.5"/>
+                                <circle cx="30" cy="25" r="4" fill="none" stroke="#f4d03f" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Gold markers</h3>
+                            <p style="margin:0; font-size:0.95rem; line-height:1.5; color:#d0d0d0;">Take you somewhere new. They appear once you've finished exploring a place.</p>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:16px;">
+                        <div style="flex-shrink:0;">
+                            <svg width="60" height="60" viewBox="0 0 60 60" style="display:block;">
+                                <!-- Green disc -->
+                                <circle cx="20" cy="30" r="8" fill="none" stroke="#5ec962" stroke-width="1.5"/>
+                                <!-- White disc -->
+                                <circle cx="40" cy="30" r="8" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Discs</h3>
+                            <p style="margin:0; font-size:0.95rem; line-height:1.5; color:#d0d0d0;">On the farm path, click the green disc ahead to move forward, the white disc behind you to step back.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="context-begin-btn" style="display:block; width:100%; margin-top:40px; padding:14px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; border-radius:6px; cursor:pointer; transition:all 0.3s ease;">Begin the Journey</button>
+        </div>
+    </div>
+
+    <!-- Language Select Overlay -->
+    <div id="language-select" style="display:none; opacity:0; transition:opacity 0.8s ease; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:1003; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="position:relative; z-index:1; max-width:500px; width:90%; background:rgba(10,10,10,0.85); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:48px; text-align:center; font-family:'Inter',sans-serif; color:#f4f4f4;">
+            <h2 style="font-family:'Oswald',sans-serif; font-size:2rem; margin:0 0 32px 0; font-weight:400; letter-spacing:1px;">Select Language</h2>
+
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <button id="lang-select-en" style="padding:16px 24px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:1rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; border-radius:6px; cursor:pointer; transition:all 0.3s ease;">English</button>
+                <button id="lang-select-bis" disabled style="padding:16px 24px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:rgba(244,208,63,0.4); font-family:'Inter',sans-serif; font-size:1rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; border-radius:6px; cursor:not-allowed; transition:all 0.3s ease; position:relative;">
+                    <span style="opacity:0.6;">Bisaya</span>
+                    <div style="position:absolute; top:50%; right:24px; transform:translateY(-50%); font-size:0.75rem; opacity:0.5; letter-spacing:0.5px;">Coming soon</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="desktop-gate" style="display:none; position:fixed; inset:0; background:#050505; z-index:10000; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; color:#f4f4f4; flex-direction:column; gap:20px;"><div style="text-align:center; max-width:500px; padding:40px;"><p style="font-size:1.25rem; line-height:1.6;">The experience requires a desktop or laptop with keyboard and mouse, please revisit on one.</p></div></div>
     <div id="debug-info"></div>
 
@@ -709,43 +833,34 @@
             );
         });
 
-        document.getElementById('enter-btn').addEventListener('click', async () => {
+        // Flow: Enter → Context → Language → 360 Experience
+        const proceedTo360 = async () => {
             const wrapper = document.getElementById('landing-wrapper');
             const loadingScreen = document.getElementById('loading-screen');
             const statusEl = document.getElementById('btn-status');
-            const btn = document.getElementById('enter-btn');
 
             // Check if on mobile
             const isPhoneOrTablet = window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(pointer: fine)').matches;
             const tooNarrow = window.innerWidth < 900;
             const onMobile = isPhoneOrTablet || tooNarrow;
 
-            // Disable button
-            btn.disabled = true;
-            statusEl.textContent = 'Preparing experience…';
-
             // Start preload if not on mobile
-            let preloadComplete = false;
             if (!onMobile) {
                 setTimeout(() => {
                     const R2_BASE = 'https://assets.granjaalegre.com';
                     fetch(`${R2_BASE}/thesisCafeInterior_optimized.sog`, { mode: 'cors' })
                         .then(() => {
-                            preloadComplete = true;
                             statusEl.classList.add('ready');
                             statusEl.textContent = 'Ready';
                         })
                         .catch(() => {
-                            preloadComplete = true;
                             statusEl.textContent = '';
                         });
                 }, 2000);
-            } else {
-                preloadComplete = true;
             }
 
-            // Wait a minimum time for user to see the status, or for preload to complete
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Fade out all overlays and wrapper
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             gsap.to(wrapper, {
                 opacity: 0,
@@ -764,6 +879,46 @@
 
                     loadingScreen.classList.remove('hidden');
                     window.dispatchEvent(new Event('start360Experience'));
+                }
+            });
+        };
+
+        document.getElementById('enter-btn').addEventListener('click', () => {
+            const wrapper = document.getElementById('landing-wrapper');
+            const contextScreen = document.getElementById('context-screen');
+
+            contextScreen.style.display = 'flex';
+            setTimeout(() => { contextScreen.style.opacity = '1'; }, 10);
+        });
+
+        document.getElementById('context-begin-btn').addEventListener('click', () => {
+            const contextScreen = document.getElementById('context-screen');
+            const languageSelect = document.getElementById('language-select');
+
+            gsap.to(contextScreen, {
+                opacity: 0,
+                duration: 0.6,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                    contextScreen.style.display = 'none';
+                    languageSelect.style.display = 'flex';
+                    setTimeout(() => { languageSelect.style.opacity = '1'; }, 10);
+                }
+            });
+        });
+
+        document.getElementById('lang-select-en').addEventListener('click', async () => {
+            window.currentLanguage = 'en';
+            try { sessionStorage.setItem('language', 'en'); } catch (e) {}
+
+            const languageSelect = document.getElementById('language-select');
+            gsap.to(languageSelect, {
+                opacity: 0,
+                duration: 0.6,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                    languageSelect.style.display = 'none';
+                    proceedTo360();
                 }
             });
         });
