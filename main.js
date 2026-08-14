@@ -1894,6 +1894,17 @@ const DevJump = {
         const isReturnVisit = btn.dataset.returnVisit === 'true';
         const spawnPos = btn.dataset.position || 'spawn';
 
+        // Hide landing wrapper if app not initialized
+        const wrapper = document.getElementById('landing-wrapper');
+        if (wrapper && wrapper.style.display !== 'none') {
+            wrapper.style.display = 'none';
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) loadingScreen.classList.remove('hidden');
+            const canvas = document.getElementById('canvas');
+            if (canvas) canvas.style.display = 'block';
+            console.log('[DEV] Hiding landing wrapper');
+        }
+
         // Set properties before switching
         const scene = sceneManager.scenes[sceneName];
         if (scene) {
@@ -1937,6 +1948,18 @@ const DevJump = {
             console.error('[DEV] Street view scene not found');
             return;
         }
+
+        // Hide landing wrapper
+        const wrapper = document.getElementById('landing-wrapper');
+        if (wrapper && wrapper.style.display !== 'none') {
+            wrapper.style.display = 'none';
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) loadingScreen.classList.remove('hidden');
+            const canvas = document.getElementById('canvas');
+            if (canvas) canvas.style.display = 'block';
+            console.log('[DEV] Hiding landing wrapper');
+        }
+
         if (appState.currentSceneName !== 'street-view') {
             streetScene.quizPassed = true;
             try {
