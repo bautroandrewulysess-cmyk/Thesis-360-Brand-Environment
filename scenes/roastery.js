@@ -855,11 +855,13 @@ class RoasteryScene extends Scene {
 
             const core = new pc.Entity(`hotspot-core-${hotspot.id}`);
             core.addComponent('render', { type: 'sphere' });
-            core.setLocalScale(0.04, 0.04, 0.04);
+            const isTransition = hotspot.isTransition;
+            const isGateMarker = hotspot.isGateMarker;
+            const coreScale = (isTransition || isGateMarker) ? 0.08 : 0.04;
+            core.setLocalScale(coreScale, coreScale, coreScale);
 
             const coreMaterial = new pc.StandardMaterial();
-            const isTransition = hotspot.isTransition;
-            coreMaterial.diffuse = isTransition ? new pc.Color(1, 0.85, 0.2) : coreMaterial.diffuse;
+            coreMaterial.diffuse = (isTransition || isGateMarker) ? new pc.Color(1, 0.85, 0.2) : coreMaterial.diffuse;
             coreMaterial.emissive = new pc.Color(0, 0, 0);
             coreMaterial.emissiveIntensity = 0;
             coreMaterial.opacity = 1.0;
@@ -870,12 +872,13 @@ class RoasteryScene extends Scene {
 
             const glow = new pc.Entity(`hotspot-glow-${hotspot.id}`);
             glow.addComponent('render', { type: 'sphere' });
-            glow.setLocalScale(0.08, 0.08, 0.08);
+            const glowScale = (isTransition || isGateMarker) ? 0.18 : 0.08;
+            glow.setLocalScale(glowScale, glowScale, glowScale);
 
             const glowMaterial = new pc.StandardMaterial();
-            glowMaterial.emissive = new pc.Color(0, 0, 0);
-            glowMaterial.emissiveIntensity = 0;
-            glowMaterial.opacity = 0.4;
+            glowMaterial.emissive = (isTransition || isGateMarker) ? new pc.Color(1, 0.85, 0.2) : new pc.Color(0, 0, 0);
+            glowMaterial.emissiveIntensity = (isTransition || isGateMarker) ? 3 : 0;
+            glowMaterial.opacity = (isTransition || isGateMarker) ? 0.6 : 0.4;
             glowMaterial.blendType = pc.BLEND_NORMAL;
             glowMaterial.depthWrite = false;
             glowMaterial.cull = pc.CULLFACE_NONE;
@@ -885,7 +888,8 @@ class RoasteryScene extends Scene {
 
             const halo = new pc.Entity(`hotspot-halo-${hotspot.id}`);
             halo.addComponent('render', { type: 'sphere' });
-            halo.setLocalScale(0.15, 0.15, 0.15);
+            const haloScale = (isTransition || isGateMarker) ? 0.25 : 0.15;
+            halo.setLocalScale(haloScale, haloScale, haloScale);
             const haleMaterial = new pc.StandardMaterial();
             haleMaterial.emissive = new pc.Color(0, 0, 0);
             haleMaterial.emissiveIntensity = 0;
@@ -905,17 +909,19 @@ class RoasteryScene extends Scene {
             this.hotspotEntities.push(group);
             console.log(`[roastery] Created hotspot: "${hotspot.id}" (transition=${hotspot.isTransition})`);
 
-            // Visibility: hide video hotspots and transition hotspots until quiz is passed
-            if (hotspot.isVideo || hotspot.hiddenUntilQuizPass) {
+            // Visibility: hide video hotspots until quiz is passed; gate markers start disabled and are enabled by spawnGateMarker
+            if (hotspot.isVideo) {
                 group.enabled = this.quizPassed;
+            } else if (hotspot.isGateMarker) {
+                group.enabled = false;
             }
 
             this.registerInteractiveObject(group, () => {
                 this.onHotspotClick(hotspot, group);
             });
 
-            // Create label for transition hotspots and video hotspots
-            if (hotspot.isTransition || hotspot.isVideo) {
+            // Create label for transition hotspots, gate markers, and video hotspots
+            if (hotspot.isTransition || hotspot.isGateMarker || hotspot.isVideo) {
                 const label = document.createElement('div');
                 label.className = 'hotspot-label';
                 label.textContent = hotspot.label;
@@ -1287,12 +1293,20 @@ class RoasteryScene extends Scene {
             }
         });
 
-        // Update transition and video hotspot labels (only when actually visible)
+        // Update transition, gate marker, and video hotspot labels (only when actually visible)
         if (!document.body.classList.contains('video-open')) {
             this.hotspotEntities.forEach(group => {
-                if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isVideo)) {
+                if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isGateMarker || group.hotspotData?.isVideo)) {
                     const isVideoHotspot = group.hotspotData?.isVideo;
-                    const shouldShow = isVideoHotspot ? (this.quizPassed && group.enabled) : (this.quizPassed && !window.journeyComplete);
+                    const isGateMarker = group.hotspotData?.isGateMarker;
+                    let shouldShow;
+                    if (isGateMarker) {
+                        shouldShow = group.enabled;
+                    } else if (isVideoHotspot) {
+                        shouldShow = this.quizPassed && group.enabled;
+                    } else {
+                        shouldShow = this.quizPassed && !window.journeyComplete;
+                    }
                     if (shouldShow) {
                         const worldPos = group.getPosition();
                         const screen = this.worldToScreen(worldPos);
