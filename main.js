@@ -1287,7 +1287,7 @@ class Scene {
             }
         } else if (gate.ref) {
             const videoMap = {
-                polybag: 'droneTopViewCafeToFarmOverview.mp4',
+                polybag: 'heroLoop.mp4',
                 mapZoom: 'heroLoop.mp4',
                 aerial: 'heroLoop.mp4',
                 farmerMontage: 'heroLoop.mp4',
@@ -1299,18 +1299,6 @@ class Scene {
                 // Skip heroLoop.mp4 placeholder — go straight to next segment when real footage arrives
                 if (videoSrc === 'heroLoop.mp4') {
                     this.resumeVoSequence();
-                } else if (gate.ref === 'polybag') {
-                    // Special handling: drone video with journey narration, then transition to toFarm1
-                    this.showVideoPopup(assetUrl(`Videos/${videoSrc}`), {
-                        required: true,
-                        narrationId: 'journeyToFarm_en_01',
-                        onFinish: async () => {
-                            // After drone video ends, fade and transition to street-view at toFarm1
-                            // journeyToFarm_en_02 will play when loading screen dismisses (onLoadingScreenDismissed)
-                            await fadeOut();
-                            sceneManager.switchTo('street-view', [0, 1.6, 0]);
-                        }
-                    });
                 } else {
                     this.showVideoPopup(assetUrl(`Videos/${videoSrc}`), {
                         required: true,

@@ -908,6 +908,11 @@ class NurseryScene extends Scene {
                 this.showVoWarning('Please complete the quiz first.');
                 return;
             }
+            // Intercept nursery→farm transition to play drone video first
+            if (hotspot.id === 'back-to-exterior' && hotspot.targetScene === 'street-view') {
+                this.playDroneVideoThenTransition(hotspot.spawnPosition);
+                return;
+            }
             sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
             return;
         }
@@ -921,6 +926,69 @@ class NurseryScene extends Scene {
             document.getElementById('hotspot-description').textContent = hotspot.description;
             this.dom.hotspotPopup.classList.add('active');
         }
+    }
+
+    async playDroneVideoThenTransition(spawnPosition) {
+        // Play drone video with journeyToFarm_en_01 narration, then transition to street-view at toFarm1
+        const droneVideoUrl = assetUrl('Videos/droneTopViewCafeToFarmOverview.mp4');
+
+        // Create full-viewport video element for drone footage
+        const video = document.createElement('video');
+        video.style.position = 'fixed';
+        video.style.top = '0';
+        video.style.left = '0';
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.zIndex = '9999';
+        video.style.backgroundColor = '#000';
+        video.crossOrigin = 'anonymous';
+
+        let videoEnded = false;
+        let transitionStarted = false;
+
+        const completeTransition = async () => {
+            if (transitionStarted) return;
+            transitionStarted = true;
+
+            // Remove video and transition to street-view
+            if (video.parentElement) {
+                video.remove();
+            }
+            sceneManager.switchTo('street-view', spawnPosition);
+        };
+
+        video.onended = async () => {
+            videoEnded = true;
+            await completeTransition();
+        };
+
+        video.onerror = async () => {
+            console.warn('[Nursery] Drone video failed to load, completing transition anyway');
+            videoEnded = true;
+            await completeTransition();
+        };
+
+        document.body.appendChild(video);
+        video.src = droneVideoUrl;
+
+        // Start narration with video
+        this.playVoWithSubtitles('journeyToFarm_en_01', false);
+
+        // Play video
+        video.play().catch(err => {
+            console.warn('[Nursery] Failed to play drone video:', err);
+            // Still complete transition if autoplay fails
+            videoEnded = true;
+            completeTransition();
+        });
+
+        // Safety fallback: if video doesn't end within 20s, force transition
+        setTimeout(() => {
+            if (!videoEnded) {
+                console.warn('[Nursery] Drone video timeout, forcing transition');
+                completeTransition();
+            }
+        }, 20000);
     }
 
     async onLoad() {
