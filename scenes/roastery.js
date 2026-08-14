@@ -1177,9 +1177,6 @@ class RoasteryScene extends Scene {
     update(deltaTime) {
         if (!this.isLoaded) return;
 
-        // Update gate marker
-        super.update(deltaTime);
-
         // Display camera position — throttled to 10x per second (not every frame)
         const camPos = cameraEntity.getLocalPosition();
         this.coordUpdateTimer += deltaTime;

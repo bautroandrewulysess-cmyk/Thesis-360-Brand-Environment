@@ -1200,99 +1200,40 @@ class Scene {
     }
 
     spawnGateMarker(gate) {
-        if (!this.container || !cameraEntity) return;
-
         // Clean up any existing marker
         this.despawnGateMarker();
 
-        // Compute marker position: 2m in front of camera at eye height
-        const camPos = cameraEntity.getPosition();
-        const camFwd = cameraEntity.forward;
-        const offset = new pc.Vec3().copy(camFwd).mulScalar(2);
-        const markerWorldPos = new pc.Vec3().copy(camPos).add(offset);
+        // Create DOM button, screen-fixed and centred
+        const button = document.createElement('button');
+        button.className = 'gate-marker-button';
+        button.textContent = this.getGateMarkerLabel(gate.ref);
+        button.style.cssText = `position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:14px 28px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; z-index:910; outline:none; animation:gate-marker-pulse 2s ease-in-out infinite;`;
 
-        // Create marker group entity
-        this.gateMarkerEntity = new pc.Entity('gate-marker');
-        this.gateMarkerEntity.setPosition(markerWorldPos);
-        this.container.addChild(this.gateMarkerEntity);
-
-        // Core sphere (gold, emissive) — scaled up 3x for visibility at 2m
-        const core = new pc.Entity('gate-marker-core');
-        core.addComponent('render', { type: 'sphere' });
-        core.setLocalScale(0.18, 0.18, 0.18);
-
-        const coreMaterial = new pc.StandardMaterial();
-        coreMaterial.diffuse = new pc.Color(1, 0.85, 0.2); // Gold
-        coreMaterial.emissive = new pc.Color(1, 0.85, 0.2);
-        coreMaterial.emissiveIntensity = 3;
-        coreMaterial.opacity = 1.0;
-        coreMaterial.blendType = pc.BLEND_NORMAL;
-        coreMaterial.update();
-        core.render.meshInstances[0].material = coreMaterial;
-        this.gateMarkerEntity.addChild(core);
-        this.gateMarkerEntity.coreEntity = core;
-
-        // Glow sphere (translucent) — scaled up 3x
-        const glow = new pc.Entity('gate-marker-glow');
-        glow.addComponent('render', { type: 'sphere' });
-        glow.setLocalScale(0.36, 0.36, 0.36);
-
-        const glowMaterial = new pc.StandardMaterial();
-        glowMaterial.emissive = new pc.Color(1, 0.85, 0.2);
-        glowMaterial.emissiveIntensity = 2;
-        glowMaterial.opacity = 0.4;
-        glowMaterial.blendType = pc.BLEND_NORMAL;
-        glowMaterial.depthWrite = false;
-        glowMaterial.cull = pc.CULLFACE_NONE;
-        glowMaterial.update();
-        glow.render.meshInstances[0].material = glowMaterial;
-        this.gateMarkerEntity.addChild(glow);
-        this.gateMarkerEntity.glowEntity = glow;
-
-        // Halo sphere (very translucent) — large glow aura
-        const halo = new pc.Entity('gate-marker-halo');
-        halo.addComponent('render', { type: 'sphere' });
-        halo.setLocalScale(0.45, 0.45, 0.45);
-
-        const haloMaterial = new pc.StandardMaterial();
-        haloMaterial.emissive = new pc.Color(1, 0.85, 0.2);
-        haloMaterial.emissiveIntensity = 1;
-        haloMaterial.opacity = 0.12;
-        haloMaterial.blendType = pc.BLEND_NORMAL;
-        haloMaterial.depthWrite = false;
-        haloMaterial.cull = pc.CULLFACE_NONE;
-        haloMaterial.update();
-        halo.render.meshInstances[0].material = haloMaterial;
-        this.gateMarkerEntity.addChild(halo);
-        this.gateMarkerEntity.haloEntity = halo;
-
-        // DOM label with human-readable text
-        const label = document.createElement('div');
-        label.className = 'gate-marker-label';
-        label.textContent = this.getGateMarkerLabel(gate.ref);
-        label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
-        document.body.appendChild(label);
-        this.gateMarkerEntity.labelElement = label;
-
-        // Store gate ref for click handler
-        this.gateMarkerEntity.gateRef = gate.ref;
-
-        // Register for clicks
-        this.registerInteractiveObject(this.gateMarkerEntity, () => {
+        // Guard against double-clicks
+        let clicked = false;
+        const handleClick = () => {
+            if (clicked) return;
+            clicked = true;
             this.onGateMarkerClick(gate);
-        }, 0.15);
+        };
+
+        // Hover effects
+        button.addEventListener('mouseenter', () => {
+            if (!clicked) button.style.background = 'rgba(244,208,63,0.25)';
+        });
+        button.addEventListener('mouseleave', () => {
+            if (!clicked) button.style.background = 'rgba(244,208,63,0.15)';
+        });
+        button.addEventListener('click', handleClick);
+
+        document.body.appendChild(button);
+        this.gateMarkerButton = button;
     }
 
     despawnGateMarker() {
-        if (this.gateMarkerEntity) {
-            if (this.gateMarkerEntity.labelElement && this.gateMarkerEntity.labelElement.parentNode) {
-                this.gateMarkerEntity.labelElement.parentNode.removeChild(this.gateMarkerEntity.labelElement);
-            }
-            this.unregisterInteractiveObject(this.gateMarkerEntity);
-            if (this.gateMarkerEntity.parent) {
-                this.gateMarkerEntity.parent.removeChild(this.gateMarkerEntity);
-            }
-            this.gateMarkerEntity = null;
+        if (this.gateMarkerButton && this.gateMarkerButton.parentNode) {
+            this.gateMarkerButton.parentNode.removeChild(this.gateMarkerButton);
+            this.gateMarkerButton = null;
         }
     }
 
@@ -1335,18 +1276,31 @@ class Scene {
             if (videoSrc && this.dom && this.dom.popupVideo && this.dom.videoPopup) {
                 const video = this.dom.popupVideo;
                 video.src = assetUrl(`Videos/${videoSrc}`);
-                video.play();
                 this.dom.videoPopup.classList.add('active');
                 document.body.classList.add('video-open');
 
-                // Resume sequence when video ends
                 const onVideoEnd = () => {
                     video.removeEventListener('ended', onVideoEnd);
+                    video.removeEventListener('error', onVideoError);
                     this.dom.videoPopup.classList.remove('active');
                     document.body.classList.remove('video-open');
                     this.resumeVoSequence();
                 };
+
+                const onVideoError = () => {
+                    video.removeEventListener('ended', onVideoEnd);
+                    video.removeEventListener('error', onVideoError);
+                    this.dom.videoPopup.classList.remove('active');
+                    document.body.classList.remove('video-open');
+                    this.resumeVoSequence();
+                };
+
                 video.addEventListener('ended', onVideoEnd);
+                video.addEventListener('error', onVideoError);
+                video.play().catch(() => {
+                    // If play() fails, trigger error handler
+                    onVideoError();
+                });
             } else {
                 this.resumeVoSequence();
             }
@@ -1442,51 +1396,8 @@ class Scene {
         }
     }
 
-    updateGateMarker(deltaTime) {
-        if (!this.gateMarkerEntity) return;
-
-        // Update label positioning and visibility
-        if (this.gateMarkerEntity.labelElement) {
-            const videoOpen = document.body.classList.contains('video-open');
-            const worldPos = this.gateMarkerEntity.getPosition();
-            const screen = this.worldToScreen(worldPos);
-            const camPos = cameraEntity.getPosition();
-            const camFwd = cameraEntity.forward;
-            const toMarker = new pc.Vec3().sub2(worldPos, camPos);
-            const isBehind = toMarker.dot(camFwd) <= 0;
-            const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
-            const newDisplay = (videoOpen || isBehind || isOffScreen) ? 'none' : 'block';
-            if (this.gateMarkerEntity._labelDisplay !== newDisplay) {
-                this.gateMarkerEntity.labelElement.style.display = newDisplay;
-                this.gateMarkerEntity._labelDisplay = newDisplay;
-            }
-            if (this.gateMarkerEntity._labelX !== screen.x) {
-                this.gateMarkerEntity.labelElement.style.left = `${screen.x}px`;
-                this.gateMarkerEntity._labelX = screen.x;
-            }
-            if (this.gateMarkerEntity._labelY !== screen.y) {
-                this.gateMarkerEntity.labelElement.style.top = `${screen.y - 50}px`;
-                this.gateMarkerEntity._labelY = screen.y;
-            }
-        }
-
-        // Pulse animation (scaled for 3x marker size)
-        const pulse = Math.sin(Date.now() * 0.003) * 0.5 + 0.5;
-        const core = this.gateMarkerEntity.coreEntity;
-        const glow = this.gateMarkerEntity.glowEntity;
-        if (core) {
-            const s = 0.09 + pulse * 0.03;
-            core.setLocalScale(s, s, s);
-        }
-        if (glow) {
-            const s = 0.18 + pulse * 0.06;
-            glow.setLocalScale(s, s, s);
-        }
-    }
-
     update(deltaTime) {
-        // Update gate marker in all scenes
-        this.updateGateMarker(deltaTime);
+        // Base scene update (subclasses override this)
     }
 }
 
