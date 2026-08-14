@@ -909,12 +909,6 @@ class RoasteryScene extends Scene {
             this.hotspotEntities.push(group);
             console.log(`[roastery] Created hotspot: "${hotspot.id}" (transition=${hotspot.isTransition})`);
 
-            // Visibility: hide video hotspots until quiz is passed; gate markers start disabled and are enabled by spawnGateMarker
-            if (hotspot.isGateMarker) {
-                group.enabled = false;
-            } else if (hotspot.isVideo) {
-                group.enabled = this.quizPassed;
-            }
 
             this.registerInteractiveObject(group, () => {
                 this.onHotspotClick(hotspot, group);
@@ -928,6 +922,10 @@ class RoasteryScene extends Scene {
                 label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
                 document.body.appendChild(label);
                 group.labelElement = label;
+                // Gate markers show their label immediately
+                if (hotspot.isGateMarker) {
+                    label.style.display = 'block';
+                }
                 console.warn(`[roastery] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
             }
         });
