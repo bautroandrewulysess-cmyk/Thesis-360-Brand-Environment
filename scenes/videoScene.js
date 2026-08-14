@@ -105,7 +105,7 @@ class VideoScene extends Scene {
         this.isLoaded = true;
     }
 
-    playVoWithSubtitles(audioKey) {
+    playVoWithSubtitles(audioKey, isQuizEligible = false) {
         // Override to suppress subtitles if suppressSubtitles flag is set
         if (this.suppressSubtitles) {
             // Hide subtitle bar and play audio without VTT track
@@ -150,8 +150,8 @@ class VideoScene extends Scene {
             return Promise.resolve();
         }
 
-        // Otherwise use parent class implementation
-        return super.playVoWithSubtitles(audioKey);
+        // Otherwise use parent class implementation, passing through isQuizEligible
+        return super.playVoWithSubtitles(audioKey, isQuizEligible);
     }
 
     onLoadingScreenDismissed() {

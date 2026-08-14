@@ -24,6 +24,11 @@ class RoasteryScene extends Scene {
         this.mouseDownX = 0;
         this.mouseDownY = 0;
 
+        // Gate marker hotspot highlighting
+        this.highlightedHotspot = null;
+        this.highlightStartTime = 0;
+        this.highlightLabel = null;
+
         // Hotspot system
         this.hotspots = [
             {
@@ -1033,10 +1038,17 @@ class RoasteryScene extends Scene {
         if (gate.ref === 'roasterVideo') {
             const hotspotGroup = this.hotspotEntities.find(h => h.hotspotData?.id === 'coffee-roasting');
             if (hotspotGroup) {
+                this.highlightedHotspot = hotspotGroup;
+                this.highlightStartTime = Date.now();
+                // Set initial glow color for highlighted state
                 const glowMat = hotspotGroup.glowEntity.render.meshInstances[0].material;
                 glowMat.emissive = new pc.Color(1, 0.85, 0.2);
-                glowMat.emissiveIntensity = 2;
                 glowMat.update();
+                // Show label
+                if (hotspotGroup.labelElement) {
+                    hotspotGroup.labelElement.style.display = 'block';
+                    this.highlightLabel = hotspotGroup.labelElement;
+                }
             }
             return;
         }
@@ -1077,6 +1089,12 @@ class RoasteryScene extends Scene {
                 glowMat.emissive = new pc.Color(0, 0, 0);
                 glowMat.emissiveIntensity = 0;
                 glowMat.update();
+                // Clear highlight state and hide label
+                this.highlightedHotspot = null;
+                if (this.highlightLabel) {
+                    this.highlightLabel.style.display = 'none';
+                    this.highlightLabel = null;
+                }
 
                 this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
@@ -1219,6 +1237,10 @@ class RoasteryScene extends Scene {
                     const s = 0.08 + tripleSpeedPulse * 0.04;
                     glow.setLocalScale(s, s, s);
                     glow.render.meshInstances[0].material.opacity = 0.5;
+                    // Animate glow intensity
+                    const intensityPulse = 1.5 + (Math.sin(Date.now() * 0.005) * 0.5 + 0.5) * 1.5;
+                    glow.render.meshInstances[0].material.emissiveIntensity = intensityPulse;
+                    glow.render.meshInstances[0].material.update();
                 }
                 if (halo) {
                     halo.enabled = true;
