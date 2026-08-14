@@ -218,6 +218,12 @@ class StreetViewScene extends Scene {
                     { label: 'Back', yaw: 180, pitch: 0, target: 'farm1-4' }
                 ]
             },
+            'farm1-closeup': {
+                photo: assetUrl('Photos (360)/Farm1/Close Up/farm1Closeup 1.jpg'),
+                arrows: [
+                    { label: 'Back', yaw: 0, pitch: 0, target: 'farm1-4' }
+                ]
+            },
 
             // === Farm → Dryer walk (6 positions) ===
             'toDryer1': {
@@ -714,8 +720,8 @@ class StreetViewScene extends Scene {
             }, 1.5);
         });
 
-        // Create farm close-up 3D orb at farm1-3
-        if (this.currentPosition === 'farm1-3') {
+        // Create farm close-up 3D orb at farm1-4
+        if (this.currentPosition === 'farm1-4') {
             this.createFarmCloseupOrb();
         }
 
@@ -726,8 +732,8 @@ class StreetViewScene extends Scene {
         const orbEntity = new pc.Entity('farm-closeup-orb');
         orbEntity.addComponent('render', { type: 'sphere' });
 
-        // Position in world space (forward and up)
-        orbEntity.setLocalPosition(0, 0.5, 2.5);
+        // Position to the lower-left side, clear of forward arrow line of sight
+        orbEntity.setLocalPosition(-1.5, -1.0, 1.5);
         orbEntity.setLocalScale(0.5, 0.5, 0.5);
 
         const layer = app.scene.layers.getLayerByName('Immediate') || app.scene.layers.getLayerByName('UI');
@@ -750,35 +756,23 @@ class StreetViewScene extends Scene {
         this.container.addChild(orbEntity);
         this.farmCloseupOrb = orbEntity;
 
-        // Register for clicking
+        // Register for clicking with small raycast radius to avoid blocking forward arrow
         this.registerInteractiveObject(orbEntity, () => {
             this.onFarmCloseupOrbClick();
-        }, 1.5);
+        }, 0.35);
 
-        console.log('[farm-closeup] Orb created at farm1-3');
+        console.log('[farm-closeup] Orb created at farm1-4');
     }
 
     onFarmCloseupOrbClick() {
-        // Load and display the farm close-up 360 photo
-        const imagePopup = document.getElementById('image-popup');
-        const popupImage = document.getElementById('popup-image');
-        const closeBtn = document.getElementById('image-popup-close');
-
-        if (imagePopup && popupImage) {
-            popupImage.src = assetUrl('Photos (360)/Farm1/Close Up/farm1Closeup 1.jpg');
-            imagePopup.style.display = 'flex';
-            imagePopup.style.opacity = '1';
-            document.body.classList.add('video-open');
-
-            const onClose = () => {
-                imagePopup.style.opacity = '0';
-                setTimeout(() => {
-                    imagePopup.style.display = 'none';
-                    document.body.classList.remove('video-open');
-                }, 800);
-            };
-            closeBtn.onclick = onClose;
+        // Clicking the orb triggers the treePhoto gate: resume VO and load close-up sphere
+        if (this.voSceneKey === 'farm' && window.VoSegments.farm.en[this.voSegmentIndex]?.gate?.ref === 'treePhoto') {
+            this.farm_en_01_Finished = false;
+            this.farmHintVisible = false;
+            this.resumeVoSequence();
         }
+        this.currentPosition = 'farm1-closeup';
+        this.updateSceneContent();
     }
 
     loadTexture(url) {
@@ -1368,6 +1362,16 @@ class StreetViewScene extends Scene {
         video.src = src;
         video.preload = 'metadata';
         document.body.appendChild(video);
+    }
+
+    spawnGateMarker(gate) {
+        // For treePhoto gate, don't show the 2D button — the 3D orb at farm1-4 is the only trigger
+        if (gate.ref === 'treePhoto') {
+            this.despawnGateMarker();
+            return;
+        }
+        // All other gates show the standard 2D button
+        super.spawnGateMarker(gate);
     }
 
     onGateMarkerClick(gate) {
