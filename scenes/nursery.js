@@ -1093,7 +1093,8 @@ class NurseryScene extends Scene {
     update(deltaTime) {
         if (!this.isLoaded) return;
 
-        this.updateGateMarker(deltaTime);
+        // Update gate marker
+        super.update(deltaTime);
 
         // Display camera position — throttled to 10x per second (not every frame)
         const camPos = cameraEntity.getLocalPosition();

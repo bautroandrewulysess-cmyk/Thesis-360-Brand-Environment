@@ -1163,6 +1163,9 @@ class StreetViewScene extends Scene {
     update(deltaTime) {
         if (!this.isLoaded) return;
 
+        // Update gate marker
+        super.update(deltaTime);
+
         // Update camera rotation from euler angles
         cameraEntity.setEulerAngles(
             this.eulerAngles.pitch * 180 / Math.PI,

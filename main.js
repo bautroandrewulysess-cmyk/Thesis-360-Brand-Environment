@@ -1184,6 +1184,21 @@ class Scene {
         await this.playVoSequence(this.voSceneKey);
     }
 
+    getGateMarkerLabel(gateRef) {
+        const labels = {
+            'mapZoom': 'Learn More',
+            'aerial': 'Learn More',
+            'farmerMontage': 'Learn More',
+            'ownerInterview': 'Learn More',
+            'treePhoto': 'Learn More',
+            'roasterVideo': 'Learn More',
+            'brewingPOV': 'Learn More',
+            'polybag': 'Learn More',
+            'monitoring': 'Learn More'
+        };
+        return labels[gateRef] || 'Watch';
+    }
+
     spawnGateMarker(gate) {
         if (!this.container || !cameraEntity) return;
 
@@ -1201,10 +1216,10 @@ class Scene {
         this.gateMarkerEntity.setPosition(markerWorldPos);
         this.container.addChild(this.gateMarkerEntity);
 
-        // Core sphere (gold, emissive)
+        // Core sphere (gold, emissive) — scaled up 3x for visibility at 2m
         const core = new pc.Entity('gate-marker-core');
         core.addComponent('render', { type: 'sphere' });
-        core.setLocalScale(0.06, 0.06, 0.06);
+        core.setLocalScale(0.18, 0.18, 0.18);
 
         const coreMaterial = new pc.StandardMaterial();
         coreMaterial.diffuse = new pc.Color(1, 0.85, 0.2); // Gold
@@ -1217,10 +1232,10 @@ class Scene {
         this.gateMarkerEntity.addChild(core);
         this.gateMarkerEntity.coreEntity = core;
 
-        // Glow sphere (translucent)
+        // Glow sphere (translucent) — scaled up 3x
         const glow = new pc.Entity('gate-marker-glow');
         glow.addComponent('render', { type: 'sphere' });
-        glow.setLocalScale(0.12, 0.12, 0.12);
+        glow.setLocalScale(0.36, 0.36, 0.36);
 
         const glowMaterial = new pc.StandardMaterial();
         glowMaterial.emissive = new pc.Color(1, 0.85, 0.2);
@@ -1234,10 +1249,27 @@ class Scene {
         this.gateMarkerEntity.addChild(glow);
         this.gateMarkerEntity.glowEntity = glow;
 
-        // DOM label
+        // Halo sphere (very translucent) — large glow aura
+        const halo = new pc.Entity('gate-marker-halo');
+        halo.addComponent('render', { type: 'sphere' });
+        halo.setLocalScale(0.45, 0.45, 0.45);
+
+        const haloMaterial = new pc.StandardMaterial();
+        haloMaterial.emissive = new pc.Color(1, 0.85, 0.2);
+        haloMaterial.emissiveIntensity = 1;
+        haloMaterial.opacity = 0.12;
+        haloMaterial.blendType = pc.BLEND_NORMAL;
+        haloMaterial.depthWrite = false;
+        haloMaterial.cull = pc.CULLFACE_NONE;
+        haloMaterial.update();
+        halo.render.meshInstances[0].material = haloMaterial;
+        this.gateMarkerEntity.addChild(halo);
+        this.gateMarkerEntity.haloEntity = halo;
+
+        // DOM label with human-readable text
         const label = document.createElement('div');
         label.className = 'gate-marker-label';
-        label.textContent = gate.ref || 'Gate';
+        label.textContent = this.getGateMarkerLabel(gate.ref);
         label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
         document.body.appendChild(label);
         this.gateMarkerEntity.labelElement = label;
@@ -1438,22 +1470,23 @@ class Scene {
             }
         }
 
-        // Pulse animation
+        // Pulse animation (scaled for 3x marker size)
         const pulse = Math.sin(Date.now() * 0.003) * 0.5 + 0.5;
         const core = this.gateMarkerEntity.coreEntity;
         const glow = this.gateMarkerEntity.glowEntity;
         if (core) {
-            const s = 0.03 + pulse * 0.01;
+            const s = 0.09 + pulse * 0.03;
             core.setLocalScale(s, s, s);
         }
         if (glow) {
-            const s = 0.06 + pulse * 0.02;
+            const s = 0.18 + pulse * 0.06;
             glow.setLocalScale(s, s, s);
         }
     }
 
     update(deltaTime) {
-        // Override in subclasses
+        // Update gate marker in all scenes
+        this.updateGateMarker(deltaTime);
     }
 }
 
