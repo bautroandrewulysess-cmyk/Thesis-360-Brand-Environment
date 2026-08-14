@@ -1081,7 +1081,7 @@ class RoasteryScene extends Scene {
             if (this.voAudio && !this.voAudio.paused) return;
 
             // If this is the roasterVideo gate marker (roasting-beans-transition), play video and resume sequence
-            if (hotspot.isGateMarker && this.voSceneKey === 'roasting' && !this.isVoFinished) {
+            if (hotspot.isGateMarker && this.voSceneKey === 'roasting') {
                 // Unhighlight and hide the gate marker orb
                 const glowMat = entity.glowEntity.render.meshInstances[0].material;
                 glowMat.emissive = new pc.Color(0, 0, 0);
@@ -1100,6 +1100,7 @@ class RoasteryScene extends Scene {
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: false,
                     caption: hotspot.label,
+                    volume: 0.15,
                     onFinish: () => {
                         this.resumeAmbient();
                     }

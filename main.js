@@ -1064,7 +1064,7 @@ class Scene {
         }
     }
 
-    showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null } = {}) {
+    showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null, volume = 1 } = {}) {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
         // Improve video hardware acceleration hints to reduce lag when overlaying the canvas
@@ -1086,7 +1086,7 @@ class Scene {
             this.pauseAmbient();
         }
 
-        video.volume = 1;
+        video.volume = volume;
         video.preload = 'auto';
         video.src = src;
         skipBtn.style.display = required ? 'none' : 'block';
@@ -1097,9 +1097,9 @@ class Scene {
         }
 
         const cleanupVideo = async () => {
-            video.volume = 1;
+            const startVol = video.volume;
             for (let i = 0; i <= 40; i++) {
-                video.volume = Math.max(0, 1 - (i / 40));
+                video.volume = Math.max(0, startVol * (1 - (i / 40)));
                 await new Promise(r => setTimeout(r, 10));
             }
             video.pause();
