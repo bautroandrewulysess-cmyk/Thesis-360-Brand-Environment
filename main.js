@@ -281,6 +281,11 @@ class SceneManager {
                 loadingScreen.classList.add('hidden');
             }
 
+            // Signal to active scene that loading screen has been dismissed — allows VO to start after loading
+            if (this.activeScene?.onLoadingScreenDismissed) {
+                this.activeScene.onLoadingScreenDismissed();
+            }
+
             appState.isTransitioning = false;
         }
     }
@@ -954,7 +959,7 @@ class Scene {
         }
     }
 
-    showVideoPopup(src, { required = false, caption = null, onFinish = null } = {}) {
+    showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null } = {}) {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
         // Improve video hardware acceleration hints to reduce lag when overlaying the canvas
@@ -981,6 +986,11 @@ class Scene {
         video.preload = 'auto';
         video.src = src;
         skipBtn.style.display = required ? 'none' : 'block';
+
+        // Play narration if specified
+        if (narrationId) {
+            this.playVoWithSubtitles(narrationId, false);
+        }
 
         const cleanupVideo = async () => {
             video.volume = 1;
@@ -1277,7 +1287,7 @@ class Scene {
             }
         } else if (gate.ref) {
             const videoMap = {
-                polybag: 'heroLoop.mp4',
+                polybag: 'droneTopViewCafeToFarmOverview.mp4',
                 mapZoom: 'heroLoop.mp4',
                 aerial: 'heroLoop.mp4',
                 farmerMontage: 'heroLoop.mp4',
@@ -1286,10 +1296,27 @@ class Scene {
             };
             const videoSrc = videoMap[gate.ref];
             if (videoSrc) {
-                this.showVideoPopup(assetUrl(`Videos/${videoSrc}`), {
-                    required: true,
-                    onFinish: () => this.resumeVoSequence()
-                });
+                // Skip heroLoop.mp4 placeholder — go straight to next segment when real footage arrives
+                if (videoSrc === 'heroLoop.mp4') {
+                    this.resumeVoSequence();
+                } else if (gate.ref === 'polybag') {
+                    // Special handling: drone video with journey narration, then transition to toFarm1
+                    this.showVideoPopup(assetUrl(`Videos/${videoSrc}`), {
+                        required: true,
+                        narrationId: 'journeyToFarm_en_01',
+                        onFinish: async () => {
+                            // After drone video ends, fade and transition to street-view at toFarm1
+                            // journeyToFarm_en_02 will play when loading screen dismisses (onLoadingScreenDismissed)
+                            await fadeOut();
+                            sceneManager.switchTo('street-view', [0, 1.6, 0]);
+                        }
+                    });
+                } else {
+                    this.showVideoPopup(assetUrl(`Videos/${videoSrc}`), {
+                        required: true,
+                        onFinish: () => this.resumeVoSequence()
+                    });
+                }
             } else {
                 this.resumeVoSequence();
             }
@@ -1326,7 +1353,7 @@ class Scene {
 
         // Answer options
         const optionsContainer = document.createElement('div');
-        optionsContainer.style.cssText = `display:flex; flex-direction:column; gap:12px;`;
+        optionsContainer.style.cssText = `display:flex; flex-direction:column; gap:12px; align-items:center;`;
 
         const correctAnswer = questionData.correct;
         const options = [questionData.a, questionData.b].sort(() => Math.random() - 0.5); // Shuffle
@@ -1360,7 +1387,7 @@ class Scene {
         options.forEach(option => {
             const btn = document.createElement('button');
             btn.textContent = option;
-            btn.style.cssText = `padding:12px 16px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4f4f4; border-radius:6px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.95rem; transition:all 0.2s; text-align:left;`;
+            btn.style.cssText = `padding:12px 16px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4f4f4; border-radius:6px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.95rem; transition:all 0.2s; text-align:center; width:280px;`;
             btn.addEventListener('mouseenter', () => {
                 if (!btn.disabled) btn.style.background = 'rgba(244,208,63,0.3)';
             });

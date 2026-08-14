@@ -22,6 +22,7 @@ class StreetViewScene extends Scene {
         this.nadirPatchTexture = null;
         this.arrowEntities = [];
         this.arrowLabels = [];
+        this.farmCloseupOrb = null;
 
         // Camera control
         this.mouseX = 0;
@@ -517,9 +518,9 @@ class StreetViewScene extends Scene {
 
         ctx.save();
 
-        // Rotate 180° to correct upside-down text viewed from below
+        // Flip horizontally to correct text when viewed from below — avoids mirroring from 180° rotation
         ctx.translate(512, 512);
-        ctx.rotate(Math.PI);
+        ctx.scale(-1, 1);
         ctx.translate(-512, -512);
 
         const text = 'GRANJA ALEGRE';
@@ -599,6 +600,13 @@ class StreetViewScene extends Scene {
         this.arrowLabels.forEach(label => label.remove());
         this.arrowLabels = [];
 
+        // Clear previous farm close-up orb if exists
+        if (this.farmCloseupOrb) {
+            this.unregisterInteractiveObject(this.farmCloseupOrb);
+            this.farmCloseupOrb.destroy();
+            this.farmCloseupOrb = null;
+        }
+
         const posData = this.positions[this.currentPosition];
         if (!posData || !posData.arrows) {
             if (window.DEV_MODE) console.log(`[createArrows] No arrows for ${this.currentPosition}`);
@@ -609,7 +617,11 @@ class StreetViewScene extends Scene {
 
         posData.arrows.forEach((arrow, index) => {
             if (arrow.label === 'To Dryer' && !window.journeyComplete) return;
-            if (this.currentPosition === 'farm1-1' && arrow.label === 'Next View' && this.farmVoStarted && !window.journeyComplete) return;
+            // Suppress 'Next View' at farm1-1 during VO, but only if there are other forward arrows
+            if (this.currentPosition === 'farm1-1' && arrow.label === 'Next View' && this.farmVoStarted && !window.journeyComplete) {
+                const forwardArrows = posData.arrows.filter(a => !a.label.includes('Back'));
+                if (forwardArrows.length > 1) return; // Safe to suppress: other forward arrows exist
+            }
             // Parse yaw and pitch (default pitch -18° if not specified)
             const yawDeg = arrow.yaw;
             const pitchDeg = arrow.pitch !== undefined ? arrow.pitch : -18;
@@ -702,7 +714,71 @@ class StreetViewScene extends Scene {
             }, 1.5);
         });
 
+        // Create farm close-up 3D orb at farm1-3
+        if (this.currentPosition === 'farm1-3') {
+            this.createFarmCloseupOrb();
+        }
+
         if (window.DEV_MODE) console.log(`[createArrows] ✓ ${this.arrowEntities.length} arrows created`);
+    }
+
+    createFarmCloseupOrb() {
+        const orbEntity = new pc.Entity('farm-closeup-orb');
+        orbEntity.addComponent('render', { type: 'sphere' });
+
+        // Position in world space (forward and up)
+        orbEntity.setLocalPosition(0, 0.5, 2.5);
+        orbEntity.setLocalScale(0.5, 0.5, 0.5);
+
+        const layer = app.scene.layers.getLayerByName('Immediate') || app.scene.layers.getLayerByName('UI');
+        if (layer) {
+            orbEntity.render.meshInstances[0].layer = layer.id;
+        }
+
+        // Gold material
+        const mat = new pc.StandardMaterial();
+        mat.cull = pc.CULLFACE_NONE;
+        mat.diffuse = new pc.Color(1, 0.85, 0.2);
+        mat.emissive = new pc.Color(0.8, 0.68, 0.1);
+        mat.emissiveIntensity = 0.6;
+        mat.opacity = 0.95;
+        mat.blendType = pc.BLEND_NORMAL;
+        mat.update();
+
+        orbEntity.render.meshInstances[0].material = mat;
+
+        this.container.addChild(orbEntity);
+        this.farmCloseupOrb = orbEntity;
+
+        // Register for clicking
+        this.registerInteractiveObject(orbEntity, () => {
+            this.onFarmCloseupOrbClick();
+        }, 1.5);
+
+        console.log('[farm-closeup] Orb created at farm1-3');
+    }
+
+    onFarmCloseupOrbClick() {
+        // Load and display the farm close-up 360 photo
+        const imagePopup = document.getElementById('image-popup');
+        const popupImage = document.getElementById('popup-image');
+        const closeBtn = document.getElementById('image-popup-close');
+
+        if (imagePopup && popupImage) {
+            popupImage.src = assetUrl('Photos (360)/Farm1/Close Up/farm1Closeup 1.jpg');
+            imagePopup.style.display = 'flex';
+            imagePopup.style.opacity = '1';
+            document.body.classList.add('video-open');
+
+            const onClose = () => {
+                imagePopup.style.opacity = '0';
+                setTimeout(() => {
+                    imagePopup.style.display = 'none';
+                    document.body.classList.remove('video-open');
+                }, 800);
+            };
+            closeBtn.onclick = onClose;
+        }
     }
 
     loadTexture(url) {
@@ -1065,33 +1141,6 @@ class StreetViewScene extends Scene {
             // Preload next positions
             this.preloadArrowTargets();
 
-            // Journey to farm: on first entry, show drone video with voiceover
-            if (!this.journeyVideoPlayed && this.currentPosition === 'toFarm1') {
-                this.journeyVideoPlayed = true;
-                const videoPopup = document.getElementById('video-popup');
-                const popupVideo = document.getElementById('popup-video');
-                if (videoPopup && popupVideo) {
-                    popupVideo.src = assetUrl('Videos/droneTopViewCafeToFarmOverview.mp4');
-                    videoPopup.style.display = 'flex';
-                    popupVideo.play();
-                    this.playVoWithSubtitles('journeyToFarm_en_01', false);
-
-                    const onVideoEnd = () => {
-                        popupVideo.removeEventListener('ended', onVideoEnd);
-                        fadeOut().then(() => {
-                            videoPopup.style.display = 'none';
-                            return fadeIn();
-                        }).then(() => {
-                            // After fade completes and photo is visible, play journeyToFarm_en_02
-                            this.playVoWithSubtitles('journeyToFarm_en_02', false);
-                        }).catch(() => {
-                            videoPopup.style.display = 'none';
-                        });
-                    };
-                    popupVideo.addEventListener('ended', onVideoEnd);
-                }
-            }
-
             this.attachEventListeners();
         } catch (error) {
             console.error('Street view load failed:', error);
@@ -1214,21 +1263,31 @@ class StreetViewScene extends Scene {
             inToFarm7_13 = farmNum >= 7 && farmNum <= 13;
         }
 
+        // Reset journeyIdleTimerActive when VO finishes, allowing next encouragement to play
+        if (this.isVoFinished && this.journeyIdleTimerActive) {
+            console.log(`[encouragement] VO finished, resetting journeyIdleTimerActive`);
+            this.journeyIdleTimerActive = false;
+        }
+
         if (inToFarm1_6) {
             this.journeyIdleTimer += deltaTime;
             if (this.journeyIdleTimer >= 10 && !this.journeyIdleTimerActive) {
+                console.log(`[encouragement] toFarm1-6: timer=${this.journeyIdleTimer.toFixed(1)}s, isVoFinished=${this.isVoFinished}, videoOpen=${document.body.classList.contains('video-open')}`);
                 // Don't play if VO or video already playing
                 if (!this.isVoFinished || document.body.classList.contains('video-open')) {
+                    console.log(`[encouragement] skipped (VO running or video open)`);
                     // Skip only the encouragement block, not the coordinate display update below
                 } else {
                     this.journeyIdleTimerActive = true;
                     const lastLine = this.journeyEncouragementLastLine[pos];
                     if (lastLine === '04') {
                         // Last was 04, play 03
+                        console.log(`[encouragement] playing journeyToFarm_en_03 at ${pos}`);
                         this.playVoWithSubtitles('journeyToFarm_en_03', false);
                         this.journeyEncouragementLastLine[pos] = '03';
                     } else {
                         // Last was 03 or undefined, play 04
+                        console.log(`[encouragement] playing journeyToFarm_en_04 at ${pos}`);
                         this.playVoWithSubtitles('journeyToFarm_en_04', false);
                         this.journeyEncouragementLastLine[pos] = '04';
                     }
@@ -1238,11 +1297,14 @@ class StreetViewScene extends Scene {
         } else if (inToFarm7_13) {
             this.journeyIdleTimer += deltaTime;
             if (this.journeyIdleTimer >= 15 && !this.journeyIdleTimerActive) {
+                console.log(`[encouragement] toFarm7-13: timer=${this.journeyIdleTimer.toFixed(1)}s, isVoFinished=${this.isVoFinished}, videoOpen=${document.body.classList.contains('video-open')}`);
                 // Don't play if VO or video already playing
                 if (!this.isVoFinished || document.body.classList.contains('video-open')) {
+                    console.log(`[encouragement] skipped (VO running or video open)`);
                     // Skip only the encouragement block, not the coordinate display update below
                 } else {
                     this.journeyIdleTimerActive = true;
+                    console.log(`[encouragement] playing journeyToFarm_en_06 at ${pos}`);
                     this.playVoWithSubtitles('journeyToFarm_en_06', false);
                     this.journeyIdleTimer = 0;
                 }
@@ -1279,6 +1341,33 @@ class StreetViewScene extends Scene {
             this.farm_en_01_Finished = true;
         }
         super.spawnGateMarker(gate);
+        // Recreate arrows when pausing at a gate — restores suppressed forward arrows at farm1-1
+        this.createArrows();
+    }
+
+    async resumeVoSequence() {
+        // Recreate arrows before resuming so suppressed ones re-appear
+        this.createArrows();
+        await super.resumeVoSequence();
+    }
+
+    onLoadingScreenDismissed() {
+        // Play journeyToFarm_en_02 on arrival at toFarm1 (after drone video transitions from nursery)
+        if (this.currentPosition === 'toFarm1' && !this.journeyVideoPlayed) {
+            this.journeyVideoPlayed = true;
+            this.isVoFinished = false;
+            this.playVoWithSubtitles('journeyToFarm_en_02', false);
+            // Preload farmerInterview video for toFarm14 so it plays immediately
+            this.preloadVideo(`${R2_BASE}/farmerInterview.mp4`);
+        }
+    }
+
+    preloadVideo(src) {
+        const video = document.createElement('video');
+        video.style.display = 'none';
+        video.src = src;
+        video.preload = 'metadata';
+        document.body.appendChild(video);
     }
 
     onGateMarkerClick(gate) {

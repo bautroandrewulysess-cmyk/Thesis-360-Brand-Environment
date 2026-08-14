@@ -972,6 +972,22 @@ class NurseryScene extends Scene {
             // Create hotspots
             this.createHotspots();
 
+            // Scale up hotspots for better visibility and clickability
+            this.hotspotEntities.forEach(group => {
+                if (group.coreEntity) {
+                    const [x, y, z] = group.coreEntity.getLocalScale();
+                    group.coreEntity.setLocalScale(x * 1.5, y * 1.5, z * 1.5);
+                }
+                if (group.glowEntity) {
+                    const [x, y, z] = group.glowEntity.getLocalScale();
+                    group.glowEntity.setLocalScale(x * 1.5, y * 1.5, z * 1.5);
+                }
+                if (group.haloEntity) {
+                    const [x, y, z] = group.haloEntity.getLocalScale();
+                    group.haloEntity.setLocalScale(x * 1.5, y * 1.5, z * 1.5);
+                }
+            });
+
             // Cache DOM references to avoid repeated getElementById() calls
             this.dom = {
                 coordX: document.getElementById('coord-x'),
@@ -997,8 +1013,6 @@ class NurseryScene extends Scene {
             window.addEventListener('keydown', fallbackAudioStart);
             window.addEventListener('click', fallbackAudioStart);
 
-            this.isVoFinished = false;
-            this.playVoSequence('nursery');
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisRoastery_optimized.sog`, 'roastery-splat');
             }
@@ -1088,6 +1102,11 @@ class NurseryScene extends Scene {
         } finally {
             this.isLoaded = false;
         }
+    }
+
+    onLoadingScreenDismissed() {
+        this.isVoFinished = false;
+        this.playVoSequence('nursery');
     }
 
     update(deltaTime) {
