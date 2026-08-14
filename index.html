@@ -970,9 +970,11 @@
 
                 // Play the VO segment with subtitles
                 const vo = new Audio(assetUrl(`VO/${segmentId}.mp3`));
+                vo.crossOrigin = 'anonymous';
                 subtitles.innerHTML = ''; // Clear previous subtitles
                 gateContainer.innerHTML = ''; // Clear previous gate button
                 let isPlaying = true;
+                let autoplayBlocked = false;
 
                 const onSegmentEnd = async () => {
                     isPlaying = false;
@@ -980,14 +982,31 @@
                     // Show gate button for this segment
                     const btn = document.createElement('button');
                     btn.textContent = gateData.label;
-                    btn.style.cssText = `padding:14px 28px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; outline:none;`;
+                    btn.style.cssText = `padding:14px 28px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; outline:none; z-index:1010;`;
+                    let clicked = false;
+                    let pointerDownX = 0;
+                    let pointerDownY = 0;
+
+                    btn.addEventListener('pointerdown', (e) => {
+                        pointerDownX = e.clientX;
+                        pointerDownY = e.clientY;
+                    });
+
                     btn.addEventListener('mouseenter', () => {
-                        btn.style.background = 'rgba(244,208,63,0.25)';
+                        if (!clicked) btn.style.background = 'rgba(244,208,63,0.25)';
                     });
                     btn.addEventListener('mouseleave', () => {
-                        btn.style.background = 'rgba(244,208,63,0.15)';
+                        if (!clicked) btn.style.background = 'rgba(244,208,63,0.15)';
                     });
-                    btn.addEventListener('click', async () => {
+
+                    btn.addEventListener('click', async (e) => {
+                        if (clicked) return;
+                        // Guard against drag: only fire if pointer moved < 5px
+                        const dx = Math.abs(e.clientX - pointerDownX);
+                        const dy = Math.abs(e.clientY - pointerDownY);
+                        if (dx > 5 || dy > 5) return;
+
+                        clicked = true;
                         btn.disabled = true;
                         btn.style.opacity = '0.5';
                         // Play gate video (placeholder: heroLoop.mp4)
@@ -1001,6 +1020,7 @@
                             videoEl.play().catch(() => {});
                             const onVideoEnd = () => {
                                 videoEl.removeEventListener('ended', onVideoEnd);
+                                videoEl.removeEventListener('error', onVideoEnd);
                                 video.style.opacity = '0';
                                 setTimeout(() => {
                                     video.style.display = 'none';
@@ -1008,7 +1028,15 @@
                                     playBrandStorySegment(index + 1);
                                 }, 800);
                             };
+                            const onVideoError = () => {
+                                videoEl.removeEventListener('ended', onVideoEnd);
+                                videoEl.removeEventListener('error', onVideoError);
+                                video.style.display = 'none';
+                                document.body.classList.remove('video-open');
+                                playBrandStorySegment(index + 1);
+                            };
                             videoEl.addEventListener('ended', onVideoEnd);
+                            videoEl.addEventListener('error', onVideoError);
                         } else {
                             playBrandStorySegment(index + 1);
                         }
@@ -1017,7 +1045,11 @@
                 };
 
                 vo.addEventListener('ended', onSegmentEnd);
-                vo.addEventListener('error', onSegmentEnd);
+                vo.addEventListener('error', () => {
+                    console.warn(`[BrandStory] Audio load failed for ${segmentId}`);
+                    autoplayBlocked = true;
+                    onSegmentEnd();
+                });
 
                 // Fetch and display subtitles if available
                 try {
@@ -1027,8 +1059,15 @@
                     }
                 } catch (e) {}
 
+                // Append to DOM to help with autoplay
+                document.body.appendChild(vo);
+
                 // Play audio
-                vo.play().catch(e => console.warn('[BrandStory] Autoplay failed:', e));
+                vo.play().catch(e => {
+                    console.warn('[BrandStory] Autoplay failed:', e.name);
+                    autoplayBlocked = true;
+                    onSegmentEnd();
+                });
             };
 
             // Start with first segment
