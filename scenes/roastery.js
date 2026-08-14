@@ -58,13 +58,12 @@ class RoasteryScene extends Scene {
             },
             {
                 id: 'roasting-beans-transition',
-                position: new pc.Vec3(0.566, 2.0, -0.740),
+                position: new pc.Vec3(0.566, 1.8, -0.740),
                 label: 'Roasting Beans',
-                description: 'Return to the cafe.',
-                isTransition: true,
-                targetScene: 'cafe-interior',
-                spawnPosition: [0, 1.6, 0.9],
-                hiddenUntilQuizPass: true
+                description: 'Watch the beans roast',
+                isVideo: true,
+                videoSrc: `${R2_BASE}/roasting.mp4`,
+                isGateMark: true
             },
             {
                 id: 'green-bean-packs',
@@ -1034,10 +1033,11 @@ class RoasteryScene extends Scene {
     }
 
     spawnGateMarker(gate) {
-        // For roasterVideo, don't spawn a marker — highlight the existing hotspot
+        // For roasterVideo gate, highlight and show the roasting-beans-transition orb
         if (gate.ref === 'roasterVideo') {
-            const hotspotGroup = this.hotspotEntities.find(h => h.hotspotData?.id === 'coffee-roasting');
+            const hotspotGroup = this.hotspotEntities.find(h => h.hotspotData?.id === 'roasting-beans-transition');
             if (hotspotGroup) {
+                hotspotGroup.enabled = true;
                 this.highlightedHotspot = hotspotGroup;
                 this.highlightStartTime = Date.now();
                 // Set initial glow color for highlighted state
@@ -1049,6 +1049,7 @@ class RoasteryScene extends Scene {
                     hotspotGroup.labelElement.style.display = 'block';
                     this.highlightLabel = hotspotGroup.labelElement;
                 }
+                console.log('[Roastery] roasterVideo gate reached - roasting-beans-transition orb highlighted');
             }
             return;
         }
@@ -1082,9 +1083,9 @@ class RoasteryScene extends Scene {
             if (this.videoPending) return;
             if (this.voAudio && !this.voAudio.paused) return;
 
-            // If this is the roasterVideo (marker gate), resume the VO sequence
-            if (hotspot.id === 'coffee-roasting' && this.voSceneKey === 'roasting' && !this.isVoFinished) {
-                // Unhighlight the hotspot
+            // If this is the roasterVideo gate marker (roasting-beans-transition), play video and resume sequence
+            if (hotspot.isGateMark && this.voSceneKey === 'roasting' && !this.isVoFinished) {
+                // Unhighlight and hide the gate marker orb
                 const glowMat = entity.glowEntity.render.meshInstances[0].material;
                 glowMat.emissive = new pc.Color(0, 0, 0);
                 glowMat.emissiveIntensity = 0;
@@ -1095,6 +1096,8 @@ class RoasteryScene extends Scene {
                     this.highlightLabel.style.display = 'none';
                     this.highlightLabel = null;
                 }
+                // Disable the orb after clicking
+                entity.enabled = false;
 
                 this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
@@ -1140,19 +1143,15 @@ class RoasteryScene extends Scene {
 
     onQuizPassed() {
         super.onQuizPassed();
-        // Re-enable all hotspots that were hidden until quiz passed
+        // Re-enable video hotspots now that quiz is passed
         this.hotspotEntities.forEach(group => {
-            if (group.hotspotData?.hiddenUntilQuizPass) {
+            if (group.hotspotData?.isVideo && !group.hotspotData?.isGateMark) {
                 group.enabled = true;
-                // Set glow to gold to match transition hotspots
-                const glowMat = group.glowEntity.render.meshInstances[0].material;
-                glowMat.emissive = new pc.Color(1, 0.85, 0.2);
-                glowMat.update();
                 // Show label if it exists
                 if (group.labelElement) {
                     group.labelElement.style.display = 'block';
                 }
-                console.log(`[Roastery] Re-enabled hiddenUntilQuizPass hotspot: "${group.hotspotData.id}"`);
+                console.log(`[Roastery] Re-enabled video hotspot: "${group.hotspotData.id}"`);
             }
         });
     }
