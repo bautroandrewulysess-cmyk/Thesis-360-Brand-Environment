@@ -1299,7 +1299,7 @@ class Scene {
                 mapZoom: 'heroLoop.mp4',
                 aerial: 'heroLoop.mp4',
                 farmerMontage: 'heroLoop.mp4',
-                ownerInterview: 'farmerInterview.mp4',
+                ownerInterview: 'ownerInterview.mp4',
                 roasterVideo: 'roasting.mp4'
             };
             const videoSrc = videoMap[gate.ref];
@@ -1366,12 +1366,6 @@ class Scene {
                 confirmMsg.textContent = 'Correct!';
                 confirmMsg.style.cssText = `color:#4caf50; font-weight:bold; text-align:center; margin-top:20px;`;
                 card.appendChild(confirmMsg);
-
-                // Disable all buttons
-                Array.from(optionsContainer.querySelectorAll('button')).forEach(btn => {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.5';
-                });
 
                 setTimeout(() => {
                     quizContainer.style.display = 'none';

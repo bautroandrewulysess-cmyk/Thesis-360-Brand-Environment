@@ -872,7 +872,7 @@ class StreetViewScene extends Scene {
                 this.playVoWithSubtitles('journeyToFarm_en_05', false);
             }
 
-            // Reset idle timer on position change
+            // Reset idle timer on position change — allows each position to trigger once
             this.journeyIdleTimer = 0;
             this.journeyIdleTimerActive = false;
 
@@ -1177,14 +1177,17 @@ class StreetViewScene extends Scene {
             arrow.setLocalScale(scale, 0.08, scale);
         });
 
-        // Farm directional hint
-        if (this.farmHintVisible && this.currentPosition >= 'farm1-1' && this.currentPosition <= 'farm1-5') {
+        // Farm directional hint — parse numeric suffix for proper range comparison
+        const isFarmRange = this.currentPosition.startsWith('farm1-');
+        const farmIndex = isFarmRange ? parseInt(this.currentPosition.split('-')[1]) : null;
+        const inFarmRange = isFarmRange && farmIndex >= 1 && farmIndex <= 5;
+
+        if (this.farmHintVisible && inFarmRange) {
             if (!this.farmHintElement) {
                 this.farmHintElement = document.createElement('div');
                 this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:#f4d03f; padding:12px 20px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.9rem; white-space:nowrap; z-index:100;';
                 document.body.appendChild(this.farmHintElement);
             }
-            const farmIndex = parseInt(this.currentPosition.split('-')[1]);
             this.farmHintElement.textContent = farmIndex < 3 ? 'Keep moving forward' : farmIndex > 3 ? 'Go back' : '';
             this.farmHintElement.style.display = this.farmHintElement.textContent ? 'block' : 'none';
         } else {
@@ -1193,36 +1196,45 @@ class StreetViewScene extends Scene {
             }
         }
 
-        // Journey to farm: idle timer for encouragement lines
+        // Journey to farm: idle timer for encouragement lines — parse numeric suffix for proper comparison
         const pos = this.currentPosition;
-        if (pos >= 'toFarm1' && pos <= 'toFarm6') {
+        let inToFarm1_6 = false, inToFarm8_13 = false;
+        if (pos.startsWith('toFarm')) {
+            const farmNum = parseInt(pos.slice(6));
+            inToFarm1_6 = farmNum >= 1 && farmNum <= 6;
+            inToFarm8_13 = farmNum >= 8 && farmNum <= 13;
+        }
+
+        if (inToFarm1_6) {
             this.journeyIdleTimer += deltaTime;
             if (this.journeyIdleTimer >= 8 && !this.journeyIdleTimerActive) {
                 // Don't play if VO or video already playing
                 if (!this.isVoFinished || document.body.classList.contains('video-open')) {
-                    return;
+                    // Skip only the encouragement block, not the coordinate display update below
+                } else {
+                    this.journeyIdleTimerActive = true;
+                    if (!this.journeyEncouragementPlayedAt03.has(pos)) {
+                        this.playVoWithSubtitles('journeyToFarm_en_03', false);
+                        this.journeyEncouragementPlayedAt03.add(pos);
+                    } else if (!this.journeyEncouragementPlayedAt04.has(pos)) {
+                        this.playVoWithSubtitles('journeyToFarm_en_04', false);
+                        this.journeyEncouragementPlayedAt04.add(pos);
+                    }
+                    this.journeyIdleTimer = 0;
                 }
-                this.journeyIdleTimerActive = true;
-                if (!this.journeyEncouragementPlayedAt03.has(pos)) {
-                    this.playVoWithSubtitles('journeyToFarm_en_03', false);
-                    this.journeyEncouragementPlayedAt03.add(pos);
-                } else if (!this.journeyEncouragementPlayedAt04.has(pos)) {
-                    this.playVoWithSubtitles('journeyToFarm_en_04', false);
-                    this.journeyEncouragementPlayedAt04.add(pos);
-                }
-                this.journeyIdleTimer = 0;
             }
-        } else if (pos >= 'toFarm8' && pos <= 'toFarm13') {
+        } else if (inToFarm8_13) {
             this.journeyIdleTimer += deltaTime;
             if (this.journeyIdleTimer >= 8 && !this.journeyIdleTimerActive && !this.journeyEncouragementPlayedAt06) {
                 // Don't play if VO or video already playing
                 if (!this.isVoFinished || document.body.classList.contains('video-open')) {
-                    return;
+                    // Skip only the encouragement block, not the coordinate display update below
+                } else {
+                    this.journeyIdleTimerActive = true;
+                    this.playVoWithSubtitles('journeyToFarm_en_06', false);
+                    this.journeyEncouragementPlayedAt06 = true;
+                    this.journeyIdleTimer = 0;
                 }
-                this.journeyIdleTimerActive = true;
-                this.playVoWithSubtitles('journeyToFarm_en_06', false);
-                this.journeyEncouragementPlayedAt06 = true;
-                this.journeyIdleTimer = 0;
             }
         } else {
             this.journeyIdleTimer = 0;
