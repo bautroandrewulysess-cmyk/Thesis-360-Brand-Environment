@@ -988,6 +988,17 @@ class CafeInteriorScene extends Scene {
 
     onQuizPassed() {
         super.onQuizPassed();
+        // Re-enable video hotspots now that quiz is passed
+        this.hotspotEntities.forEach(group => {
+            if (group.hotspotData?.isVideo) {
+                group.enabled = true;
+                // Show label if it exists
+                if (group.labelElement) {
+                    group.labelElement.style.display = 'block';
+                }
+                console.log(`[CafeInterior] Re-enabled video hotspot: "${group.hotspotData.id}"`);
+            }
+        });
         if (!window.brewingVideoPreloaded) {
             window.brewingVideoPreloaded = true;
             fetch(`${R2_BASE}/brewing.mp4`, { mode: 'cors' }).catch(() => {});

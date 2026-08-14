@@ -58,7 +58,7 @@ class RoasteryScene extends Scene {
             },
             {
                 id: 'roasting-beans-transition',
-                position: new pc.Vec3(0.566, 1.45, -0.740),
+                position: new pc.Vec3(0.566, 2.0, -0.740),
                 label: 'Roasting Beans',
                 description: 'Return to the cafe.',
                 isTransition: true,
@@ -1136,6 +1136,25 @@ class RoasteryScene extends Scene {
         document.getElementById('hotspot-title').textContent = hotspot.label;
         document.getElementById('hotspot-description').textContent = hotspot.description;
         this.dom.hotspotPopup.classList.add('active');
+    }
+
+    onQuizPassed() {
+        super.onQuizPassed();
+        // Re-enable all hotspots that were hidden until quiz passed
+        this.hotspotEntities.forEach(group => {
+            if (group.hotspotData?.hiddenUntilQuizPass) {
+                group.enabled = true;
+                // Set glow to gold to match transition hotspots
+                const glowMat = group.glowEntity.render.meshInstances[0].material;
+                glowMat.emissive = new pc.Color(1, 0.85, 0.2);
+                glowMat.update();
+                // Show label if it exists
+                if (group.labelElement) {
+                    group.labelElement.style.display = 'block';
+                }
+                console.log(`[Roastery] Re-enabled hiddenUntilQuizPass hotspot: "${group.hotspotData.id}"`);
+            }
+        });
     }
 
     async onUnload() {
