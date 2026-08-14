@@ -317,8 +317,12 @@ function fadeOut() {
 
 function fadeIn() {
     return new Promise((resolve) => {
+        console.log('[Fade] fadeIn called, removing active class from overlay');
         fadeOverlay.classList.remove('active');
-        setTimeout(resolve, fadeTransitionDuration);
+        setTimeout(() => {
+            console.log('[Fade] fadeIn transition complete');
+            resolve();
+        }, fadeTransitionDuration);
     });
 }
 
@@ -1925,8 +1929,13 @@ const DevJump = {
         const finalPos = spawnPos !== 'spawn' ? spawnPos : spawnMap[sceneName];
 
         try {
+            console.log(`[DEV] About to switch to ${sceneName} at ${finalPos}`);
             await sceneManager.switchTo(sceneName, finalPos);
             console.log(`[DEV] Jumped to ${sceneName} at ${finalPos}`);
+            const pos = cameraEntity.getLocalPosition();
+            console.log(`[DEV] Camera type:`, typeof pos, 'Camera:',  pos?.x, pos?.y, pos?.z);
+            console.log(`[DEV] App enabled:`, app.enabled, 'Rendering:', app.isRunning?.());
+            console.log(`[DEV] Canvas visible:`, canvas.style.display, 'Size:', canvas.clientWidth, 'x', canvas.clientHeight);
         } catch (e) {
             console.error(`[DEV] Failed to switch to ${sceneName}:`, e);
         }
