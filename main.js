@@ -1295,17 +1295,21 @@ class Scene {
                 roasterVideo: 'roasting.mp4'
             };
             const videoSrc = videoMap[gate.ref];
+            if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}, isPlaceholder=${videoSrc === 'heroLoop.mp4'}`);
             if (videoSrc) {
                 // Skip heroLoop.mp4 placeholder — go straight to next segment when real footage arrives
                 if (videoSrc === 'heroLoop.mp4') {
+                    if (window.DEV_MODE) console.log(`[Gate] Skipping placeholder, resuming VO immediately`);
                     this.resumeVoSequence();
                 } else {
+                    if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
                     this.showVideoPopup(assetUrl(`Videos/${videoSrc}`), {
                         required: true,
                         onFinish: () => this.resumeVoSequence()
                     });
                 }
             } else {
+                if (window.DEV_MODE) console.log(`[Gate] No video mapped, resuming VO immediately`);
                 this.resumeVoSequence();
             }
         } else {

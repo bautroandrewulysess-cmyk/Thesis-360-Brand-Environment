@@ -1043,16 +1043,16 @@ class NurseryScene extends Scene {
             // Scale up hotspots for better visibility and clickability
             this.hotspotEntities.forEach(group => {
                 if (group.coreEntity) {
-                    const [x, y, z] = group.coreEntity.getLocalScale();
-                    group.coreEntity.setLocalScale(x * 1.5, y * 1.5, z * 1.5);
+                    const s = group.coreEntity.getLocalScale();
+                    group.coreEntity.setLocalScale(s.x * 1.5, s.y * 1.5, s.z * 1.5);
                 }
                 if (group.glowEntity) {
-                    const [x, y, z] = group.glowEntity.getLocalScale();
-                    group.glowEntity.setLocalScale(x * 1.5, y * 1.5, z * 1.5);
+                    const s = group.glowEntity.getLocalScale();
+                    group.glowEntity.setLocalScale(s.x * 1.5, s.y * 1.5, s.z * 1.5);
                 }
                 if (group.haloEntity) {
-                    const [x, y, z] = group.haloEntity.getLocalScale();
-                    group.haloEntity.setLocalScale(x * 1.5, y * 1.5, z * 1.5);
+                    const s = group.haloEntity.getLocalScale();
+                    group.haloEntity.setLocalScale(s.x * 1.5, s.y * 1.5, s.z * 1.5);
                 }
             });
 
