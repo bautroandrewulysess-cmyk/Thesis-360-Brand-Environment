@@ -941,7 +941,6 @@ class NurseryScene extends Scene {
         video.style.height = '100%';
         video.style.zIndex = '9999';
         video.style.backgroundColor = '#000';
-        video.crossOrigin = 'anonymous';
 
         let transitionStarted = false;
 

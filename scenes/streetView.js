@@ -78,6 +78,7 @@ class StreetViewScene extends Scene {
         this.farmHintVisible = false;
         this.farmHintElement = null;
         this.farm_en_01_Finished = false;
+        this.farmCloseupClickInProgress = false;
 
         // Position graph: 31 total positions
         this.positions = {
@@ -765,16 +766,26 @@ class StreetViewScene extends Scene {
     }
 
     async onFarmCloseupOrbClick() {
-        console.log('[Farm Close-up] Orb clicked');
-        this.currentPosition = 'farm1-closeup';
-        await this.loadPosition('farm1-closeup');
+        // Guard against double-firing (raycast can trigger multiple times per click)
+        if (this.farmCloseupClickInProgress) {
+            console.log('[Farm Close-up] Click already in progress, ignoring');
+            return;
+        }
+        this.farmCloseupClickInProgress = true;
 
-        // After position loads, satisfy the treePhoto gate and resume sequence
-        if (this.voSceneKey === 'farm' && window.VoSegments.farm.en[this.voSegmentIndex]?.gate?.ref === 'treePhoto') {
-            console.log('[Farm Close-up] Position loaded, resuming farm_en_02');
+        try {
+            console.log('[Farm Close-up] Orb clicked');
+            this.currentPosition = 'farm1-closeup';
+            await this.loadPosition('farm1-closeup');
+
+            // After position loads, resume the VO sequence to play farm_en_02
+            console.log('[Farm Close-up] Resuming VO sequence');
             this.farm_en_01_Finished = false;
             this.farmHintVisible = false;
             await this.resumeVoSequence();
+            console.log('[Farm Close-up] VO sequence resumed');
+        } finally {
+            this.farmCloseupClickInProgress = false;
         }
     }
 
@@ -1241,18 +1252,60 @@ class StreetViewScene extends Scene {
             // This hint is no longer used; golden button hint appears below
         }
 
-        // Show golden button hint immediately after farm_en_01 ends and keep showing until close-up opened
+        // Show dynamic golden button hint based on distance from button position
         if (this.farm_en_01_Finished && inFarmRange && this.currentPosition !== 'farm1-closeup') {
             if (!this.farmHintElement) {
                 console.log('[Farm Hint] Creating hint element');
                 this.farmHintElement = document.createElement('div');
                 this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#f4d03f; padding:14px 24px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.95rem; white-space:nowrap; z-index:100; font-weight:500;';
                 document.body.appendChild(this.farmHintElement);
+                this.farmHintElement.lastText = '';
+                this.farmHintElement.variantIndex = 0;
             }
-            if (this.farmHintElement.style.display === 'none' || !this.farmHintElement.style.display) {
-                console.log('[Farm Hint] Showing hint at', this.currentPosition);
+
+            // Calculate distance-based hint
+            let hintText = 'Look for the golden button';
+            if (this.currentPosition === 'farm1-4') {
+                // Button is at roughly yaw -45° (315°) at farm1-4
+                const buttonYaw = -45;
+                const buttonPitch = 25;
+                const currentYaw = this.eulerAngles.yaw * 180 / Math.PI;
+                const currentPitch = this.eulerAngles.pitch * 180 / Math.PI;
+
+                // Calculate angular distance (accounting for yaw wraparound)
+                let yawDiff = currentYaw - buttonYaw;
+                while (yawDiff > 180) yawDiff -= 360;
+                while (yawDiff < -180) yawDiff += 360;
+                const yawDistance = Math.abs(yawDiff);
+                const pitchDistance = Math.abs(currentPitch - buttonPitch);
+
+                // Provide hint based on distance
+                if (yawDistance < 15 && pitchDistance < 15) {
+                    const closeHints = ['There it is!', 'You found it!', 'Right there!'];
+                    hintText = closeHints[this.farmHintElement.variantIndex % closeHints.length];
+                } else if (yawDistance < 45) {
+                    const closingHints = ['Getting closer', 'You\'re on it', 'Very close now'];
+                    hintText = closingHints[this.farmHintElement.variantIndex % closingHints.length];
+                } else if (yawDiff < 0) {
+                    const leftHints = ['Look right', 'Shift right', 'Keep turning right'];
+                    hintText = leftHints[this.farmHintElement.variantIndex % leftHints.length];
+                } else {
+                    const rightHints = ['Look left', 'Shift left', 'Keep turning left'];
+                    hintText = rightHints[this.farmHintElement.variantIndex % rightHints.length];
+                }
+                this.farmHintElement.variantIndex++;
+            } else {
+                // At farm1-1, 1-2, 1-3, 1-5, guide toward farm1-4
+                const progressHints = ['Keep searching', 'Move forward', 'Look around', 'Explore more'];
+                hintText = progressHints[this.farmHintElement.variantIndex % progressHints.length];
+                this.farmHintElement.variantIndex++;
             }
-            this.farmHintElement.textContent = 'Look for the golden button';
+
+            if (this.farmHintElement.lastText !== hintText) {
+                console.log('[Farm Hint] ' + hintText + ' at ' + this.currentPosition);
+                this.farmHintElement.lastText = hintText;
+            }
+            this.farmHintElement.textContent = hintText;
             this.farmHintElement.style.display = 'block';
         } else {
             if (this.farmHintElement && this.farmHintElement.style.display !== 'none') {
