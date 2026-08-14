@@ -765,14 +765,17 @@ class StreetViewScene extends Scene {
     }
 
     async onFarmCloseupOrbClick() {
-        // Clicking the orb triggers the treePhoto gate: resume VO and load close-up sphere
-        if (this.voSceneKey === 'farm' && window.VoSegments.farm.en[this.voSegmentIndex]?.gate?.ref === 'treePhoto') {
-            this.farm_en_01_Finished = false;
-            this.farmHintVisible = false;
-            this.resumeVoSequence();
-        }
+        console.log('[Farm Close-up] Orb clicked');
         this.currentPosition = 'farm1-closeup';
         await this.loadPosition('farm1-closeup');
+
+        // After position loads, satisfy the treePhoto gate and resume sequence
+        if (this.voSceneKey === 'farm' && window.VoSegments.farm.en[this.voSegmentIndex]?.gate?.ref === 'treePhoto') {
+            console.log('[Farm Close-up] Position loaded, resuming farm_en_02');
+            this.farm_en_01_Finished = false;
+            this.farmHintVisible = false;
+            await this.resumeVoSequence();
+        }
     }
 
     loadTexture(url) {
@@ -1241,14 +1244,19 @@ class StreetViewScene extends Scene {
         // Show golden button hint immediately after farm_en_01 ends and keep showing until close-up opened
         if (this.farm_en_01_Finished && inFarmRange && this.currentPosition !== 'farm1-closeup') {
             if (!this.farmHintElement) {
+                console.log('[Farm Hint] Creating hint element');
                 this.farmHintElement = document.createElement('div');
                 this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#f4d03f; padding:14px 24px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.95rem; white-space:nowrap; z-index:100; font-weight:500;';
                 document.body.appendChild(this.farmHintElement);
             }
+            if (this.farmHintElement.style.display === 'none' || !this.farmHintElement.style.display) {
+                console.log('[Farm Hint] Showing hint at', this.currentPosition);
+            }
             this.farmHintElement.textContent = 'Look for the golden button';
             this.farmHintElement.style.display = 'block';
         } else {
-            if (this.farmHintElement) {
+            if (this.farmHintElement && this.farmHintElement.style.display !== 'none') {
+                console.log('[Farm Hint] Hiding hint (farm_en_01_Finished=' + this.farm_en_01_Finished + ', inFarmRange=' + inFarmRange + ', pos=' + this.currentPosition + ')');
                 this.farmHintElement.style.display = 'none';
             }
         }
@@ -1342,16 +1350,6 @@ class StreetViewScene extends Scene {
         return null;
     }
 
-    spawnGateMarker(gate) {
-        // Detect when farm_en_01 finishes by observing treePhoto gate spawn
-        if (gate.ref === 'treePhoto' && this.voSceneKey === 'farm') {
-            this.farm_en_01_Finished = true;
-        }
-        super.spawnGateMarker(gate);
-        // Recreate arrows when pausing at a gate — restores suppressed forward arrows at farm1-1
-        this.createArrows();
-    }
-
     async resumeVoSequence() {
         // Recreate arrows before resuming so suppressed ones re-appear
         this.createArrows();
@@ -1378,18 +1376,26 @@ class StreetViewScene extends Scene {
     }
 
     spawnGateMarker(gate) {
-        // For treePhoto gate, don't show the 2D button — the 3D orb at farm1-4 is the only trigger
-        if (gate.ref === 'treePhoto') {
+        // Detect when farm_en_01 finishes by observing treePhoto gate spawn
+        if (gate.ref === 'treePhoto' && this.voSceneKey === 'farm') {
+            console.log('[Farm] farm_en_01 finished, treePhoto gate spawned');
+            this.farm_en_01_Finished = true;
+            // For treePhoto gate, don't show the 2D button — the 3D orb at farm1-4 is the only trigger
             this.despawnGateMarker();
+            // Recreate arrows when pausing at a gate — restores suppressed forward arrows at farm1-1
+            this.createArrows();
             return;
         }
         // All other gates show the standard 2D button
         super.spawnGateMarker(gate);
+        // Recreate arrows when pausing at a gate — restores suppressed forward arrows at farm1-1
+        this.createArrows();
     }
 
     onGateMarkerClick(gate) {
         // Clear farm hint when treePhoto is opened
         if (gate.ref === 'treePhoto') {
+            console.log('[Farm] treePhoto gate clicked, clearing hint');
             this.farm_en_01_Finished = false;
             this.farmHintVisible = false;
         }

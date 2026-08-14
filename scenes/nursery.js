@@ -929,7 +929,7 @@ class NurseryScene extends Scene {
     }
 
     async playDroneVideoThenTransition(spawnPosition) {
-        // Play drone video with journeyToFarm_en_01 narration, then transition to street-view at toFarm1
+        // Play drone video with journeyToFarm_en_01 narration, cutting when VO ends (not when video ends)
         const droneVideoUrl = assetUrl('Videos/droneTopViewCafeToFarmOverview.mp4');
 
         // Create full-viewport video element for drone footage
@@ -943,48 +943,49 @@ class NurseryScene extends Scene {
         video.style.backgroundColor = '#000';
         video.crossOrigin = 'anonymous';
 
-        let videoEnded = false;
         let transitionStarted = false;
 
         const completeTransition = async () => {
             if (transitionStarted) return;
             transitionStarted = true;
 
-            // Remove video and transition to street-view
-            if (video.parentElement) {
-                video.remove();
-            }
-            sceneManager.switchTo('street-view', spawnPosition);
-        };
+            // Fade out video over 500ms
+            video.style.transition = 'opacity 0.5s ease-out';
+            video.style.opacity = '0';
 
-        video.onended = async () => {
-            videoEnded = true;
-            await completeTransition();
+            // Remove after fade completes
+            setTimeout(() => {
+                if (video.parentElement) {
+                    video.remove();
+                }
+            }, 600);
+
+            sceneManager.switchTo('street-view', spawnPosition);
         };
 
         video.onerror = async () => {
             console.warn('[Nursery] Drone video failed to load, completing transition anyway');
-            videoEnded = true;
             await completeTransition();
         };
 
         document.body.appendChild(video);
         video.src = droneVideoUrl;
 
-        // Start narration with video
-        this.playVoWithSubtitles('journeyToFarm_en_01', false);
-
         // Play video
         video.play().catch(err => {
             console.warn('[Nursery] Failed to play drone video:', err);
             // Still complete transition if autoplay fails
-            videoEnded = true;
             completeTransition();
         });
 
-        // Safety fallback: if video doesn't end within 20s, force transition
+        // Play VO narration — when it ends, complete transition (cuts video, not when video ends)
+        await this.playVoWithSubtitles('journeyToFarm_en_01', false);
+        console.log('[Nursery] Drone video: VO ended, completing transition');
+        await completeTransition();
+
+        // Safety fallback: if transition doesn't complete within 20s, force it
         setTimeout(() => {
-            if (!videoEnded) {
+            if (!transitionStarted) {
                 console.warn('[Nursery] Drone video timeout, forcing transition');
                 completeTransition();
             }
@@ -1036,6 +1037,9 @@ class NurseryScene extends Scene {
                     resolve();
                 });
             });
+
+            // Preload drone video so it's buffered when nursery→farm transition fires
+            this.preloadVideo(assetUrl('Videos/droneTopViewCafeToFarmOverview.mp4'));
 
             // Create hotspots
             this.createHotspots();
@@ -1113,6 +1117,14 @@ class NurseryScene extends Scene {
             throw error;
         }
         this.isLoaded = true;
+    }
+
+    preloadVideo(src) {
+        const video = document.createElement('video');
+        video.style.display = 'none';
+        video.src = src;
+        video.preload = 'metadata';
+        document.body.appendChild(video);
     }
 
     async onUnload() {
