@@ -764,7 +764,7 @@ class StreetViewScene extends Scene {
         console.log('[farm-closeup] Orb created at farm1-4');
     }
 
-    onFarmCloseupOrbClick() {
+    async onFarmCloseupOrbClick() {
         // Clicking the orb triggers the treePhoto gate: resume VO and load close-up sphere
         if (this.voSceneKey === 'farm' && window.VoSegments.farm.en[this.voSegmentIndex]?.gate?.ref === 'treePhoto') {
             this.farm_en_01_Finished = false;
@@ -772,7 +772,7 @@ class StreetViewScene extends Scene {
             this.resumeVoSequence();
         }
         this.currentPosition = 'farm1-closeup';
-        this.updateSceneContent();
+        await this.loadPosition('farm1-closeup');
     }
 
     loadTexture(url) {
@@ -1234,14 +1234,19 @@ class StreetViewScene extends Scene {
         const farmIndex = isFarmRange ? parseInt(this.currentPosition.split('-')[1]) : null;
         const inFarmRange = isFarmRange && farmIndex >= 1 && farmIndex <= 5;
 
-        if (this.farmHintVisible && inFarmRange) {
+        if (this.farmHintVisible && inFarmRange && !this.farm_en_01_Finished) {
+            // This hint is no longer used; golden button hint appears below
+        }
+
+        // Show golden button hint immediately after farm_en_01 ends and keep showing until close-up opened
+        if (this.farm_en_01_Finished && inFarmRange && this.currentPosition !== 'farm1-closeup') {
             if (!this.farmHintElement) {
                 this.farmHintElement = document.createElement('div');
-                this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:#f4d03f; padding:12px 20px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.9rem; white-space:nowrap; z-index:100;';
+                this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#f4d03f; padding:14px 24px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.95rem; white-space:nowrap; z-index:100; font-weight:500;';
                 document.body.appendChild(this.farmHintElement);
             }
-            this.farmHintElement.textContent = farmIndex < 3 ? 'Keep moving forward' : farmIndex > 3 ? 'Go back' : '';
-            this.farmHintElement.style.display = this.farmHintElement.textContent ? 'block' : 'none';
+            this.farmHintElement.textContent = 'Look for the golden button';
+            this.farmHintElement.style.display = 'block';
         } else {
             if (this.farmHintElement) {
                 this.farmHintElement.style.display = 'none';
@@ -1274,16 +1279,24 @@ class StreetViewScene extends Scene {
                 } else {
                     this.journeyIdleTimerActive = true;
                     const lastLine = this.journeyEncouragementLastLine[pos];
-                    if (lastLine === '04') {
-                        // Last was 04, play 03
-                        console.log(`[encouragement] playing journeyToFarm_en_03 at ${pos}`);
-                        this.playVoWithSubtitles('journeyToFarm_en_03', false);
-                        this.journeyEncouragementLastLine[pos] = '03';
+                    // Extract position number (toFarm1 → 1, toFarm2 → 2, etc)
+                    const posMatch = pos.match(/toFarm(\d+)/);
+                    const posNum = posMatch ? parseInt(posMatch[1]) : 0;
+                    // Swap leading line by position: odd positions start with _03, even with _04
+                    const shouldPlay03First = (posNum % 2) === 1;
+                    const firstLine = shouldPlay03First ? '03' : '04';
+                    const secondLine = shouldPlay03First ? '04' : '03';
+
+                    if (lastLine === secondLine || lastLine === undefined) {
+                        // Last was second line or undefined, play first line
+                        console.log(`[encouragement] playing journeyToFarm_en_${firstLine} at ${pos}`);
+                        this.playVoWithSubtitles(`journeyToFarm_en_${firstLine}`, false);
+                        this.journeyEncouragementLastLine[pos] = firstLine;
                     } else {
-                        // Last was 03 or undefined, play 04
-                        console.log(`[encouragement] playing journeyToFarm_en_04 at ${pos}`);
-                        this.playVoWithSubtitles('journeyToFarm_en_04', false);
-                        this.journeyEncouragementLastLine[pos] = '04';
+                        // Last was first line, play second line
+                        console.log(`[encouragement] playing journeyToFarm_en_${secondLine} at ${pos}`);
+                        this.playVoWithSubtitles(`journeyToFarm_en_${secondLine}`, false);
+                        this.journeyEncouragementLastLine[pos] = secondLine;
                     }
                     this.journeyIdleTimer = 0;
                 }
