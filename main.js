@@ -141,6 +141,22 @@ class SceneManager {
                 this.sceneContainer = null;
             }
 
+            // Safety net: clear any remaining mesh instances from Immediate and UI layers
+            try {
+                const immediateLayer = this.app.scene.layers.getLayerByName('Immediate');
+                const uiLayer = this.app.scene.layers.getLayerByName('UI');
+                if (immediateLayer && immediateLayer.meshInstances.length > 0) {
+                    console.warn(`[SceneManager] Clearing ${immediateLayer.meshInstances.length} orphaned mesh instances from Immediate layer`);
+                    immediateLayer.clearMeshInstances();
+                }
+                if (uiLayer && uiLayer.meshInstances.length > 0) {
+                    console.warn(`[SceneManager] Clearing ${uiLayer.meshInstances.length} orphaned mesh instances from UI layer`);
+                    uiLayer.clearMeshInstances();
+                }
+            } catch (e) {
+                console.error('Error clearing layer mesh instances:', e);
+            }
+
             this.activeScene = null;
             debugLog(`Scene unloaded: ${appState.currentSceneName}`);
         }

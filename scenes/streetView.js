@@ -600,9 +600,20 @@ class StreetViewScene extends Scene {
     createArrows() {
         if (!this.container || this.container._destroyed) return; // Prevent zombie callbacks
 
-        // Clear previous arrows — MUST unregister from raycast system first
+        // Clear previous arrows — MUST remove mesh instances from layer first
         this.arrowEntities.forEach(arrow => {
             this.unregisterInteractiveObject(arrow);
+            // Remove mesh instances from render layers before destroying entity
+            if (arrow.render && arrow.render.meshInstances) {
+                const immediateLayer = app.scene.layers.getLayerByName('Immediate');
+                const uiLayer = app.scene.layers.getLayerByName('UI');
+                if (immediateLayer && arrow.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
+                    immediateLayer.removeMeshInstances(arrow.render.meshInstances);
+                }
+                if (uiLayer && arrow.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
+                    uiLayer.removeMeshInstances(arrow.render.meshInstances);
+                }
+            }
             arrow.destroy();
         });
         this.arrowEntities = [];
@@ -612,6 +623,17 @@ class StreetViewScene extends Scene {
         // Clear previous farm close-up orb if exists
         if (this.farmCloseupOrb) {
             this.unregisterInteractiveObject(this.farmCloseupOrb);
+            // Remove mesh instances from render layers before destroying entity
+            if (this.farmCloseupOrb.render && this.farmCloseupOrb.render.meshInstances) {
+                const immediateLayer = app.scene.layers.getLayerByName('Immediate');
+                const uiLayer = app.scene.layers.getLayerByName('UI');
+                if (immediateLayer && this.farmCloseupOrb.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
+                    immediateLayer.removeMeshInstances(this.farmCloseupOrb.render.meshInstances);
+                }
+                if (uiLayer && this.farmCloseupOrb.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
+                    uiLayer.removeMeshInstances(this.farmCloseupOrb.render.meshInstances);
+                }
+            }
             this.farmCloseupOrb.destroy();
             this.farmCloseupOrb = null;
         }
@@ -1191,6 +1213,17 @@ class StreetViewScene extends Scene {
         try {
             this.arrowEntities.forEach(arrow => {
                 this.unregisterInteractiveObject(arrow);
+                // Remove mesh instances from render layers before destroying entity
+                if (arrow.render && arrow.render.meshInstances) {
+                    const immediateLayer = app.scene.layers.getLayerByName('Immediate');
+                    const uiLayer = app.scene.layers.getLayerByName('UI');
+                    if (immediateLayer && arrow.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
+                        immediateLayer.removeMeshInstances(arrow.render.meshInstances);
+                    }
+                    if (uiLayer && arrow.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
+                        uiLayer.removeMeshInstances(arrow.render.meshInstances);
+                    }
+                }
                 arrow.destroy();
             });
             this.arrowEntities = [];
@@ -1208,6 +1241,17 @@ class StreetViewScene extends Scene {
         try {
             if (this.farmCloseupOrb) {
                 this.unregisterInteractiveObject(this.farmCloseupOrb);
+                // Remove mesh instances from render layers before destroying entity
+                if (this.farmCloseupOrb.render && this.farmCloseupOrb.render.meshInstances) {
+                    const immediateLayer = app.scene.layers.getLayerByName('Immediate');
+                    const uiLayer = app.scene.layers.getLayerByName('UI');
+                    if (immediateLayer && this.farmCloseupOrb.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
+                        immediateLayer.removeMeshInstances(this.farmCloseupOrb.render.meshInstances);
+                    }
+                    if (uiLayer && this.farmCloseupOrb.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
+                        uiLayer.removeMeshInstances(this.farmCloseupOrb.render.meshInstances);
+                    }
+                }
                 this.farmCloseupOrb.destroy();
                 this.farmCloseupOrb = null;
             }
@@ -1251,10 +1295,32 @@ class StreetViewScene extends Scene {
         // Entity cleanup
         try {
             if (this.photoSphere) {
+                // Remove mesh instances from render layers before destroying entity
+                if (this.photoSphere.render && this.photoSphere.render.meshInstances) {
+                    const immediateLayer = app.scene.layers.getLayerByName('Immediate');
+                    const uiLayer = app.scene.layers.getLayerByName('UI');
+                    if (immediateLayer && this.photoSphere.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
+                        immediateLayer.removeMeshInstances(this.photoSphere.render.meshInstances);
+                    }
+                    if (uiLayer && this.photoSphere.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
+                        uiLayer.removeMeshInstances(this.photoSphere.render.meshInstances);
+                    }
+                }
                 this.photoSphere.destroy();
                 this.photoSphere = null;
             }
             if (this.nadirPatch) {
+                // Remove mesh instances from render layers before destroying entity
+                if (this.nadirPatch.render && this.nadirPatch.render.meshInstances) {
+                    const immediateLayer = app.scene.layers.getLayerByName('Immediate');
+                    const uiLayer = app.scene.layers.getLayerByName('UI');
+                    if (immediateLayer && this.nadirPatch.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
+                        immediateLayer.removeMeshInstances(this.nadirPatch.render.meshInstances);
+                    }
+                    if (uiLayer && this.nadirPatch.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
+                        uiLayer.removeMeshInstances(this.nadirPatch.render.meshInstances);
+                    }
+                }
                 this.nadirPatch.destroy();
                 this.nadirPatch = null;
             }
