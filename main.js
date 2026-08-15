@@ -1440,27 +1440,22 @@ class Scene {
             }
         } else if (gate.ref) {
             const videoMap = {
-                polybag: 'heroLoop.mp4',
-                mapZoom: 'heroLoop.mp4',
-                aerial: 'heroLoop.mp4',
-                farmerMontage: 'heroLoop.mp4',
-                ownerInterview: 'ownerInterview.mp4',
-                roasterVideo: 'roasting.mp4'
+                mapZoom: 'Videos/mapZoom.mp4',
+                aerial: 'Videos/aerial.mp4',
+                farmerMontage: 'Videos/farmerMontage.mp4',
+                polybag: 'Videos/polybag.mp4',
+                roasterVideo: 'Videos/coffeeRoasting.mp4',
+                brewingPOV: 'Videos/brewingVideo.mp4',
+                ownerInterview: 'Videos/ownerInterview.mp4'
             };
             const videoSrc = videoMap[gate.ref];
-            if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}, isPlaceholder=${videoSrc === 'heroLoop.mp4'}`);
+            if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
             if (videoSrc) {
-                // Skip heroLoop.mp4 placeholder — go straight to next segment when real footage arrives
-                if (videoSrc === 'heroLoop.mp4') {
-                    if (window.DEV_MODE) console.log(`[Gate] Skipping placeholder, resuming VO immediately`);
-                    this.resumeVoSequence();
-                } else {
-                    if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
-                    this.showVideoPopup(assetUrl(`Videos/${videoSrc}`), {
-                        required: true,
-                        onFinish: () => this.resumeVoSequence()
-                    });
-                }
+                if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
+                this.showVideoPopup(assetUrl(videoSrc), {
+                    required: true,
+                    onFinish: () => this.resumeVoSequence()
+                });
             } else {
                 if (window.DEV_MODE) console.log(`[Gate] No video mapped, resuming VO immediately`);
                 this.resumeVoSequence();

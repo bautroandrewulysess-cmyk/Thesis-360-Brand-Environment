@@ -910,7 +910,13 @@ class CafeInteriorScene extends Scene {
 
             const coreMaterial = new pc.StandardMaterial();
             const isTransition = hotspot.isTransition;
-            coreMaterial.diffuse = isTransition ? new pc.Color(1, 0.85, 0.2) : coreMaterial.diffuse;
+            let coreColor;
+            if (isTransition) {
+                coreColor = new pc.Color(1, 0.85, 0.2); // gold
+            } else {
+                coreColor = new pc.Color(0.2, 0.6, 1); // blue for informational
+            }
+            coreMaterial.diffuse = coreColor;
             coreMaterial.emissive = new pc.Color(0, 0, 0);
             coreMaterial.emissiveIntensity = 0;
             coreMaterial.opacity = 1.0;
@@ -925,8 +931,17 @@ class CafeInteriorScene extends Scene {
             glow.setLocalScale(0.08, 0.08, 0.08);
 
             const glowMaterial = new pc.StandardMaterial();
-            glowMaterial.emissive = new pc.Color(0, 0, 0);
-            glowMaterial.emissiveIntensity = 0;
+            let glowColor;
+            let glowIntensity;
+            if (isTransition) {
+                glowColor = new pc.Color(1, 0.85, 0.2); // gold
+                glowIntensity = 2;
+            } else {
+                glowColor = coreColor; // match core color
+                glowIntensity = 0.6;
+            }
+            glowMaterial.emissive = glowColor;
+            glowMaterial.emissiveIntensity = glowIntensity;
             glowMaterial.opacity = 0.4;
             glowMaterial.blendType = pc.BLEND_NORMAL;
             glowMaterial.depthWrite = false;
@@ -1209,13 +1224,11 @@ class CafeInteriorScene extends Scene {
             this.initAmbient(assetUrl('Music/cafeJazz.mp3'), 0.1);
             this.isVoFinished = false;
 
-            const delay = document.getElementById('loading-screen')?.classList.contains('hidden') ? 1000 : 3500;
-
             if (this.isReturnVisit) {
                 this.quiz = [window.PendingQuizzes.backToTheCafe, window.PendingQuizzes.finalChallenge];
-                setTimeout(() => this.playVoSequence('backToCafe'), delay);
+                this.cafeVoSequence = 'backToCafe';
             } else {
-                setTimeout(() => this.playVoSequence('cafeInterior'), delay);
+                this.cafeVoSequence = 'cafeInterior';
                 if (!window.journeyComplete) {
                     this.preloadSplat(`${R2_BASE}/thesisNursery_optimized.sog`, 'nursery-splat');
                 }
@@ -1224,6 +1237,8 @@ class CafeInteriorScene extends Scene {
                     fetch(`${R2_BASE}/ownerInterview.mp4`, { mode: 'cors' }).catch(() => {});
                 }
             }
+
+            // Audio will be started by onLoadingScreenDismissed() callback
 
             const startVoOnInteraction = () => {
                 if (this.voAudio && this.voAudio.paused && this.voAudio.currentTime === 0) {
@@ -1340,6 +1355,13 @@ class CafeInteriorScene extends Scene {
             console.error('Error unloading cafe interior scene:', error);
         } finally {
             this.isLoaded = false;
+        }
+    }
+
+    onLoadingScreenDismissed() {
+        if (this.cafeVoSequence) {
+            this.playVoSequence(this.cafeVoSequence);
+            this.cafeVoSequence = null;
         }
     }
 

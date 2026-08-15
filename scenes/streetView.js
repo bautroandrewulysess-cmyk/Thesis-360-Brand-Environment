@@ -1001,19 +1001,23 @@ class StreetViewScene extends Scene {
             this.journeyIdleTimer = 0;
             this.journeyIdleTimerActive = false;
 
-            // Farm directional hint: show if farm_en_01 has finished (numeric range check)
+            // Farm close-up hint: position-specific guidance (set on position change only)
             const isFarmRange = positionKey.startsWith('farm1-');
             const farmIndex = isFarmRange ? parseInt(positionKey.split('-')[1]) : null;
             const inFarmRange = isFarmRange && farmIndex >= 1 && farmIndex <= 5;
 
-            if (inFarmRange && this.farm_en_01_Finished) {
-                this.farmHintVisible = true;
+            if (inFarmRange && this.farm_en_01_Finished && positionKey !== 'farm1-closeup') {
+                const hintMap = {
+                    'farm1-4': "You're really close — try looking down.",
+                    'farm1-3': "So close. Moving forward should help.",
+                    'farm1-5': "You've gone a bit far. Move back a little.",
+                    'farm1-2': "Explore the area ahead.",
+                    'farm1-1': "Keep heading forward."
+                };
+                const hintText = hintMap[positionKey] || "Look around for the golden button.";
+                this.setFarmHint(hintText);
             } else {
-                this.farmHintVisible = false;
-                if (this.farmHintElement) {
-                    this.farmHintElement.remove();
-                    this.farmHintElement = null;
-                }
+                this.clearFarmHint();
             }
 
             this.updateCoordinateDisplay();
@@ -1129,6 +1133,21 @@ class StreetViewScene extends Scene {
         }
     }
 
+    setFarmHint(text) {
+        if (!this.farmHintElement) {
+            this.farmHintElement = document.createElement('div');
+            this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#f4d03f; padding:14px 24px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.95rem; z-index:100; font-weight:500;';
+            document.body.appendChild(this.farmHintElement);
+        }
+        this.farmHintElement.textContent = text;
+        this.farmHintElement.style.display = 'block';
+    }
+
+    clearFarmHint() {
+        if (this.farmHintElement) {
+            this.farmHintElement.style.display = 'none';
+        }
+    }
 
     async onLoad() {
         await super.onLoad();
@@ -1397,72 +1416,8 @@ class StreetViewScene extends Scene {
             // This hint is no longer used; golden button hint appears below
         }
 
-        // Show dynamic golden button hint based on distance from button position
-        if (this.farm_en_01_Finished && inFarmRange && this.currentPosition !== 'farm1-closeup') {
-            if (!this.farmHintElement) {
-                console.log('[Farm Hint] Creating hint element');
-                this.farmHintElement = document.createElement('div');
-                this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#f4d03f; padding:14px 24px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.95rem; white-space:nowrap; z-index:100; font-weight:500;';
-                document.body.appendChild(this.farmHintElement);
-                this.farmHintElement.lastText = '';
-                this.farmHintElement.lastPosition = null;
-                this.farmHintElement.hintChoiceIndex = 0;
-            }
-
-            // Update hint only when position changes
-            if (this.farmHintElement.lastPosition !== this.currentPosition) {
-                this.farmHintElement.lastPosition = this.currentPosition;
-                this.farmHintElement.hintChoiceIndex = Math.floor(Math.random() * 4); // Pick random hint per position
-            }
-
-            // Calculate distance-based hint
-            let hintText = 'Look for the golden button';
-            if (this.currentPosition === 'farm1-4') {
-                // Button is at roughly yaw -45° (315°) at farm1-4
-                const buttonYaw = -45;
-                const buttonPitch = 25;
-                const currentYaw = this.eulerAngles.yaw * 180 / Math.PI;
-                const currentPitch = this.eulerAngles.pitch * 180 / Math.PI;
-
-                // Calculate angular distance (accounting for yaw wraparound)
-                let yawDiff = currentYaw - buttonYaw;
-                while (yawDiff > 180) yawDiff -= 360;
-                while (yawDiff < -180) yawDiff += 360;
-                const yawDistance = Math.abs(yawDiff);
-                const pitchDistance = Math.abs(currentPitch - buttonPitch);
-
-                // Provide hint based on distance
-                if (yawDistance < 15 && pitchDistance < 15) {
-                    const closeHints = ['There it is!', 'You found it!', 'Right there!'];
-                    hintText = closeHints[this.farmHintElement.hintChoiceIndex % closeHints.length];
-                } else if (yawDistance < 45) {
-                    const closingHints = ['Getting closer', 'You\'re on it', 'Very close now'];
-                    hintText = closingHints[this.farmHintElement.hintChoiceIndex % closingHints.length];
-                } else if (yawDiff < 0) {
-                    const leftHints = ['Look right', 'Shift right', 'Keep turning right'];
-                    hintText = leftHints[this.farmHintElement.hintChoiceIndex % leftHints.length];
-                } else {
-                    const rightHints = ['Look left', 'Shift left', 'Keep turning left'];
-                    hintText = rightHints[this.farmHintElement.hintChoiceIndex % rightHints.length];
-                }
-            } else {
-                // At farm1-1, 1-2, 1-3, 1-5, guide toward farm1-4
-                const progressHints = ['Keep searching', 'Move forward', 'Look around', 'Explore more'];
-                hintText = progressHints[this.farmHintElement.hintChoiceIndex % progressHints.length];
-            }
-
-            if (this.farmHintElement.lastText !== hintText) {
-                console.log('[Farm Hint] ' + hintText + ' at ' + this.currentPosition);
-                this.farmHintElement.lastText = hintText;
-            }
-            this.farmHintElement.textContent = hintText;
-            this.farmHintElement.style.display = 'block';
-        } else {
-            if (this.farmHintElement && this.farmHintElement.style.display !== 'none') {
-                console.log('[Farm Hint] Hiding hint (farm_en_01_Finished=' + this.farm_en_01_Finished + ', inFarmRange=' + inFarmRange + ', pos=' + this.currentPosition + ')');
-                this.farmHintElement.style.display = 'none';
-            }
-        }
+        // Show position-specific farm close-up hint (only when position changes, not in update)
+        // Note: This is set in transitionToPosition() and createFarmCloseupOrb() callbacks, not here
 
         // Journey to farm: idle timer for encouragement lines — parse numeric suffix for proper comparison
         const pos = this.currentPosition;

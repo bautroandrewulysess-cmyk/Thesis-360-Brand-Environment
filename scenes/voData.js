@@ -61,8 +61,6 @@ window.VoSegments = {
     roasting: {
         en: [
             { id: 'roasting_en_01', gate: { type: 'marker', ref: 'roasterVideo' }, dur: 20.85 },
-            { id: 'roasting_en_02', gate: { type: 'none' }, dur: 21.91 },
-            { id: 'roasting_en_03', gate: { type: 'quiz' }, dur: 16.62 },
             { id: 'roasting_en_04', gate: { type: 'postquiz' }, dur: 6.59 },
         ],
         bis: [], // TODO: Bisaya recordings not yet produced

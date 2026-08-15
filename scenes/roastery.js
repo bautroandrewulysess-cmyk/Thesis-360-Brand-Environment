@@ -854,7 +854,13 @@ class RoasteryScene extends Scene {
             core.setLocalScale(coreScale, coreScale, coreScale);
 
             const coreMaterial = new pc.StandardMaterial();
-            coreMaterial.diffuse = (isTransition || isGateMarker) ? new pc.Color(1, 0.85, 0.2) : coreMaterial.diffuse;
+            let coreColor;
+            if (isTransition || isGateMarker) {
+                coreColor = new pc.Color(1, 0.85, 0.2); // gold
+            } else {
+                coreColor = new pc.Color(0.2, 0.6, 1); // blue for informational
+            }
+            coreMaterial.diffuse = coreColor;
             coreMaterial.emissive = new pc.Color(0, 0, 0);
             coreMaterial.emissiveIntensity = 0;
             coreMaterial.opacity = 1.0;
@@ -869,8 +875,17 @@ class RoasteryScene extends Scene {
             glow.setLocalScale(glowScale, glowScale, glowScale);
 
             const glowMaterial = new pc.StandardMaterial();
-            glowMaterial.emissive = (isTransition || isGateMarker) ? new pc.Color(1, 0.85, 0.2) : new pc.Color(0, 0, 0);
-            glowMaterial.emissiveIntensity = (isTransition || isGateMarker) ? 3 : 0;
+            let glowColor;
+            let glowIntensity;
+            if (isTransition || isGateMarker) {
+                glowColor = new pc.Color(1, 0.85, 0.2); // gold
+                glowIntensity = 2; // reduced from 3
+            } else {
+                glowColor = coreColor; // match core color
+                glowIntensity = 0.6; // subtle glow for informational
+            }
+            glowMaterial.emissive = glowColor;
+            glowMaterial.emissiveIntensity = glowIntensity;
             glowMaterial.opacity = (isTransition || isGateMarker) ? 0.6 : 0.4;
             glowMaterial.blendType = pc.BLEND_NORMAL;
             glowMaterial.depthWrite = false;
