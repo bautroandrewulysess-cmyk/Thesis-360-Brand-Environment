@@ -201,12 +201,13 @@ class SceneManager {
             });
         }
 
+        appState.isTransitioning = true; // Lock immediately
+
         if (appState.currentSceneName === sceneName) {
             debugLog(`Already on scene: ${sceneName}`);
+            appState.isTransitioning = false;
             return;
         }
-
-        appState.isTransitioning = true;
         const loadingScreen = document.getElementById('loading-screen');
         let loadSuccess = false;
         let loadingScreenShownAt = null;
@@ -2278,10 +2279,18 @@ window.addEventListener('popstate', async (e) => {
     if (state?.view === 'experience' && state?.scene) {
         // Navigate to the scene from history (flag prevents pushing duplicate state)
         isSceneChangeFromPopstate = true;
+
+        // Stop any rogue videos playing from previous scenes
+        const video = document.getElementById('popup-video');
+        if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
+        document.body.classList.remove('video-open');
+
         const canvas = document.getElementById('canvas');
         if (canvas) canvas.style.display = 'block';
         const fadeOverlay = document.getElementById('fade-overlay');
         if (fadeOverlay) fadeOverlay.classList.remove('active');
+
+        app.resume?.(); // Force render loop to restart after hitting back
         await sceneManager.switchTo(state.scene);
     } else {
         // Back button went past the experience entry — return to landing page

@@ -824,6 +824,8 @@ class NurseryScene extends Scene {
     }
 
     createHotspots() {
+        if (!this.container || this.container._destroyed) return; // Prevent zombie callbacks
+
         this.hotspots.forEach(hotspot => {
             const group = new pc.Entity(`hotspot-${hotspot.id}`);
             group.setLocalPosition(hotspot.position);

@@ -864,6 +864,8 @@ class CafeExteriorScene extends Scene {
     }
 
     createHotspots() {
+        if (!this.container || this.container._destroyed) return; // Prevent zombie callbacks
+
         document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
         this.hotspotEntities.forEach(group => { if (group?.labelElement) group.labelElement.remove(); });
         this.hotspotEntities = [];

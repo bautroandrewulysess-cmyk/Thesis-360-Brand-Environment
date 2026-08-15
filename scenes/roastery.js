@@ -834,6 +834,8 @@ class RoasteryScene extends Scene {
     }
 
     createHotspots() {
+        if (!this.container || this.container._destroyed) return; // Prevent zombie callbacks
+
         document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
 
         this.hotspotEntities.forEach(group => { if (group?.labelElement) group.labelElement.remove(); });
@@ -1291,7 +1293,11 @@ class RoasteryScene extends Scene {
             // Video hotspots are shown/hidden based on quiz state when created; do not override here
 
         // Update transition, gate marker, and video hotspot labels (only when actually visible)
-        if (!document.body.classList.contains('video-open')) {
+        const isOverlayActive = document.getElementById('quiz-overlay')?.style.display === 'flex' ||
+                                document.getElementById('completion-panel')?.style.display === 'flex' ||
+                                document.body.classList.contains('video-open');
+
+        if (!isOverlayActive) {
             this.hotspotEntities.forEach(group => {
                 if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isGateMarker || group.hotspotData?.isVideo)) {
                     const isGateMarker = group.hotspotData?.isGateMarker;
@@ -1327,6 +1333,11 @@ class RoasteryScene extends Scene {
                         group._labelDisplay = 'none';
                     }
                 }
+            });
+        } else {
+            // Force hide all labels when overlays are active
+            this.hotspotEntities.forEach(group => {
+                if (group.labelElement) group.labelElement.style.display = 'none';
             });
         }
 

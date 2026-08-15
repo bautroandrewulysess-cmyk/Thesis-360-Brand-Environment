@@ -598,6 +598,8 @@ class StreetViewScene extends Scene {
     }
 
     createArrows() {
+        if (!this.container || this.container._destroyed) return; // Prevent zombie callbacks
+
         // Clear previous arrows — MUST unregister from raycast system first
         this.arrowEntities.forEach(arrow => {
             this.unregisterInteractiveObject(arrow);

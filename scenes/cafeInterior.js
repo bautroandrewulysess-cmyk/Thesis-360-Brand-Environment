@@ -889,6 +889,8 @@ class CafeInteriorScene extends Scene {
 
 
     createHotspots() {
+        if (!this.container || this.container._destroyed) return; // Prevent zombie callbacks
+
         const labelCountBefore = document.querySelectorAll('.hotspot-label').length;
         const hotspotCountBefore = this.hotspotEntities.length;
         console.warn(`[cafeInterior] createHotspots called: ${hotspotCountBefore} existing hotspots, ${labelCountBefore} existing labels`);
@@ -1409,7 +1411,11 @@ class CafeInteriorScene extends Scene {
         });
 
         // Update transition and video hotspot labels (only when actually visible)
-        if (!document.body.classList.contains('video-open')) {
+        const isOverlayActive = document.getElementById('quiz-overlay')?.style.display === 'flex' ||
+                                document.getElementById('completion-panel')?.style.display === 'flex' ||
+                                document.body.classList.contains('video-open');
+
+        if (!isOverlayActive) {
             this.hotspotEntities.forEach(group => {
                     if (group.labelElement && (group.hotspotData?.isTransition || group.hotspotData?.isVideo)) {
                         const isVideoHotspot = group.hotspotData?.isVideo;
@@ -1446,6 +1452,11 @@ class CafeInteriorScene extends Scene {
                         group._labelDisplay = 'none';
                     }
                 }
+            });
+        } else {
+            // Force hide all labels when overlays are active
+            this.hotspotEntities.forEach(group => {
+                if (group.labelElement) group.labelElement.style.display = 'none';
             });
         }
 
