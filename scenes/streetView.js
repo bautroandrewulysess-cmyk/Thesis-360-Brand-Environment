@@ -1187,37 +1187,69 @@ class StreetViewScene extends Scene {
     }
 
     async onUnload() {
+        // Arrow and interactive object cleanup FIRST (before anything else)
         try {
-            document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
-
-            this.detachEventListeners();
-
-            this.isMouseDown = false;
-
-            this.stopAmbient();
-
-            this.stopVo();
-
-            if (this.nadirPatchTexture) {
-                this.nadirPatchTexture.destroy();
-                this.nadirPatchTexture = null;
-            }
             this.arrowEntities.forEach(arrow => {
                 this.unregisterInteractiveObject(arrow);
                 arrow.destroy();
             });
             this.arrowEntities = [];
+        } catch (error) {
+            console.error('Error cleaning up arrows:', error);
+        }
+
+        try {
             this.arrowLabels.forEach(l => l.remove());
             this.arrowLabels = [];
+        } catch (error) {
+            console.error('Error cleaning up arrow labels:', error);
+        }
 
-            // Clean up farm closeup orb if it exists
+        try {
             if (this.farmCloseupOrb) {
                 this.unregisterInteractiveObject(this.farmCloseupOrb);
                 this.farmCloseupOrb.destroy();
                 this.farmCloseupOrb = null;
             }
+        } catch (error) {
+            console.error('Error cleaning up farm closeup orb:', error);
+        }
 
-            // Destroy photo sphere and nadir patch entities
+        // DOM and event listener cleanup
+        try {
+            document.querySelectorAll('.hotspot-label, .arrow-label').forEach(el => el.remove());
+            this.detachEventListeners();
+        } catch (error) {
+            console.error('Error cleaning up DOM:', error);
+        }
+
+        // State cleanup
+        try {
+            this.isMouseDown = false;
+        } catch (error) {
+            console.error('Error during state cleanup:', error);
+        }
+
+        // Audio cleanup
+        try {
+            this.stopAmbient();
+            this.stopVo();
+        } catch (error) {
+            console.error('Error stopping audio:', error);
+        }
+
+        // Texture cleanup
+        try {
+            if (this.nadirPatchTexture) {
+                this.nadirPatchTexture.destroy();
+                this.nadirPatchTexture = null;
+            }
+        } catch (error) {
+            console.error('Error cleaning up texture:', error);
+        }
+
+        // Entity cleanup
+        try {
             if (this.photoSphere) {
                 this.photoSphere.destroy();
                 this.photoSphere = null;
@@ -1226,31 +1258,48 @@ class StreetViewScene extends Scene {
                 this.nadirPatch.destroy();
                 this.nadirPatch = null;
             }
+        } catch (error) {
+            console.error('Error destroying entities:', error);
+        }
 
-            // Dispose preloaded assets
+        // Asset cleanup
+        try {
             Object.values(this.preloadedAssets).forEach(asset => {
                 asset.unload();
                 app.assets.remove(asset);
             });
             this.preloadedAssets = {};
             this.preloadedAssetKeys = [];
+        } catch (error) {
+            console.error('Error disposing assets:', error);
+        }
 
-            // Clear journey to farm timers
+        // Timer cleanup
+        try {
             this.journeyIdleTimer = 0;
             this.journeyIdleTimerActive = false;
+        } catch (error) {
+            console.error('Error clearing timers:', error);
+        }
 
-            // Clear farm hint
+        // Farm hint cleanup
+        try {
             if (this.farmHintElement) {
                 this.farmHintElement.remove();
                 this.farmHintElement = null;
             }
+        } catch (error) {
+            console.error('Error cleaning up farm hint:', error);
+        }
 
+        // Parent class cleanup
+        try {
             await super.onUnload();
         } catch (error) {
-            console.error('Error unloading street view:', error);
-        } finally {
-            this.isLoaded = false;
+            console.error('Error in parent onUnload:', error);
         }
+
+        this.isLoaded = false;
     }
 
     update(deltaTime) {

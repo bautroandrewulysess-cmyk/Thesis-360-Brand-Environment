@@ -122,9 +122,17 @@ class SceneManager {
 
     async unloadScene() {
         if (this.activeScene) {
-            if (this.activeScene.onUnload) {
-                await this.activeScene.onUnload();
+            try {
+                if (this.activeScene.onUnload) {
+                    await this.activeScene.onUnload();
+                }
+            } catch (e) {
+                console.error('Error during scene unload:', e);
             }
+
+            // Unconditional teardown: remove orphaned labels and clear raycaster
+            document.querySelectorAll('.hotspot-label, .arrow-label').forEach(el => el.remove());
+            if (typeof raycaster !== 'undefined') raycaster.clear();
 
             // Remove scene container and its children
             if (this.sceneContainer) {
@@ -133,6 +141,7 @@ class SceneManager {
                 this.sceneContainer = null;
             }
 
+            this.activeScene = null;
             debugLog(`Scene unloaded: ${appState.currentSceneName}`);
         }
     }
@@ -947,6 +956,7 @@ class Scene {
                 overlay.style.opacity = '0';
                 setTimeout(() => {
                     overlay.style.display = 'none';
+                    document.body.classList.remove('ui-overlay-active');
                     choicesEl.innerHTML = '';
                     feedbackEl.textContent = '';
                     feedbackEl.style.color = '#f4f4f4';
@@ -999,6 +1009,7 @@ class Scene {
         };
 
         showQuestion(0);
+        document.body.classList.add('ui-overlay-active');
         overlay.style.display = 'flex';
         setTimeout(() => {
             overlay.style.opacity = '1';
@@ -1047,12 +1058,14 @@ class Scene {
         if (surveyLink) surveyLink.href = surveyUrl;
 
         if (panel) {
+            document.body.classList.add('ui-overlay-active');
             panel.style.display = 'flex';
             setTimeout(() => panel.style.opacity = '1', 50);
         }
 
         if (closeBtn) {
             closeBtn.onclick = () => {
+                document.body.classList.remove('ui-overlay-active');
                 if (panel) {
                     panel.style.opacity = '0';
                     setTimeout(() => panel.style.display = 'none', 800);
@@ -2277,23 +2290,30 @@ window.addEventListener('start360Experience', () => {
 window.addEventListener('popstate', async (e) => {
     const state = e.state;
     if (state?.view === 'experience' && state?.scene) {
-        // Navigate to the scene from history (flag prevents pushing duplicate state)
+        // Navigate to the scene from history
         isSceneChangeFromPopstate = true;
 
-        // Stop any rogue videos playing from previous scenes
+        // Stop rogue videos
         const video = document.getElementById('popup-video');
         if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
-        document.body.classList.remove('video-open');
+        document.body.classList.remove('video-open', 'ui-overlay-active');
 
         const canvas = document.getElementById('canvas');
         if (canvas) canvas.style.display = 'block';
         const fadeOverlay = document.getElementById('fade-overlay');
         if (fadeOverlay) fadeOverlay.classList.remove('active');
 
-        app.resume?.(); // Force render loop to restart after hitting back
+        app.resume?.(); // Force render loop to restart
         await sceneManager.switchTo(state.scene);
     } else {
         // Back button went past the experience entry — return to landing page
+        const wrapper = document.getElementById('landing-wrapper');
+        if (wrapper) {
+            wrapper.style.display = 'block';
+            wrapper.style.opacity = '1';
+        }
+        document.body.style.overflow = '';
+
         const canvas = document.getElementById('canvas');
         if (canvas) canvas.style.display = 'none';
         const loadingScreen = document.getElementById('loading-screen');
