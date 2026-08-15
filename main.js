@@ -2280,8 +2280,6 @@ window.addEventListener('popstate', async (e) => {
         isSceneChangeFromPopstate = true;
         const canvas = document.getElementById('canvas');
         if (canvas) canvas.style.display = 'block';
-        const loadingScreen = document.getElementById('loading-screen');
-        if (loadingScreen) loadingScreen.classList.remove('hidden');
         const fadeOverlay = document.getElementById('fade-overlay');
         if (fadeOverlay) fadeOverlay.classList.remove('active');
         await sceneManager.switchTo(state.scene);

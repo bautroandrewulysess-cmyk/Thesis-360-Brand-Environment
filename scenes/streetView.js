@@ -1196,8 +1196,6 @@ class StreetViewScene extends Scene {
 
             this.stopVo();
 
-            this.photoSphere = null;
-            this.nadirPatch = null;
             if (this.nadirPatchTexture) {
                 this.nadirPatchTexture.destroy();
                 this.nadirPatchTexture = null;
