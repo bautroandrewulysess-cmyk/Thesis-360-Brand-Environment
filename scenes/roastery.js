@@ -34,7 +34,7 @@ class RoasteryScene extends Scene {
             {
                 id: 'back-to-exterior',
                 position: new pc.Vec3(-1.116, 1.600, 1.233),
-                label: 'Back to Cafe',
+                label: 'Exit to Cafe',
                 description: 'Return to the cafe garden.',
                 isTransition: true,
                 targetScene: 'cafe-interior',
