@@ -954,14 +954,14 @@ class CafeInteriorScene extends Scene {
             group.hotspotData = hotspot;
             group.coreEntity = core;
             group.glowEntity = glow;
-            // Hide gate markers on initial load; they'll be enabled via spawnGateMarker
-            if (hotspot.isGateMarker) group.enabled = false;
-            this.hotspotEntities.push(group);
-
-            // Visibility: hide video hotspots until quiz is passed
-            if (hotspot.isVideo) {
-                group.enabled = this.quizPassed;
+            if (hotspot.isGateMarker) {
+                group.enabled = false;
+            } else if (hotspot.isTransition || hotspot.isVideo) {
+                group.enabled = window.journeyComplete || this.quizPassed;
+            } else {
+                group.enabled = true;
             }
+            this.hotspotEntities.push(group);
 
             // Register group with raycaster
             this.registerInteractiveObject(group, () => {
@@ -970,13 +970,16 @@ class CafeInteriorScene extends Scene {
 
             // Create label for transition hotspots and video hotspots
             if (hotspot.isTransition || hotspot.isVideo) {
-                const label = document.createElement('div');
-                label.className = 'hotspot-label';
-                label.textContent = hotspot.label;
-                label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
-                document.body.appendChild(label);
-                group.labelElement = label;
-                console.warn(`[cafeInterior] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
+                // Only create if one doesn't already exist
+                if (!group.labelElement) {
+                    const label = document.createElement('div');
+                    label.className = 'hotspot-label';
+                    label.textContent = hotspot.label;
+                    label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
+                    document.body.appendChild(label);
+                    group.labelElement = label;
+                    console.warn(`[cafeInterior] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
+                }
             }
         });
 
@@ -991,9 +994,9 @@ class CafeInteriorScene extends Scene {
 
     onQuizPassed() {
         super.onQuizPassed();
-        // Re-enable video hotspots now that quiz is passed
+        // Re-enable transition and video hotspots now that quiz is passed
         this.hotspotEntities.forEach(group => {
-            if (group.hotspotData?.isVideo) {
+            if ((group.hotspotData?.isVideo || group.hotspotData?.isTransition) && !group.hotspotData?.isGateMarker) {
                 group.enabled = true;
                 // Show label if it exists
                 if (group.labelElement) {
@@ -1012,17 +1015,6 @@ class CafeInteriorScene extends Scene {
         }
     }
 
-    onLoadingScreenDismissed() {
-        this.initAmbient(assetUrl('Music/cafeJazz.mp3'), 0.1);
-        this.isVoFinished = false;
-        if (this.isReturnVisit) {
-            this.quiz = [window.PendingQuizzes.backToTheCafe, window.PendingQuizzes.finalChallenge];
-            this.playVoSequence('backToCafe');
-        } else {
-            this.playVoSequence('cafeInterior');
-        }
-    }
-
     onVoFinished_brandStory() {
         // Quiz is now shown by onGateMarkerClick for the ownerInterview gate
         // This callback is kept for backwards compatibility if needed
@@ -1033,6 +1025,7 @@ class CafeInteriorScene extends Scene {
         if (gate.ref === 'brewingPOV') {
             const hotspotGroup = this.hotspotEntities.find(h => h.hotspotData?.id === 'coffee-brewing');
             if (hotspotGroup) {
+                hotspotGroup.enabled = true;
                 this.highlightedHotspot = hotspotGroup;
                 this.highlightStartTime = Date.now();
                 // Set initial glow color for highlighted state
@@ -1211,7 +1204,24 @@ class CafeInteriorScene extends Scene {
             // Reset quiz for this load
             this.quizPassed = false;
 
-            // (Deferred) ambient and VO start will run after loading screen dismissal
+            this.initAmbient(assetUrl('Music/cafeJazz.mp3'), 0.1);
+            this.isVoFinished = false;
+
+            const delay = document.getElementById('loading-screen')?.classList.contains('hidden') ? 1000 : 3500;
+
+            if (this.isReturnVisit) {
+                this.quiz = [window.PendingQuizzes.backToTheCafe, window.PendingQuizzes.finalChallenge];
+                setTimeout(() => this.playVoSequence('backToCafe'), delay);
+            } else {
+                setTimeout(() => this.playVoSequence('cafeInterior'), delay);
+                if (!window.journeyComplete) {
+                    this.preloadSplat(`${R2_BASE}/thesisNursery_optimized.sog`, 'nursery-splat');
+                }
+                if (!window.ownerInterviewPreloaded) {
+                    window.ownerInterviewPreloaded = true;
+                    fetch(`${R2_BASE}/ownerInterview.mp4`, { mode: 'cors' }).catch(() => {});
+                }
+            }
 
             const startVoOnInteraction = () => {
                 if (this.voAudio && this.voAudio.paused && this.voAudio.currentTime === 0) {

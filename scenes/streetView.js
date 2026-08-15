@@ -1210,6 +1210,23 @@ class StreetViewScene extends Scene {
             this.arrowLabels.forEach(l => l.remove());
             this.arrowLabels = [];
 
+            // Clean up farm closeup orb if it exists
+            if (this.farmCloseupOrb) {
+                this.unregisterInteractiveObject(this.farmCloseupOrb);
+                this.farmCloseupOrb.destroy();
+                this.farmCloseupOrb = null;
+            }
+
+            // Destroy photo sphere and nadir patch entities
+            if (this.photoSphere) {
+                this.photoSphere.destroy();
+                this.photoSphere = null;
+            }
+            if (this.nadirPatch) {
+                this.nadirPatch.destroy();
+                this.nadirPatch = null;
+            }
+
             // Dispose preloaded assets
             Object.values(this.preloadedAssets).forEach(asset => {
                 asset.unload();

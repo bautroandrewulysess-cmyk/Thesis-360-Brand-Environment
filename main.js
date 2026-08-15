@@ -1326,7 +1326,7 @@ class Scene {
         const button = document.createElement('button');
         button.className = 'gate-marker-button';
         button.textContent = this.getGateMarkerLabel(gate.ref);
-        button.style.cssText = `position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:14px 28px; background:#050505; border:1px solid #f4d03f; color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; z-index:1010; outline:none; animation:gate-marker-pulse 2s ease-in-out infinite; box-shadow: 0 0 15px rgba(244,208,63,0.3);`;
+        button.style.cssText = `position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:14px 28px; background:#f4d03f; border:none; color:#050505; font-family:'Inter',sans-serif; font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; z-index:1010; outline:none; animation:gate-marker-pulse 2s ease-in-out infinite; box-shadow: 0 0 20px rgba(244,208,63,0.5);`;
 
         // Guard against double-clicks and drag-clicks
         let clicked = false;
@@ -2250,6 +2250,11 @@ async function startup() {
 
         hideLoadingScreen();
 
+        const activeScene = sceneManager.getActiveScene();
+        if (activeScene && activeScene.onLoadingScreenDismissed) {
+            activeScene.onLoadingScreenDismissed();
+        }
+
         debugLog('Application started');
         debugLog('Press backtick (`) to toggle debug mode');
         debugLog('Use sceneManager.switchTo("scene-name") to switch scenes');
@@ -2273,6 +2278,12 @@ window.addEventListener('popstate', async (e) => {
     if (state?.view === 'experience' && state?.scene) {
         // Navigate to the scene from history (flag prevents pushing duplicate state)
         isSceneChangeFromPopstate = true;
+        const canvas = document.getElementById('canvas');
+        if (canvas) canvas.style.display = 'block';
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) loadingScreen.classList.remove('hidden');
+        const fadeOverlay = document.getElementById('fade-overlay');
+        if (fadeOverlay) fadeOverlay.classList.remove('active');
         await sceneManager.switchTo(state.scene);
     } else {
         // Back button went past the experience entry — return to landing page

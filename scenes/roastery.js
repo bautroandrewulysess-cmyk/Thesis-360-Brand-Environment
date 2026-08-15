@@ -897,8 +897,13 @@ class RoasteryScene extends Scene {
             group.hotspotData = hotspot;
             group.coreEntity = core;
             group.glowEntity = glow;
-            // Hide gate marker on initial load; it will be enabled via spawnGateMarker when appropriate
-            if (hotspot.isGateMarker) group.enabled = false;
+            if (hotspot.isGateMarker) {
+                group.enabled = false;
+            } else if (hotspot.isTransition || hotspot.isVideo) {
+                group.enabled = window.journeyComplete || this.quizPassed;
+            } else {
+                group.enabled = true;
+            }
             this.hotspotEntities.push(group);
             console.log(`[roastery] Created hotspot: "${hotspot.id}" (transition=${hotspot.isTransition})`);
 
@@ -909,17 +914,20 @@ class RoasteryScene extends Scene {
 
             // Create label for transition hotspots, gate markers, and video hotspots
             if (hotspot.isTransition || hotspot.isGateMarker || hotspot.isVideo) {
-                const label = document.createElement('div');
-                label.className = 'hotspot-label';
-                label.textContent = hotspot.label;
-                label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
-                document.body.appendChild(label);
-                group.labelElement = label;
-                // Gate markers show their label immediately
-                if (hotspot.isGateMarker) {
-                    label.style.display = 'block';
+                // Only create if one doesn't already exist
+                if (!group.labelElement) {
+                    const label = document.createElement('div');
+                    label.className = 'hotspot-label';
+                    label.textContent = hotspot.label;
+                    label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
+                    document.body.appendChild(label);
+                    group.labelElement = label;
+                    // Gate markers show their label immediately
+                    if (hotspot.isGateMarker) {
+                        label.style.display = 'block';
+                    }
+                    console.warn(`[roastery] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
                 }
-                console.warn(`[roastery] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
             }
         });
     }
@@ -990,7 +998,13 @@ class RoasteryScene extends Scene {
             // Setup collision box editor listeners
             this.setupEditorPanelListeners();
 
-            // (Deferred) start VO and ambient after loading screen dismissal
+            this.quizPassed = false;
+            this.initAmbient(assetUrl('Music/roasteryJazz.mp3'), 0.05);
+            this.isVoFinished = false;
+
+            const delay = document.getElementById('loading-screen')?.classList.contains('hidden') ? 1000 : 3500;
+            setTimeout(() => this.playVoSequence('roasting'), delay);
+
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisCafeInterior_optimized.sog`, 'cafe-interior-splat');
             }
@@ -1139,12 +1153,14 @@ class RoasteryScene extends Scene {
 
     onQuizPassed() {
         super.onQuizPassed();
-    }
-
-    onLoadingScreenDismissed() {
-        this.isVoFinished = false;
-        this.playVoSequence('roasting');
-        this.initAmbient(assetUrl('Music/roasteryJazz.mp3'), 0.05);
+        this.hotspotEntities.forEach(group => {
+            if ((group.hotspotData?.isVideo || group.hotspotData?.isTransition) && !group.hotspotData?.isGateMarker) {
+                group.enabled = true;
+                if (group.labelElement) {
+                    group.labelElement.style.display = 'block';
+                }
+            }
+        });
     }
 
     async onUnload() {
