@@ -1286,6 +1286,45 @@ class NurseryScene extends Scene {
                             group.labelElement.style.top = `${screen.y - 50}px`;
                             group._labelY = screen.y;
                         }
+
+                        // Item 4: Direction-aware clue for transition hotspots (throttled to ~4 Hz)
+                        if (group.hotspotData?.isTransition && this.quizPassed) {
+                            this.directionClueTimer = (this.directionClueTimer || 0) + deltaTime;
+                            if (this.directionClueTimer >= 0.25) { // ~4 updates per second
+                                this.directionClueTimer = 0;
+                                const toHotspotNorm = toHotspot.normalize();
+                                const angle = Math.acos(Math.max(-1, Math.min(1, camFwd.dot(toHotspotNorm))));
+                                const crossRight = camFwd.cross(toHotspotNorm);
+                                const rightDot = cameraEntity.right.dot(crossRight);
+                                let directionClue;
+                                if (angle < Math.PI / 6) { // < 30°
+                                    directionClue = "It's right in front of you";
+                                } else if (angle < Math.PI / 2.5) { // ~72°
+                                    directionClue = rightDot > 0 ? "Look to your right" : "Look to your left";
+                                } else if (angle < Math.PI / 1.5) { // ~120°
+                                    directionClue = rightDot > 0 ? "It's to your right" : "It's to your left";
+                                } else {
+                                    directionClue = "Turn around — it's behind you";
+                                }
+                                group._directionClue = directionClue;
+                            }
+                            // Use stored clue for display
+                            const displayText = group._directionClue || group.hotspotData.label;
+                            if (group.labelElement.textContent !== displayText) {
+                                group.labelElement.textContent = displayText;
+                            }
+                        }
+
+                        // Item 5: Pulse emissive on transition hotspots
+                        if (group.hotspotData?.isTransition && this.quizPassed) {
+                            const glow = group.glowEntity;
+                            if (glow && glow.render?.meshInstances[0]?.material) {
+                                const pulseMat = glow.render.meshInstances[0].material;
+                                const emissivePulse = 1.5 + (Math.sin(Date.now() * 0.004) * 0.5 + 0.5) * 2; // pulse 1.5–3.5
+                                pulseMat.emissiveIntensity = emissivePulse;
+                                pulseMat.update();
+                            }
+                        }
                     }
                 });
             } else if (this.hotspotEntities.some(g => g.labelElement && g._labelDisplay !== 'none')) {

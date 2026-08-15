@@ -1184,6 +1184,68 @@ class CafeExteriorScene extends Scene {
             }
         });
 
+        // Update transition hotspot labels (Item 4 & 5: direction-aware clues + pulsing)
+        if (!document.body.classList.contains('video-open')) {
+            this.hotspotEntities.forEach(group => {
+                if (group.labelElement && group.hotspotData?.isTransition) {
+                    const worldPos = group.getPosition();
+                    const screen = this.worldToScreen(worldPos);
+                    const camPos = cameraEntity.getPosition();
+                    const camFwd = cameraEntity.forward;
+                    const toHotspot = new pc.Vec3().sub2(worldPos, camPos);
+                    const isBehind = toHotspot.dot(camFwd) <= 0;
+                    const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
+                    const newDisplay = isBehind || isOffScreen ? 'none' : 'block';
+                    if (group._labelDisplay !== newDisplay) {
+                        group.labelElement.style.display = newDisplay;
+                        group._labelDisplay = newDisplay;
+                    }
+                    if (group._labelX !== screen.x) {
+                        group.labelElement.style.left = `${screen.x}px`;
+                        group._labelX = screen.x;
+                    }
+                    if (group._labelY !== screen.y) {
+                        group.labelElement.style.top = `${screen.y - 50}px`;
+                        group._labelY = screen.y;
+                    }
+
+                    // Item 4: Direction-aware clue (throttled to ~4 Hz)
+                    this.directionClueTimer = (this.directionClueTimer || 0) + deltaTime;
+                    if (this.directionClueTimer >= 0.25) {
+                        this.directionClueTimer = 0;
+                        const toHotspotNorm = toHotspot.normalize();
+                        const angle = Math.acos(Math.max(-1, Math.min(1, camFwd.dot(toHotspotNorm))));
+                        const crossRight = camFwd.cross(toHotspotNorm);
+                        const rightDot = cameraEntity.right.dot(crossRight);
+                        let directionClue;
+                        if (angle < Math.PI / 6) {
+                            directionClue = "It's right in front of you";
+                        } else if (angle < Math.PI / 2.5) {
+                            directionClue = rightDot > 0 ? "Look to your right" : "Look to your left";
+                        } else if (angle < Math.PI / 1.5) {
+                            directionClue = rightDot > 0 ? "It's to your right" : "It's to your left";
+                        } else {
+                            directionClue = "Turn around — it's behind you";
+                        }
+                        group._directionClue = directionClue;
+                    }
+                    const displayText = group._directionClue || group.hotspotData.label;
+                    if (group.labelElement.textContent !== displayText) {
+                        group.labelElement.textContent = displayText;
+                    }
+
+                    // Item 5: Pulse emissive on transition hotspots
+                    const glow = group.glowEntity;
+                    if (glow && glow.render?.meshInstances[0]?.material) {
+                        const pulseMat = glow.render.meshInstances[0].material;
+                        const emissivePulse = 1.5 + (Math.sin(Date.now() * 0.004) * 0.5 + 0.5) * 2;
+                        pulseMat.emissiveIntensity = emissivePulse;
+                        pulseMat.update();
+                    }
+                }
+            });
+        }
+
         if (this.activeHotspotEntity) {
             const popup = this.dom.hotspotPopup;
             if (popup.classList.contains('active')) {
