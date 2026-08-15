@@ -1108,7 +1108,7 @@ class Scene {
         }
     }
 
-    showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null, volume = 1 } = {}) {
+    showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null, volume = 1, subtitleSrc = null } = {}) {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
         // Improve video hardware acceleration hints to reduce lag when overlaying the canvas
@@ -1130,10 +1130,26 @@ class Scene {
             this.pauseAmbient();
         }
 
+        // Clear previous tracks
+        while (video.firstChild) {
+            video.removeChild(video.firstChild);
+        }
+
         video.volume = volume;
         video.preload = 'auto';
         video.src = src;
         skipBtn.style.display = required ? 'none' : 'block';
+
+        // Add subtitle track if provided
+        if (subtitleSrc) {
+            const track = document.createElement('track');
+            track.kind = 'subtitles';
+            track.srclang = 'en';
+            track.label = 'English';
+            track.src = subtitleSrc;
+            track.default = true;
+            video.appendChild(track);
+        }
 
         // Play narration if specified
         if (narrationId) {
@@ -1449,11 +1465,16 @@ class Scene {
                 ownerInterview: 'Videos/ownerInterview.mp4'
             };
             const videoSrc = videoMap[gate.ref];
+            const subtitleMap = {
+                brewingPOV: 'Subtitles/steps_en_01.vtt' // steps_en_01 narration paired with video
+                // roasterVideo: subtitles embedded in coffeeRoasting.mp4 video, no separate track needed
+            };
             if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
             if (videoSrc) {
                 if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
                 this.showVideoPopup(assetUrl(videoSrc), {
                     required: true,
+                    subtitleSrc: subtitleMap[gate.ref] ? assetUrl(subtitleMap[gate.ref]) : null,
                     onFinish: () => this.resumeVoSequence()
                 });
             } else {
