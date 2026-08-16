@@ -830,12 +830,25 @@ class RoasteryScene extends Scene {
     }
 
     getNavPromptText() {
+        // Throttle to ~4 updates per second (250ms)
+        const now = Date.now();
+        if (this._lastNavPromptUpdate && now - this._lastNavPromptUpdate < 250) {
+            return this._cachedNavPromptText;
+        }
+        this._lastNavPromptUpdate = now;
+
         // Find the transition hotspot and compute direction-aware guidance text
         const transitionHotspot = this.hotspotEntities.find(group => group.hotspotData?.isTransition);
-        if (!transitionHotspot) return null;
+        if (!transitionHotspot) {
+            this._cachedNavPromptText = null;
+            return null;
+        }
 
         const cameraEntity = app.root.findByName('Camera');
-        if (!cameraEntity) return null;
+        if (!cameraEntity) {
+            this._cachedNavPromptText = null;
+            return null;
+        }
 
         const hotspotPos = transitionHotspot.getPosition();
         const camPos = cameraEntity.getPosition();
@@ -856,13 +869,16 @@ class RoasteryScene extends Scene {
         const angleDeg = angleRad * 180 / Math.PI;
 
         // Return direction-based text
+        let text;
         if (angleDeg <= 30) {
-            return "It's right in front of you";
+            text = "It's right in front of you";
         } else if (angleDeg > 30 && angleDeg <= 100) {
-            return dotRight > 0 ? "Look to your right" : "Look to your left";
+            text = dotRight > 0 ? "Look to your right" : "Look to your left";
         } else {
-            return "Turn around — it's behind you";
+            text = "Turn around — it's behind you";
         }
+        this._cachedNavPromptText = text;
+        return text;
     }
 
     createHotspots() {
