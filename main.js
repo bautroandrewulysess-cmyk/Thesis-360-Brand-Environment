@@ -1477,28 +1477,52 @@ class Scene {
                 this.resumeVoSequence();
             }
         } else if (gate.ref) {
-            const videoMap = {
-                polybag: 'Videos/polybag.mp4',
-                roasterVideo: 'Videos/coffeeRoasting.mp4',
-                brewingPOV: 'Videos/brewingVideo.mp4',
-                ownerInterview: 'Videos/ownerInterview.mp4'
-            };
-            const videoSrc = videoMap[gate.ref];
-            const subtitleMap = {
-                brewingPOV: 'Subtitles/steps_en_01.vtt' // steps_en_01 narration paired with video
-                // roasterVideo: subtitles embedded in coffeeRoasting.mp4 video, no separate track needed
-            };
-            if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
-            if (videoSrc) {
-                if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
-                this.showVideoPopup(assetUrl(videoSrc), {
-                    required: true,
-                    subtitleSrc: subtitleMap[gate.ref] ? assetUrl(subtitleMap[gate.ref]) : null,
-                    onFinish: () => this.resumeVoSequence()
+            // Special case: polybag video plays in parallel with nursery_en_02 VO
+            if (gate.ref === 'polybag' && this.voSceneKey === 'nursery' && this.voSequenceIndex + 1 < window.VoSegments.nursery.en.length) {
+                // Play polybag video in overlay while next VO segment plays
+                const videoUrl = assetUrl('Videos/polybag.mp4');
+                const polybagOverlay = document.createElement('div');
+                polybagOverlay.id = 'polybag-video-overlay';
+                polybagOverlay.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center;`;
+                const video = document.createElement('video');
+                video.src = videoUrl;
+                video.autoplay = true;
+                video.muted = true;
+                video.style.cssText = `max-width:90vw; max-height:90vh; object-fit:contain;`;
+                polybagOverlay.appendChild(video);
+                document.body.appendChild(polybagOverlay);
+
+                // Resume sequence to play nursery_en_02, and close video when VO ends
+                const originalAudio = this.voAudio;
+                this.resumeVoSequence().then(() => {
+                    // Close polybag overlay when VO finishes
+                    if (polybagOverlay.parentNode) {
+                        polybagOverlay.remove();
+                    }
                 });
             } else {
-                if (window.DEV_MODE) console.log(`[Gate] No video mapped, resuming VO immediately`);
-                this.resumeVoSequence();
+                // Standard gate video playback (roasterVideo, brewingPOV, ownerInterview)
+                const videoMap = {
+                    roasterVideo: 'Videos/coffeeRoasting.mp4',
+                    brewingPOV: 'Videos/brewingVideo.mp4',
+                    ownerInterview: 'Videos/ownerInterview.mp4'
+                };
+                const videoSrc = videoMap[gate.ref];
+                const subtitleMap = {
+                    brewingPOV: 'Subtitles/steps_en_01.vtt'
+                };
+                if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
+                if (videoSrc) {
+                    if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
+                    this.showVideoPopup(assetUrl(videoSrc), {
+                        required: true,
+                        subtitleSrc: subtitleMap[gate.ref] ? assetUrl(subtitleMap[gate.ref]) : null,
+                        onFinish: () => this.resumeVoSequence()
+                    });
+                } else {
+                    if (window.DEV_MODE) console.log(`[Gate] No video mapped, resuming VO immediately`);
+                    this.resumeVoSequence();
+                }
             }
         } else {
             this.resumeVoSequence();
