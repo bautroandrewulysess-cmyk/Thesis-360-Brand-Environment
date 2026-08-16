@@ -732,6 +732,25 @@ class Scene {
         }
     }
 
+    setBrandStoryVideoBackground(audioKey) {
+        const brandStoryVideoMap = {
+            'brandStory_en_01': 'Videos/mapZoom.mp4',
+            'brandStory_en_02': 'Videos/aerial.mp4',
+            'brandStory_en_03': 'Videos/farmerMontage.mp4',
+        };
+        const videoUrl = brandStoryVideoMap[audioKey];
+        if (videoUrl) {
+            const videoEl = document.getElementById('brand-story-video');
+            if (videoEl) {
+                const sourceEl = videoEl.querySelector('source');
+                if (sourceEl) {
+                    sourceEl.src = assetUrl(videoUrl);
+                    videoEl.load();
+                }
+            }
+        }
+    }
+
     playVoWithSubtitles(audioKey, isQuizEligible = false) {
         if (window.journeyComplete) {
             return Promise.resolve();
@@ -739,6 +758,9 @@ class Scene {
 
         return new Promise((resolve) => {
             this.stopVo();
+
+            // Swap brand story background video if this is a brand story segment
+            this.setBrandStoryVideoBackground(audioKey);
 
             const lang = window.currentLanguage || 'en';
             const audioPath = assetUrl(`VO/${audioKey}.mp3`);
@@ -1365,9 +1387,9 @@ class Scene {
 
     getGateMarkerLabel(gateRef) {
         const labels = {
-            'mapZoom': 'View the map',
-            'aerial': 'See the landscape',
-            'farmerMontage': 'Meet the farmer',
+            'mapZoom': 'Continue',
+            'aerial': 'Continue',
+            'farmerMontage': 'Continue',
             'ownerInterview': 'Hear the story behind Granja Alegre',
             'treePhoto': 'See the trees',
             'roasterVideo': 'Watch the roaster',
@@ -1456,9 +1478,6 @@ class Scene {
             }
         } else if (gate.ref) {
             const videoMap = {
-                mapZoom: 'Videos/mapZoom.mp4',
-                aerial: 'Videos/aerial.mp4',
-                farmerMontage: 'Videos/farmerMontage.mp4',
                 polybag: 'Videos/polybag.mp4',
                 roasterVideo: 'Videos/coffeeRoasting.mp4',
                 brewingPOV: 'Videos/brewingVideo.mp4',
