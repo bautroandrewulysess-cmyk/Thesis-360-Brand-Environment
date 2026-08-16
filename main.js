@@ -1483,7 +1483,7 @@ class Scene {
                 const videoUrl = assetUrl('Videos/polybag.mp4');
                 const polybagOverlay = document.createElement('div');
                 polybagOverlay.id = 'polybag-video-overlay';
-                polybagOverlay.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center;`;
+                polybagOverlay.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; transition:opacity 0.6s ease;`;
                 const video = document.createElement('video');
                 video.src = videoUrl;
                 video.autoplay = true;
@@ -1493,11 +1493,15 @@ class Scene {
                 document.body.appendChild(polybagOverlay);
 
                 // Resume sequence to play nursery_en_02, and close video when VO ends
-                const originalAudio = this.voAudio;
                 this.resumeVoSequence().then(() => {
-                    // Close polybag overlay when VO finishes
+                    // Fade out polybag overlay when VO finishes
                     if (polybagOverlay.parentNode) {
-                        polybagOverlay.remove();
+                        polybagOverlay.style.opacity = '0';
+                        setTimeout(() => {
+                            if (polybagOverlay.parentNode) {
+                                polybagOverlay.remove();
+                            }
+                        }, 600);
                     }
                 });
             } else {
@@ -1511,11 +1515,14 @@ class Scene {
                 const subtitleMap = {
                     brewingPOV: 'Subtitles/steps_en_01.vtt'
                 };
+                // roasterVideo contains narration (roasting_en_02/03), so play at full volume; others at 15% for ambience
+                const videoVolume = gate.ref === 'roasterVideo' ? 1.0 : 0.15;
                 if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
                 if (videoSrc) {
                     if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
                     this.showVideoPopup(assetUrl(videoSrc), {
                         required: true,
+                        volume: videoVolume,
                         subtitleSrc: subtitleMap[gate.ref] ? assetUrl(subtitleMap[gate.ref]) : null,
                         onFinish: () => this.resumeVoSequence()
                     });

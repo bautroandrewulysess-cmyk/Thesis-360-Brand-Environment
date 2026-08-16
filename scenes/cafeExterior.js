@@ -883,9 +883,9 @@ class CafeExteriorScene extends Scene {
             const isTransition = hotspot.isTransition;
             let coreColor;
             if (isTransition) {
-                coreColor = new pc.Color(1, 0.75, 0); // rich gold
+                coreColor = new pc.Color(1, 0.55, 0); // warm amber-gold
             } else {
-                coreColor = new pc.Color(0.05, 0.35, 1); // vivid blue
+                coreColor = new pc.Color(0, 0.65, 1); // strong cyan-azure
             }
             coreMaterial.diffuse = coreColor;
             coreMaterial.emissive = new pc.Color(0, 0, 0);
@@ -904,11 +904,11 @@ class CafeExteriorScene extends Scene {
             let glowColor;
             let glowIntensity;
             if (isTransition) {
-                glowColor = new pc.Color(1, 0.75, 0); // rich gold
-                glowIntensity = 2.5;
+                glowColor = new pc.Color(1, 0.55, 0); // warm amber-gold
+                glowIntensity = 2.8;
             } else {
-                glowColor = coreColor; // match core color (vivid blue)
-                glowIntensity = 0.8;
+                glowColor = coreColor; // match core color (strong cyan-azure)
+                glowIntensity = 1.0;
             }
             glowMaterial.emissive = glowColor;
             glowMaterial.emissiveIntensity = glowIntensity;
@@ -919,6 +919,39 @@ class CafeExteriorScene extends Scene {
             glowMaterial.update();
             glow.render.meshInstances[0].material = glowMaterial;
             group.addChild(glow);
+
+            // Concentric rings for transition hotspots
+            if (isTransition) {
+                const ring1 = new pc.Entity(`hotspot-ring1-${hotspot.id}`);
+                ring1.addComponent('render', { type: 'sphere' });
+                ring1.setLocalScale(0.12, 0.12, 0.12);
+                const ring1Material = new pc.StandardMaterial();
+                ring1Material.emissive = glowColor;
+                ring1Material.emissiveIntensity = 1.2;
+                ring1Material.opacity = 0.3;
+                ring1Material.blendType = pc.BLEND_NORMAL;
+                ring1Material.depthWrite = false;
+                ring1Material.cull = pc.CULLFACE_NONE;
+                ring1Material.update();
+                ring1.render.meshInstances[0].material = ring1Material;
+                group.addChild(ring1);
+                group.ring1Entity = ring1;
+
+                const ring2 = new pc.Entity(`hotspot-ring2-${hotspot.id}`);
+                ring2.addComponent('render', { type: 'sphere' });
+                ring2.setLocalScale(0.15, 0.15, 0.15);
+                const ring2Material = new pc.StandardMaterial();
+                ring2Material.emissive = glowColor;
+                ring2Material.emissiveIntensity = 0.8;
+                ring2Material.opacity = 0.2;
+                ring2Material.blendType = pc.BLEND_NORMAL;
+                ring2Material.depthWrite = false;
+                ring2Material.cull = pc.CULLFACE_NONE;
+                ring2Material.update();
+                ring2.render.meshInstances[0].material = ring2Material;
+                group.addChild(ring2);
+                group.ring2Entity = ring2;
+            }
 
             const halo = new pc.Entity(`hotspot-halo-${hotspot.id}`);
             halo.addComponent('render', { type: 'sphere' });
@@ -1234,13 +1267,33 @@ class CafeExteriorScene extends Scene {
                         group.labelElement.textContent = displayText;
                     }
 
-                    // Item 5: Pulse emissive on transition hotspots
-                    const glow = group.glowEntity;
-                    if (glow && glow.render?.meshInstances[0]?.material) {
-                        const pulseMat = glow.render.meshInstances[0].material;
-                        const emissivePulse = 1.5 + (Math.sin(Date.now() * 0.004) * 0.5 + 0.5) * 2;
-                        pulseMat.emissiveIntensity = emissivePulse;
-                        pulseMat.update();
+                    // Item 5: Pulse emissive on transition hotspots with out-of-phase rings
+                    if (group.hotspotData?.isTransition && this.quizPassed) {
+                        const now = Date.now();
+                        // Main glow pulse: 1.5–3.5
+                        const glow = group.glowEntity;
+                        if (glow && glow.render?.meshInstances[0]?.material) {
+                            const pulseMat = glow.render.meshInstances[0].material;
+                            const emissivePulse = 1.5 + (Math.sin(now * 0.004) * 0.5 + 0.5) * 2;
+                            pulseMat.emissiveIntensity = emissivePulse;
+                            pulseMat.update();
+                        }
+                        // Ring 1: pulse out of phase (offset by π/2)
+                        const ring1 = group.ring1Entity;
+                        if (ring1 && ring1.render?.meshInstances[0]?.material) {
+                            const ring1Mat = ring1.render.meshInstances[0].material;
+                            const ring1Pulse = 0.8 + (Math.sin(now * 0.003 + Math.PI / 2) * 0.5 + 0.5) * 1.2;
+                            ring1Mat.emissiveIntensity = ring1Pulse;
+                            ring1Mat.update();
+                        }
+                        // Ring 2: pulse out of phase (offset by π)
+                        const ring2 = group.ring2Entity;
+                        if (ring2 && ring2.render?.meshInstances[0]?.material) {
+                            const ring2Mat = ring2.render.meshInstances[0].material;
+                            const ring2Pulse = 0.5 + (Math.sin(now * 0.0035 + Math.PI) * 0.5 + 0.5) * 0.8;
+                            ring2Mat.emissiveIntensity = ring2Pulse;
+                            ring2Mat.update();
+                        }
                     }
                 }
             });
