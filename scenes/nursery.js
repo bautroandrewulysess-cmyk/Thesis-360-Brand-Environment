@@ -807,7 +807,39 @@ class NurseryScene extends Scene {
     }
 
     getNavPromptText() {
-        return null; // Direction clues are shown on hotspot labels instead
+        // Find the transition hotspot and compute direction-aware guidance text
+        const transitionHotspot = this.hotspotEntities.find(group => group.hotspotData?.isTransition);
+        if (!transitionHotspot) return null;
+
+        const cameraEntity = app.root.findByName('Camera');
+        if (!cameraEntity) return null;
+
+        const hotspotPos = transitionHotspot.getPosition();
+        const camPos = cameraEntity.getPosition();
+        const toHotspot = new pc.Vec3().sub2(hotspotPos, camPos);
+        toHotspot.normalize();
+
+        const camForward = cameraEntity.forward;
+        const camRight = cameraEntity.right;
+
+        // Dot product with forward vector
+        const dotForward = toHotspot.dot(camForward);
+
+        // Dot product with right vector to determine left/right
+        const dotRight = toHotspot.dot(camRight);
+
+        // Compute angle in degrees
+        const angleRad = Math.acos(Math.max(-1, Math.min(1, dotForward)));
+        const angleDeg = angleRad * 180 / Math.PI;
+
+        // Return direction-based text
+        if (angleDeg <= 30) {
+            return "It's right in front of you";
+        } else if (angleDeg > 30 && angleDeg <= 100) {
+            return dotRight > 0 ? "Look to your right" : "Look to your left";
+        } else {
+            return "Turn around — it's behind you";
+        }
     }
 
     getMiniQuizData(gateRef) {

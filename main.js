@@ -693,6 +693,12 @@ class Scene {
         const prompt = document.getElementById('nav-prompt');
         if (!prompt) return;
 
+        // Throttle to ~4 updates per second (250ms)
+        const now = Date.now();
+        if (!this.lastPromptUpdate) this.lastPromptUpdate = 0;
+        if (now - this.lastPromptUpdate < 250) return;
+        this.lastPromptUpdate = now;
+
         const cameraEntity = app.root.findByName('Camera');
         if (!cameraEntity) return;
 
@@ -717,11 +723,19 @@ class Scene {
             }
         }
 
-        if (nearestOffScreenHotspot && nearestOffScreenHotspot._directionClue) {
-            prompt.textContent = nearestOffScreenHotspot._directionClue;
-            if (prompt.style.display === 'none') {
-                prompt.style.display = 'block';
-                setTimeout(() => prompt.style.opacity = '1', 50);
+        if (nearestOffScreenHotspot) {
+            const navText = this.getNavPromptText();
+            if (navText) {
+                prompt.textContent = navText;
+                if (prompt.style.display === 'none') {
+                    prompt.style.display = 'block';
+                    setTimeout(() => prompt.style.opacity = '1', 50);
+                }
+            } else {
+                if (prompt.style.opacity !== '0') {
+                    prompt.style.opacity = '0';
+                    setTimeout(() => prompt.style.display = 'none', 600);
+                }
             }
         } else {
             if (prompt.style.opacity !== '0') {
