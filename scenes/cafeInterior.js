@@ -954,11 +954,11 @@ class CafeInteriorScene extends Scene {
             if (isTransition) {
                 const ring1 = new pc.Entity(`hotspot-ring1-${hotspot.id}`);
                 ring1.addComponent('render', { type: 'sphere' });
-                ring1.setLocalScale(0.12, 0.12, 0.12);
+                ring1.setLocalScale(0.30, 0.30, 0.30);
                 const ring1Material = new pc.StandardMaterial();
                 ring1Material.emissive = glowColor;
                 ring1Material.emissiveIntensity = 1.2;
-                ring1Material.opacity = 0.3;
+                ring1Material.opacity = 0.25;
                 ring1Material.blendType = pc.BLEND_NORMAL;
                 ring1Material.depthWrite = false;
                 ring1Material.cull = pc.CULLFACE_NONE;
@@ -969,11 +969,11 @@ class CafeInteriorScene extends Scene {
 
                 const ring2 = new pc.Entity(`hotspot-ring2-${hotspot.id}`);
                 ring2.addComponent('render', { type: 'sphere' });
-                ring2.setLocalScale(0.15, 0.15, 0.15);
+                ring2.setLocalScale(0.45, 0.45, 0.45);
                 const ring2Material = new pc.StandardMaterial();
                 ring2Material.emissive = glowColor;
                 ring2Material.emissiveIntensity = 0.8;
-                ring2Material.opacity = 0.2;
+                ring2Material.opacity = 0.15;
                 ring2Material.blendType = pc.BLEND_NORMAL;
                 ring2Material.depthWrite = false;
                 ring2Material.cull = pc.CULLFACE_NONE;
@@ -1494,13 +1494,16 @@ class CafeInteriorScene extends Scene {
                             group.labelElement.style.display = newDisplay;
                             group._labelDisplay = newDisplay;
                         }
-                        if (group._labelX !== screen.x) {
-                            group.labelElement.style.left = `${screen.x}px`;
-                            group._labelX = screen.x;
-                        }
-                        if (group._labelY !== screen.y) {
-                            group.labelElement.style.top = `${screen.y - 50}px`;
-                            group._labelY = screen.y;
+                        // Only position label when it's displayed and not behind camera
+                        if (newDisplay === 'block') {
+                            if (group._labelX !== screen.x) {
+                                group.labelElement.style.left = `${screen.x}px`;
+                                group._labelX = screen.x;
+                            }
+                            if (group._labelY !== screen.y) {
+                                group.labelElement.style.top = `${screen.y - 50}px`;
+                                group._labelY = screen.y;
+                            }
                         }
 
                         // Item 4: Direction-aware clue for transition hotspots (throttled to ~4 Hz)

@@ -1564,8 +1564,8 @@ class Scene {
                 const subtitleMap = {
                     brewingPOV: 'Subtitles/steps_en_01.vtt'
                 };
-                // roasterVideo contains narration (roasting_en_02/03), so play at full volume; others at 15% for ambience
-                const videoVolume = gate.ref === 'roasterVideo' ? 1.0 : 0.15;
+                // All gate videos play at 15% for ambience; narration is separate audio segments
+                const videoVolume = 0.15;
                 if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
                 if (videoSrc) {
                     if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);

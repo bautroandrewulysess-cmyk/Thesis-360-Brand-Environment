@@ -78,6 +78,7 @@ class StreetViewScene extends Scene {
         this.farmHintVisible = false;
         this.farmHintElement = null;
         this.farm_en_01_Finished = false;
+        this.farmCloseupViewed = false;
         this.farmCloseupClickInProgress = false;
 
         // Position graph: 31 total positions
@@ -816,7 +817,7 @@ class StreetViewScene extends Scene {
 
             // After position loads, resume the VO sequence to play farm_en_02
             console.log('[Farm Close-up] Resuming VO sequence');
-            this.farm_en_01_Finished = false;
+            this.farmCloseupViewed = true;
             this.clearFarmHint();
             await this.resumeVoSequence();
             console.log('[Farm Close-up] VO sequence resumed');
@@ -1006,7 +1007,7 @@ class StreetViewScene extends Scene {
             const farmIndex = isFarmRange ? parseInt(positionKey.split('-')[1]) : null;
             const inFarmRange = isFarmRange && farmIndex >= 1 && farmIndex <= 5;
 
-            if (inFarmRange && this.farm_en_01_Finished && positionKey !== 'farm1-closeup') {
+            if (inFarmRange && this.farm_en_01_Finished && !this.farmCloseupViewed && positionKey !== 'farm1-closeup') {
                 const hintMap = {
                     'farm1-4': "You're really close — try looking down.",
                     'farm1-3': "So close. Moving forward should help.",
