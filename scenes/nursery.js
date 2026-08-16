@@ -1450,6 +1450,9 @@ class NurseryScene extends Scene {
         } else {
             cameraEntity.setLocalPosition(currentPos.x, targetY, currentPos.z);
         }
+
+        // Update nav-prompt with direction clue from nearest off-screen transition hotspot
+        this.updateOffScreenHotspotPrompt();
     }
 }
 

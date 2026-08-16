@@ -1642,6 +1642,9 @@ class CafeInteriorScene extends Scene {
             // Not moving — still apply jump Y
             cameraEntity.setLocalPosition(currentPos.x, targetY, currentPos.z);
         }
+
+        // Update nav-prompt with direction clue from nearest off-screen transition hotspot
+        this.updateOffScreenHotspotPrompt();
     }
 }
 

@@ -817,7 +817,7 @@ class StreetViewScene extends Scene {
             // After position loads, resume the VO sequence to play farm_en_02
             console.log('[Farm Close-up] Resuming VO sequence');
             this.farm_en_01_Finished = false;
-            this.farmHintVisible = false;
+            this.clearFarmHint();
             await this.resumeVoSequence();
             console.log('[Farm Close-up] VO sequence resumed');
         } finally {

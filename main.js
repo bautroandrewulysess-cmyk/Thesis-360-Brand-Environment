@@ -685,6 +685,52 @@ class Scene {
         }
     }
 
+    updateOffScreenHotspotPrompt() {
+        if (!this.quizPassed || !this.hotspotEntities) {
+            this.hideNavPrompt();
+            return;
+        }
+        const prompt = document.getElementById('nav-prompt');
+        if (!prompt) return;
+
+        const cameraEntity = app.root.findByName('Camera');
+        if (!cameraEntity) return;
+
+        let nearestOffScreenHotspot = null;
+        let minDist = Infinity;
+
+        for (const group of this.hotspotEntities) {
+            if (!group.hotspotData?.isTransition || !group.enabled) continue;
+
+            const worldPos = group.getPosition();
+            const screen = this.worldToScreen(worldPos);
+            const camPos = cameraEntity.getPosition();
+            const toHotspot = new pc.Vec3().sub2(worldPos, camPos);
+            const dist = toHotspot.length();
+
+            const isBehind = toHotspot.dot(cameraEntity.forward) <= 0;
+            const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
+
+            if ((isOffScreen || isBehind) && dist < minDist) {
+                nearestOffScreenHotspot = group;
+                minDist = dist;
+            }
+        }
+
+        if (nearestOffScreenHotspot && nearestOffScreenHotspot._directionClue) {
+            prompt.textContent = nearestOffScreenHotspot._directionClue;
+            if (prompt.style.display === 'none') {
+                prompt.style.display = 'block';
+                setTimeout(() => prompt.style.opacity = '1', 50);
+            }
+        } else {
+            if (prompt.style.opacity !== '0') {
+                prompt.style.opacity = '0';
+                setTimeout(() => prompt.style.display = 'none', 600);
+            }
+        }
+    }
+
     clearSubtitles() {
         const subtitleBar = document.getElementById('subtitle-bar');
         if (subtitleBar) {
@@ -1492,9 +1538,8 @@ class Scene {
                 polybagOverlay.appendChild(video);
                 document.body.appendChild(polybagOverlay);
 
-                // Resume sequence to play nursery_en_02, and close video when VO ends
-                this.resumeVoSequence().then(() => {
-                    // Fade out polybag overlay when VO finishes
+                // Fade video when it ends (not when VO ends), allowing VO to continue underneath
+                const fadeVideoOverlay = () => {
                     if (polybagOverlay.parentNode) {
                         polybagOverlay.style.opacity = '0';
                         setTimeout(() => {
@@ -1503,7 +1548,11 @@ class Scene {
                             }
                         }, 600);
                     }
-                });
+                };
+                video.addEventListener('ended', fadeVideoOverlay, { once: true });
+
+                // Resume sequence to play nursery_en_02 while video plays
+                this.resumeVoSequence();
             } else {
                 // Standard gate video playback (roasterVideo, brewingPOV, ownerInterview)
                 const videoMap = {

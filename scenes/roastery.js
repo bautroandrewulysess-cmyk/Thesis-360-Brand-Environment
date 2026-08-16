@@ -977,6 +977,9 @@ class RoasteryScene extends Scene {
                         label.style.display = 'block';
                     }
                     console.warn(`[roastery] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
+                    if (hotspot.label === 'Exit to Cafe') {
+                        console.error(`[roastery] Exit to Cafe label created from:`, new Error().stack);
+                    }
                 }
             }
         });
@@ -1508,6 +1511,9 @@ class RoasteryScene extends Scene {
         } else {
             cameraEntity.setLocalPosition(currentPos.x, targetY, currentPos.z);
         }
+
+        // Update nav-prompt with direction clue from nearest off-screen transition hotspot
+        this.updateOffScreenHotspotPrompt();
     }
 }
 
