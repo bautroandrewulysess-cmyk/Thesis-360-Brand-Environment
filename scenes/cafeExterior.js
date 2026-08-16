@@ -883,9 +883,9 @@ class CafeExteriorScene extends Scene {
             const isTransition = hotspot.isTransition;
             let coreColor;
             if (isTransition) {
-                coreColor = new pc.Color(1, 0.85, 0.2); // gold
+                coreColor = new pc.Color(1, 0.75, 0); // rich gold
             } else {
-                coreColor = new pc.Color(0.2, 0.6, 1); // blue for informational
+                coreColor = new pc.Color(0.05, 0.35, 1); // vivid blue
             }
             coreMaterial.diffuse = coreColor;
             coreMaterial.emissive = new pc.Color(0, 0, 0);
@@ -904,11 +904,11 @@ class CafeExteriorScene extends Scene {
             let glowColor;
             let glowIntensity;
             if (isTransition) {
-                glowColor = new pc.Color(1, 0.85, 0.2); // gold
-                glowIntensity = 2;
+                glowColor = new pc.Color(1, 0.75, 0); // rich gold
+                glowIntensity = 2.5;
             } else {
-                glowColor = coreColor; // match core color
-                glowIntensity = 0.6;
+                glowColor = coreColor; // match core color (vivid blue)
+                glowIntensity = 0.8;
             }
             glowMaterial.emissive = glowColor;
             glowMaterial.emissiveIntensity = glowIntensity;

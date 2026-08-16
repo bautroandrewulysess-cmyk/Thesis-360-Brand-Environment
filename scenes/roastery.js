@@ -856,9 +856,9 @@ class RoasteryScene extends Scene {
             const coreMaterial = new pc.StandardMaterial();
             let coreColor;
             if (isTransition || isGateMarker) {
-                coreColor = new pc.Color(1, 0.85, 0.2); // gold
+                coreColor = new pc.Color(1, 0.75, 0); // rich gold
             } else {
-                coreColor = new pc.Color(0.2, 0.6, 1); // blue for informational
+                coreColor = new pc.Color(0.05, 0.35, 1); // vivid blue
             }
             coreMaterial.diffuse = coreColor;
             coreMaterial.emissive = new pc.Color(0, 0, 0);
@@ -878,11 +878,11 @@ class RoasteryScene extends Scene {
             let glowColor;
             let glowIntensity;
             if (isTransition || isGateMarker) {
-                glowColor = new pc.Color(1, 0.85, 0.2); // gold
-                glowIntensity = 2; // reduced from 3
+                glowColor = new pc.Color(1, 0.75, 0); // rich gold
+                glowIntensity = 2.5;
             } else {
-                glowColor = coreColor; // match core color
-                glowIntensity = 0.6; // subtle glow for informational
+                glowColor = coreColor; // match core color (vivid blue)
+                glowIntensity = 0.8;
             }
             glowMaterial.emissive = glowColor;
             glowMaterial.emissiveIntensity = glowIntensity;
