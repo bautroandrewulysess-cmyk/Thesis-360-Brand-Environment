@@ -1037,7 +1037,16 @@ class Scene {
         this.ambientSource = null;
     }
 
+    duckAmbient() {
+        if (!this.ambientGain) return;
+        this.ambientPausedGain = this.ambientGain.gain.value;
+        this.ambientGain.gain.value = 0.1; // Reduce to 10% volume while video narration plays
+    }
+
     resumeAmbient() {
+        if (this.ambientGain && this.ambientPausedGain !== undefined) {
+            this.ambientGain.gain.value = this.ambientPausedGain;
+        }
         if (!this.audioContext || !this.audioLoaded || this.ambientPausedOffset === undefined) return;
         const offset = this.audioContext.currentTime - this.ambientPausedOffset;
         this.ambientSource = this.audioContext.createBufferSource();
@@ -1045,9 +1054,6 @@ class Scene {
         this.ambientSource.loop = true;
         this.ambientSource.connect(this.ambientGain);
         this.ambientSource.start(0, offset);
-        if (this.ambientGain && this.ambientPausedGain !== undefined) {
-            this.ambientGain.gain.value = this.ambientPausedGain;
-        }
         this.ambientPausedOffset = undefined;
     }
 
@@ -1190,7 +1196,7 @@ class Scene {
         }
     }
 
-    showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null, volume = 1, subtitleSrc = null } = {}) {
+    showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null, volume = 1, subtitleSrc = null, duckAmbient = false } = {}) {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
         // Improve video hardware acceleration hints to reduce lag when overlaying the canvas
@@ -1209,7 +1215,11 @@ class Scene {
 
         if (required) {
             this.videoPending = true;
-            this.pauseAmbient();
+            if (duckAmbient) {
+                this.duckAmbient();
+            } else {
+                this.pauseAmbient();
+            }
         }
 
         // Clear previous tracks
@@ -1222,8 +1232,9 @@ class Scene {
         video.src = src;
         skipBtn.style.display = required ? 'none' : 'block';
 
-        // Add subtitle track if provided
+        // Add subtitle track if provided (requires CORS for canvas access)
         if (subtitleSrc) {
+            video.crossOrigin = 'anonymous';
             const track = document.createElement('track');
             track.kind = 'subtitles';
             track.srclang = 'en';
@@ -1231,6 +1242,8 @@ class Scene {
             track.src = subtitleSrc;
             track.default = true;
             video.appendChild(track);
+        } else {
+            video.crossOrigin = '';
         }
 
         // Play narration if specified
@@ -1578,8 +1591,8 @@ class Scene {
                 const subtitleMap = {
                     brewingPOV: 'Subtitles/steps_en_01.vtt'
                 };
-                // All gate videos play at 15% for ambience; narration is separate audio segments
-                const videoVolume = 0.15;
+                // roasterVideo plays at full volume (audio is the narration); others at 15% for ambience
+                const videoVolume = gate.ref === 'roasterVideo' ? 1.0 : 0.15;
                 if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
                 if (videoSrc) {
                     if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
@@ -1587,6 +1600,7 @@ class Scene {
                         required: true,
                         volume: videoVolume,
                         subtitleSrc: subtitleMap[gate.ref] ? assetUrl(subtitleMap[gate.ref]) : null,
+                        duckAmbient: gate.ref === 'roasterVideo',
                         onFinish: () => this.resumeVoSequence()
                     });
                 } else {

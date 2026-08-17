@@ -1552,10 +1552,10 @@ class StreetViewScene extends Scene {
     }
 
     onGateMarkerClick(gate) {
-        // Clear farm hint when treePhoto is opened
+        // Mark farm closeup as viewed when treePhoto is opened (hides hint on return)
         if (gate.ref === 'treePhoto') {
-            console.log('[Farm] treePhoto gate clicked, clearing hint');
-            this.farm_en_01_Finished = false;
+            console.log('[Farm] treePhoto gate clicked, marking closeup as viewed');
+            this.farmCloseupViewed = true;
             this.farmHintVisible = false;
         }
         super.onGateMarkerClick(gate);
