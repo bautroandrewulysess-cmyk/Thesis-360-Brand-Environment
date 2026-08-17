@@ -1443,6 +1443,25 @@ class CafeInteriorScene extends Scene {
             this.playVoSequence(this.cafeVoSequence);
             this.cafeVoSequence = null;
         }
+        // Show first-visit hint before VO starts
+        if (!this.isReturnVisit) {
+            this.showFirstVisitHint();
+        }
+    }
+
+    showFirstVisitHint() {
+        const prompt = document.getElementById('nav-prompt');
+        if (!prompt) return;
+        prompt.textContent = "Look for a door with a 'To Nursery' sign";
+        prompt.style.display = 'block';
+        prompt.style.opacity = '1';
+        // Hide after 8 seconds
+        setTimeout(() => {
+            if (prompt.style.opacity !== '0') {
+                prompt.style.opacity = '0';
+                setTimeout(() => prompt.style.display = 'none', 600);
+            }
+        }, 8000);
     }
 
     update(deltaTime) {

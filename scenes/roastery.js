@@ -1221,11 +1221,11 @@ class RoasteryScene extends Scene {
                 // Keep the orb present but mark it as no longer a gate (replayable)
                 hotspot.isGateMarker = false;
 
-                this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: true,
                     caption: hotspot.label,
                     volume: 1.0,
+                    duckAmbient: 0.5,
                     onFinish: () => {
                         this.resumeAmbient();
                         this.resumeVoSequence();

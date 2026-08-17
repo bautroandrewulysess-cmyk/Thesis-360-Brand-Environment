@@ -691,7 +691,10 @@ class Scene {
             return;
         }
         const prompt = document.getElementById('nav-prompt');
-        if (!prompt) return;
+        if (!prompt) {
+            console.warn('[NavPrompt] DOM element #nav-prompt not found');
+            return;
+        }
 
         // Throttle to ~4 updates per second (250ms)
         const now = Date.now();
@@ -723,10 +726,14 @@ class Scene {
             }
         }
 
+        console.log('[NavPrompt] Nearest hotspot:', nearestOffScreenHotspot?.hotspotData?.id, 'minDist:', minDist);
+
         if (nearestOffScreenHotspot) {
             const navText = this.getNavPromptText();
+            console.log('[NavPrompt] getNavPromptText returned:', navText);
             if (navText) {
                 prompt.textContent = navText;
+                console.log('[NavPrompt] Showing:', navText, 'prompt display:', prompt.style.display, 'opacity:', prompt.style.opacity);
                 if (prompt.style.display === 'none') {
                     prompt.style.display = 'block';
                     setTimeout(() => prompt.style.opacity = '1', 50);
@@ -1007,10 +1014,10 @@ class Scene {
         this.audioLoaded = false;
     }
 
-    duckAmbient() {
+    duckAmbient(level = 0.2) {
         if (!this.ambientGain) return;
         this.storedAmbientGain = this.ambientGain.gain.value;
-        const targetGain = this.storedAmbientGain * 0.2;
+        const targetGain = this.storedAmbientGain * level;
         this.ambientGain.gain.setTargetAtTime(targetGain, this.audioContext.currentTime, 0.4);
     }
 
@@ -1026,12 +1033,6 @@ class Scene {
         this.ambientPausedOffset = this.audioContext.currentTime;
         try { this.ambientSource.stop(); } catch(e) {}
         this.ambientSource = null;
-    }
-
-    duckAmbient() {
-        if (!this.ambientGain) return;
-        this.ambientPausedGain = this.ambientGain.gain.value;
-        this.ambientGain.gain.value = 0.1; // Reduce to 10% volume while video narration plays
     }
 
     resumeAmbient() {
@@ -1207,7 +1208,11 @@ class Scene {
         if (required) {
             this.videoPending = true;
             if (duckAmbient) {
-                this.duckAmbient();
+                if (typeof duckAmbient === 'number') {
+                    this.duckAmbient(duckAmbient);
+                } else {
+                    this.duckAmbient();
+                }
             } else {
                 this.pauseAmbient();
             }
