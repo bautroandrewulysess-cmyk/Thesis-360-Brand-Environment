@@ -1589,11 +1589,9 @@ class Scene {
                     farmerInterview: 'Videos/farmerInterview.mp4'
                 };
                 const videoSrc = videoMap[gate.ref];
-                const subtitleMap = {
-                    brewingPOV: 'Subtitles/steps_en_01.vtt'
-                };
-                // Dialogue videos (roaster, owner, farmer) at full volume; ambience videos at 15%
-                const dialogueRefs = ['roasterVideo', 'ownerInterview', 'farmerInterview'];
+                const subtitleMap = {};
+                // Dialogue videos (roaster, owner, farmer, brewing) at full volume; ambience videos at 15%
+                const dialogueRefs = ['roasterVideo', 'ownerInterview', 'farmerInterview', 'brewingPOV'];
                 const videoVolume = dialogueRefs.includes(gate.ref) ? 1.0 : 0.15;
                 if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
                 if (videoSrc) {

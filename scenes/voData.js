@@ -73,12 +73,6 @@ window.VoSegments = {
         ],
         bis: [], // TODO: Bisaya recordings not yet produced
     },
-    steps: {
-        en: [
-            { id: 'steps_en_01', gate: { type: 'none' }, dur: 48.35 },
-        ],
-        bis: [], // TODO: Bisaya recordings not yet produced
-    },
     quizTime: {
         en: [
             { id: 'quizTime_en_01', gate: { type: 'sting' }, dur: 1.56 },

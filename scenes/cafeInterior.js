@@ -1185,8 +1185,7 @@ class CafeInteriorScene extends Scene {
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: true,
                     caption: hotspot.label,
-                    volume: 0.15,
-                    narrationId: 'steps_en_01',
+                    volume: 1.0,
                     onFinish: () => {
                         this.resumeAmbient();
                         this.resumeVoSequence();
