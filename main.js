@@ -1505,10 +1505,10 @@ class Scene {
 
         // Hover effects
         button.addEventListener('mouseenter', () => {
-            if (!clicked) button.style.background = '#1a1a1a';
+            if (!clicked) button.style.background = '#ffffff';
         });
         button.addEventListener('mouseleave', () => {
-            if (!clicked) button.style.background = '#050505';
+            if (!clicked) button.style.background = '#f4d03f';
         });
         button.addEventListener('click', handleClick);
 
@@ -1585,14 +1585,16 @@ class Scene {
                 const videoMap = {
                     roasterVideo: 'Videos/coffeeRoasting.mp4',
                     brewingPOV: 'Videos/brewingVideo.mp4',
-                    ownerInterview: 'Videos/ownerInterview.mp4'
+                    ownerInterview: 'Videos/ownerInterview.mp4',
+                    farmerInterview: 'Videos/farmerInterview.mp4'
                 };
                 const videoSrc = videoMap[gate.ref];
                 const subtitleMap = {
                     brewingPOV: 'Subtitles/steps_en_01.vtt'
                 };
-                // roasterVideo plays at full volume (audio is the narration); others at 15% for ambience
-                const videoVolume = gate.ref === 'roasterVideo' ? 1.0 : 0.15;
+                // Dialogue videos (roaster, owner, farmer) at full volume; ambience videos at 15%
+                const dialogueRefs = ['roasterVideo', 'ownerInterview', 'farmerInterview'];
+                const videoVolume = dialogueRefs.includes(gate.ref) ? 1.0 : 0.15;
                 if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
                 if (videoSrc) {
                     if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
