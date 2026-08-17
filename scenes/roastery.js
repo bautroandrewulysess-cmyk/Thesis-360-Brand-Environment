@@ -53,7 +53,7 @@ class RoasteryScene extends Scene {
                 label: 'Roasting Beans',
                 description: 'Watch the beans roast',
                 isVideo: true,
-                videoSrc: `${R2_BASE}/roasting.mp4`,
+                videoSrc: `${R2_BASE}/coffeeRoasting.mp4`,
                 isGateMarker: true
             },
             {
@@ -1225,9 +1225,10 @@ class RoasteryScene extends Scene {
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: true,
                     caption: hotspot.label,
-                    volume: 0.15,
+                    volume: 1.0,
                     onFinish: () => {
                         this.resumeAmbient();
+                        this.resumeVoSequence();
                     }
                 });
 
@@ -1236,8 +1237,6 @@ class RoasteryScene extends Scene {
                 if (popup) {
                     popup.style.transition = 'opacity 0.5s ease-in-out';
                 }
-                // Resume sequence after video opens
-                this.resumeVoSequence();
                 return;
             }
 

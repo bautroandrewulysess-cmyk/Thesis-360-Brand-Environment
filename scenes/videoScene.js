@@ -184,31 +184,36 @@ class VideoScene extends Scene {
         this.forwardButton = document.createElement('button');
         this.forwardButton.style.cssText = `
             position: fixed;
-            bottom: 40px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #f4f4f4;
+            transform: translate(-50%, -50%);
+            padding: 16px 32px;
+            background: #f4d03f;
+            border: none;
+            color: #050505;
             font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            z-index: 951;
-            transition: all 0.3s ease;
+            z-index: 1010;
+            transition: background 0.2s ease, color 0.2s ease;
+            box-shadow: 0 0 20px rgba(244, 208, 63, 0.5);
+            animation: gate-marker-pulse 2s ease-in-out infinite;
         `;
         this.forwardButton.textContent = 'Continue';
+        
         this.forwardButton.addEventListener('mouseenter', () => {
-            this.forwardButton.style.background = 'rgba(255, 255, 255, 0.2)';
-            this.forwardButton.style.borderColor = 'rgba(255, 255, 255, 0.6)';
+            this.forwardButton.style.background = '#ffffff';
+            this.forwardButton.style.color = '#050505';
         });
         this.forwardButton.addEventListener('mouseleave', () => {
-            this.forwardButton.style.background = 'rgba(255, 255, 255, 0.1)';
-            this.forwardButton.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            this.forwardButton.style.background = '#f4d03f';
+            this.forwardButton.style.color = '#050505';
         });
+        
         this.forwardButton.addEventListener('click', () => {
             console.log(`[VideoScene] Continue clicked, transitioning to ${this.nextScene} with spawn ${JSON.stringify(this.nextSpawn)}`);
             sceneManager.switchTo(this.nextScene, this.nextSpawn);

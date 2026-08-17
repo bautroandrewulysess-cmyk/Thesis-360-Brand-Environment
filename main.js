@@ -827,16 +827,7 @@ class Scene {
             const langVttPath = `${assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
             const fallbackVttPath = `${assetUrl(`Subtitles/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
 
-            // Force-hide native browser captions to prevent duplicate overlay texts
-            if (!document.getElementById('hide-native-cues')) {
-                const style = document.createElement('style');
-                style.id = 'hide-native-cues';
-                style.innerHTML = `
-                    ::cue { display: none !important; opacity: 0 !important; color: transparent !important; background: transparent !important; }
-                    audio::-webkit-media-text-track-container, video::-webkit-media-text-track-container { display: none !important; }
-                `;
-                document.head.appendChild(style);
-            }
+            
 
             const audio = document.createElement('audio');
             audio.crossOrigin = 'anonymous';
@@ -1505,10 +1496,16 @@ class Scene {
 
         // Hover effects
         button.addEventListener('mouseenter', () => {
-            if (!clicked) button.style.background = '#ffffff';
+            if (!clicked) {
+                button.style.background = '#ffffff';
+                button.style.color = '#050505';
+            }
         });
         button.addEventListener('mouseleave', () => {
-            if (!clicked) button.style.background = '#f4d03f';
+            if (!clicked) {
+                button.style.background = '#f4d03f';
+                button.style.color = '#050505';
+            }
         });
         button.addEventListener('click', handleClick);
 
@@ -1588,7 +1585,7 @@ class Scene {
                     ownerInterview: 'Videos/ownerInterview.mp4',
                     farmerInterview: 'Videos/farmerInterview.mp4'
                 };
-                const videoSrc = videoMap[gate.ref];
+                    const videoSrc = videoMap[gate.ref];
                 const subtitleMap = {};
                 // Dialogue videos (roaster, owner, farmer, brewing) at full volume; ambience videos at 15%
                 const dialogueRefs = ['roasterVideo', 'ownerInterview', 'farmerInterview', 'brewingPOV'];
@@ -1596,11 +1593,11 @@ class Scene {
                 if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
                 if (videoSrc) {
                     if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
-                    this.showVideoPopup(assetUrl(videoSrc), {
+                        this.showVideoPopup(assetUrl(videoSrc), {
                         required: true,
                         volume: videoVolume,
                         subtitleSrc: subtitleMap[gate.ref] ? assetUrl(subtitleMap[gate.ref]) : null,
-                        duckAmbient: gate.ref === 'roasterVideo',
+                        duckAmbient: ['roasterVideo', 'ownerInterview', 'farmerInterview', 'brewingPOV'].includes(gate.ref),
                         onFinish: () => this.resumeVoSequence()
                     });
                 } else {

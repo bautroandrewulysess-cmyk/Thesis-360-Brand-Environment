@@ -57,7 +57,7 @@ class CafeInteriorScene extends Scene {
                 description: '',
                 isVideo: true,
                 isGateMarker: true,
-                videoSrc: `${R2_BASE}/brewing.mp4`,
+                videoSrc: `${R2_BASE}/brewingVideo.mp4`,
                 isTransition: false
             },
             {
