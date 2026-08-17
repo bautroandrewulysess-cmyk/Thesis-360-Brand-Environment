@@ -991,7 +991,7 @@ class StreetViewScene extends Scene {
                 // Preload farmer interview video at start of toFarm chain
                 if (!window.farmerInterviewPreloaded) {
                     window.farmerInterviewPreloaded = true;
-                    fetch(assetUrl('Videos/farmerInterview.mp4'), { mode: 'cors' }).catch(() => {});
+                    fetch(assetUrl('Videos/farmerInterview.mp4'), { mode: 'no-cors' }).catch(() => {});
                 }
                 this.playVoWithSubtitles('journeyToFarm_en_02', false);
             } else if (positionKey === 'toFarm7') {

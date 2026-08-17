@@ -254,7 +254,7 @@ class VideoScene extends Scene {
 // Register harvesting scene
 sceneManager.registerScene('harvesting', new VideoScene({
     name: 'harvesting',
-    videoSrc: `${R2_BASE}/harvestingWeb.mp4`,
+    videoSrc: `${R2_BASE}/Videos/harvestingWeb.mp4`,
     audioKey: 'harvesting',
     quizKey: 'harvesting',
     nextScene: 'roastery',
