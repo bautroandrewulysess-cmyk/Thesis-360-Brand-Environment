@@ -1234,7 +1234,7 @@ class Scene {
             track.default = true;
             video.appendChild(track);
         } else {
-            video.crossOrigin = '';
+            video.removeAttribute('crossorigin');
         }
 
         // Play narration if specified
@@ -1558,6 +1558,7 @@ class Scene {
                 video.src = videoUrl;
                 video.autoplay = true;
                 video.muted = true;
+                video.loop = false;
                 video.style.cssText = `max-width:90vw; max-height:90vh; object-fit:contain;`;
                 polybagOverlay.appendChild(video);
                 document.body.appendChild(polybagOverlay);

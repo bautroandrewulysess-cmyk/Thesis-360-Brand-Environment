@@ -53,7 +53,7 @@ class RoasteryScene extends Scene {
                 label: 'Roasting Beans',
                 description: 'Watch the beans roast',
                 isVideo: true,
-                videoSrc: `${R2_BASE}/coffeeRoasting.mp4`,
+                videoSrc: `${R2_BASE}/Videos/coffeeRoasting.mp4`,
                 isGateMarker: true
             },
             {

@@ -57,7 +57,7 @@ class CafeInteriorScene extends Scene {
                 description: '',
                 isVideo: true,
                 isGateMarker: true,
-                videoSrc: `${R2_BASE}/brewingVideo.mp4`,
+                videoSrc: `${R2_BASE}/Videos/brewingVideo.mp4`,
                 isTransition: false
             },
             {
@@ -1105,7 +1105,7 @@ class CafeInteriorScene extends Scene {
         });
         if (!window.brewingVideoPreloaded) {
             window.brewingVideoPreloaded = true;
-            fetch(`${R2_BASE}/brewing.mp4`, { mode: 'cors' }).catch(() => {});
+            fetch(`${R2_BASE}/Videos/brewingVideo.mp4`, { mode: 'no-cors' }).catch(() => {});
         }
         if (this.isReturnVisit) {
             this.hideNavPrompt();
@@ -1314,7 +1314,7 @@ class CafeInteriorScene extends Scene {
                 }
                 if (!window.ownerInterviewPreloaded) {
                     window.ownerInterviewPreloaded = true;
-                    fetch(`${R2_BASE}/ownerInterview.mp4`, { mode: 'cors' }).catch(() => {});
+                    fetch(`${R2_BASE}/Videos/ownerInterview.mp4`, { mode: 'no-cors' }).catch(() => {});
                 }
             }
 
