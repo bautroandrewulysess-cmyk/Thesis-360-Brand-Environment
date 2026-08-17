@@ -1453,13 +1453,16 @@ class CafeInteriorScene extends Scene {
         const prompt = document.getElementById('nav-prompt');
         if (!prompt) return;
         prompt.textContent = "Look for a door with a 'To Nursery' sign";
-        prompt.style.display = 'block';
+        prompt.style.setProperty('display', 'block', 'important');
         prompt.style.opacity = '1';
-        // Hide after 8 seconds
+        // Hide after 8 seconds (restores control to updateOffScreenHotspotPrompt)
         setTimeout(() => {
             if (prompt.style.opacity !== '0') {
                 prompt.style.opacity = '0';
-                setTimeout(() => prompt.style.display = 'none', 600);
+                setTimeout(() => {
+                    prompt.style.setProperty('display', 'none', 'important');
+                    prompt.textContent = ''; // Clear text to avoid lingering hint
+                }, 600);
             }
         }, 8000);
     }

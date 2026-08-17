@@ -734,20 +734,20 @@ class Scene {
             if (navText) {
                 prompt.textContent = navText;
                 console.log('[NavPrompt] Showing:', navText, 'prompt display:', prompt.style.display, 'opacity:', prompt.style.opacity);
-                if (prompt.style.display === 'none') {
-                    prompt.style.display = 'block';
+                if (prompt.style.display === 'none' || getComputedStyle(prompt).display === 'none') {
+                    prompt.style.setProperty('display', 'block', 'important');
                     setTimeout(() => prompt.style.opacity = '1', 50);
                 }
             } else {
                 if (prompt.style.opacity !== '0') {
                     prompt.style.opacity = '0';
-                    setTimeout(() => prompt.style.display = 'none', 600);
+                    setTimeout(() => prompt.style.setProperty('display', 'none', 'important'), 600);
                 }
             }
         } else {
             if (prompt.style.opacity !== '0') {
                 prompt.style.opacity = '0';
-                setTimeout(() => prompt.style.display = 'none', 600);
+                setTimeout(() => prompt.style.setProperty('display', 'none', 'important'), 600);
             }
         }
     }
