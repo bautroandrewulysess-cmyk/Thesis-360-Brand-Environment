@@ -726,11 +726,8 @@ class Scene {
             }
         }
 
-        console.log('[NavPrompt] Nearest hotspot:', nearestOffScreenHotspot?.hotspotData?.id, 'minDist:', minDist);
-
         if (nearestOffScreenHotspot) {
             const navText = this.getNavPromptText();
-            console.log('[NavPrompt] getNavPromptText returned:', navText);
             if (navText) {
                 prompt.textContent = navText;
                 console.log('[NavPrompt] Showing:', navText, 'prompt display:', prompt.style.display, 'opacity:', prompt.style.opacity);

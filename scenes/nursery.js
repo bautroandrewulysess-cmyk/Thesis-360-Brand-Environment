@@ -123,6 +123,7 @@ class NurseryScene extends Scene {
         this._slideA = new pc.Vec3();
         this._slideB = new pc.Vec3();
         this._screenPos = new pc.Vec3();
+        this._crossScratch = new pc.Vec3();
 
         // Mouse-look camera rotation
         this.isMouseDown = false;
@@ -1378,7 +1379,7 @@ class NurseryScene extends Scene {
                                 this.directionClueTimer = 0;
                                 const toHotspotNorm = toHotspot.normalize();
                                 const angle = Math.acos(Math.max(-1, Math.min(1, camFwd.dot(toHotspotNorm))));
-                                const crossRight = camFwd.cross(toHotspotNorm);
+                                const crossRight = this._crossScratch.cross(camFwd, toHotspotNorm);
                                 const rightDot = cameraEntity.right.dot(crossRight);
                                 let directionClue;
                                 if (angle < Math.PI / 6) { // < 30°
