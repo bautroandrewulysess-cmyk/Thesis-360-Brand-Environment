@@ -146,6 +146,7 @@ class RoasteryScene extends Scene {
         this._slideA = new pc.Vec3();
         this._slideB = new pc.Vec3();
         this._screenPos = new pc.Vec3();
+        this._crossScratch = new pc.Vec3();
 
         // Mouse-look camera rotation
         this.isMouseDown = false;
@@ -1443,13 +1444,13 @@ class RoasteryScene extends Scene {
                         }
 
                         // Item 4: Direction-aware clue for transition hotspots (throttled to ~4 Hz)
-                        if (group.hotspotData?.isTransition && this.quizPassed && camFwd && cameraEntity.right) {
+                        if (group.hotspotData?.isTransition && this.quizPassed) {
                             this.directionClueTimer = (this.directionClueTimer || 0) + deltaTime;
                             if (this.directionClueTimer >= 0.25) { // ~4 updates per second
                                 this.directionClueTimer = 0;
                                 const toHotspotNorm = toHotspot.normalize();
                                 const angle = Math.acos(Math.max(-1, Math.min(1, camFwd.dot(toHotspotNorm))));
-                                const crossRight = camFwd.cross(toHotspotNorm);
+                                const crossRight = this._crossScratch.cross(camFwd, toHotspotNorm);
                                 const rightDot = cameraEntity.right.dot(crossRight);
                                 let directionClue;
                                 if (angle < Math.PI / 6) { // < 30°
