@@ -1443,7 +1443,7 @@ class RoasteryScene extends Scene {
                         }
 
                         // Item 4: Direction-aware clue for transition hotspots (throttled to ~4 Hz)
-                        if (group.hotspotData?.isTransition && this.quizPassed) {
+                        if (group.hotspotData?.isTransition && this.quizPassed && camFwd && cameraEntity.right) {
                             this.directionClueTimer = (this.directionClueTimer || 0) + deltaTime;
                             if (this.directionClueTimer >= 0.25) { // ~4 updates per second
                                 this.directionClueTimer = 0;
