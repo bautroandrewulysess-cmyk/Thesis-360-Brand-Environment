@@ -605,6 +605,7 @@ class Scene {
         this.voSequenceRunning = false;
         this.voGateType = null; // Set to gate type when paused at a gate ('marker'|'miniquiz'|'quiz'|null)
         this.voSceneKey = null; // voData.js key for the active segment sequence (e.g. 'nursery', 'farm', 'brandStory')
+        this.lastClueUpdate = 0; // Throttle clue updates to 250ms
 
         // Dev key handlers (only bound if DEV_MODE)
         if (window.DEV_MODE) {
@@ -635,6 +636,13 @@ class Scene {
         this.hideNavPrompt();
         this.despawnGateMarker();
         this.hideMiniQuiz();
+        this.setClue(null);
+
+        // Remove clue bar element so it cannot leak into video scenes
+        const clueBar = document.getElementById('clue-bar');
+        if (clueBar) {
+            clueBar.remove();
+        }
 
         // Unregister dev VO shortcuts
         if (window.DEV_MODE) {
@@ -785,6 +793,78 @@ class Scene {
             text = "Turn around — it's behind you";
         }
         return text;
+    }
+
+    ensureClueBar() {
+        let d = document.getElementById('clue-bar');
+        if (!d) {
+            d = document.createElement('div');
+            d.id = 'clue-bar';
+            d.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 22px;background:rgba(0,0,0,0.75);color:#f4d03f;font-family:Inter,sans-serif;font-size:0.95rem;letter-spacing:0.5px;text-transform:uppercase;border:1px solid rgba(244,208,63,0.35);border-radius:30px;z-index:99999;pointer-events:none;';
+            document.body.appendChild(d);
+        }
+        return d;
+    }
+
+    setClue(text) {
+        const d = this.ensureClueBar();
+        if (d._last === text) return;
+        d._last = text;
+        d.textContent = text || '';
+        d.style.display = text ? 'block' : 'none';
+    }
+
+    updateClue() {
+        if (!this.hotspotEntities) {
+            this.setClue(null);
+            return;
+        }
+
+        // Throttle to 250ms
+        const now = Date.now();
+        if (now - this.lastClueUpdate < 250) return;
+        this.lastClueUpdate = now;
+
+        const cameraEntity = app.root.findByName('Camera');
+        if (!cameraEntity) {
+            this.setClue(null);
+            return;
+        }
+
+        // Find all enabled transition hotspots
+        const transitionHotspots = [];
+        for (const group of this.hotspotEntities) {
+            if (group.hotspotData?.isTransition && group.enabled) {
+                transitionHotspots.push(group);
+            }
+        }
+
+        if (transitionHotspots.length === 0) {
+            this.setClue(null);
+            return;
+        }
+
+        // Pick the nearest by distance from camera
+        const camPos = cameraEntity.getPosition();
+        let nearestHotspot = null;
+        let minDist = Infinity;
+
+        for (const hotspot of transitionHotspots) {
+            const worldPos = hotspot.getPosition();
+            const toHotspot = new pc.Vec3().sub2(worldPos, camPos);
+            const dist = toHotspot.length();
+            if (dist < minDist) {
+                nearestHotspot = hotspot;
+                minDist = dist;
+            }
+        }
+
+        if (nearestHotspot) {
+            const text = this.getNavPromptText(nearestHotspot);
+            this.setClue(text);
+        } else {
+            this.setClue(null);
+        }
     }
 
     async onQuizPassed() {

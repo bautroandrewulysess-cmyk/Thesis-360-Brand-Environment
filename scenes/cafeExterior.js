@@ -1343,6 +1343,9 @@ class CafeExteriorScene extends Scene {
 
         // Update nav-prompt with direction clue from nearest off-screen transition hotspot
         this.updateOffScreenHotspotPrompt();
+
+        // Update clue bar
+        this.updateClue();
     }
 }
 
