@@ -807,58 +807,6 @@ class NurseryScene extends Scene {
         return { x: this._screenPos.x, y: this._screenPos.y };
     }
 
-    getNavPromptText() {
-        // Throttle to ~4 updates per second (250ms)
-        const now = Date.now();
-        if (this._lastNavPromptUpdate && now - this._lastNavPromptUpdate < 250) {
-            return this._cachedNavPromptText;
-        }
-        this._lastNavPromptUpdate = now;
-
-        // Find the transition hotspot and compute direction-aware guidance text
-        const transitionHotspot = this.hotspotEntities.find(group => group.hotspotData?.isTransition);
-        if (!transitionHotspot) {
-            this._cachedNavPromptText = null;
-            return null;
-        }
-
-        const cameraEntity = app.root.findByName('Camera');
-        if (!cameraEntity) {
-            this._cachedNavPromptText = null;
-            return null;
-        }
-
-        const hotspotPos = transitionHotspot.getPosition();
-        const camPos = cameraEntity.getPosition();
-        const toHotspot = new pc.Vec3().sub2(hotspotPos, camPos);
-        toHotspot.normalize();
-
-        const camForward = cameraEntity.forward;
-        const camRight = cameraEntity.right;
-
-        // Dot product with forward vector
-        const dotForward = toHotspot.dot(camForward);
-
-        // Dot product with right vector to determine left/right
-        const dotRight = toHotspot.dot(camRight);
-
-        // Compute angle in degrees
-        const angleRad = Math.acos(Math.max(-1, Math.min(1, dotForward)));
-        const angleDeg = angleRad * 180 / Math.PI;
-
-        // Return direction-based text
-        let text;
-        if (angleDeg <= 30) {
-            text = "It's right in front of you";
-        } else if (angleDeg > 30 && angleDeg <= 100) {
-            text = dotRight > 0 ? "Look to your right" : "Look to your left";
-        } else {
-            text = "Turn around — it's behind you";
-        }
-        this._cachedNavPromptText = text;
-        return text;
-    }
-
     getMiniQuizData(gateRef) {
         const miniQuizzes = {
             flowers: {

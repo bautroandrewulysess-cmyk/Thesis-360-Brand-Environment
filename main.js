@@ -686,12 +686,8 @@ class Scene {
     }
 
     updateOffScreenHotspotPrompt() {
-        if (!this.quizPassed || !this.hotspotEntities) {
-            this.hideNavPrompt();
+        if (!this.hotspotEntities) {
             return;
-        }
-        if (this.isFirstVisitHintActive) {
-            return; // Don't overwrite the first-visit hint
         }
         const prompt = document.getElementById('nav-prompt');
         if (!prompt) {
@@ -730,7 +726,7 @@ class Scene {
         }
 
         if (nearestOffScreenHotspot) {
-            const navText = this.getNavPromptText();
+            const navText = this.getNavPromptText(nearestOffScreenHotspot);
             if (navText) {
                 prompt.textContent = navText;
                 if (prompt.style.display === 'none' || getComputedStyle(prompt).display === 'none') {
@@ -759,8 +755,36 @@ class Scene {
         }
     }
 
-    getNavPromptText() {
-        return null; // Override in subclasses to return scene-appropriate prompt text
+    getNavPromptText(hotspot) {
+        if (!hotspot || !hotspot.hotspotData?.isTransition) {
+            return null;
+        }
+        const cameraEntity = app.root.findByName('Camera');
+        if (!cameraEntity) return null;
+
+        const hotspotPos = hotspot.getPosition();
+        const camPos = cameraEntity.getPosition();
+        const toHotspot = new pc.Vec3().sub2(hotspotPos, camPos);
+        toHotspot.normalize();
+
+        const camForward = cameraEntity.forward;
+        const camRight = cameraEntity.right;
+
+        const dotForward = toHotspot.dot(camForward);
+        const dotRight = toHotspot.dot(camRight);
+
+        const angleRad = Math.acos(Math.max(-1, Math.min(1, dotForward)));
+        const angleDeg = angleRad * 180 / Math.PI;
+
+        let text;
+        if (angleDeg <= 30) {
+            text = "It's right in front of you";
+        } else if (angleDeg > 30 && angleDeg <= 100) {
+            text = dotRight > 0 ? "Look to your right" : "Look to your left";
+        } else {
+            text = "Turn around — it's behind you";
+        }
+        return text;
     }
 
     async onQuizPassed() {
@@ -772,7 +796,8 @@ class Scene {
             await this.resumeVoSequence();
         }
 
-        const navText = this.getNavPromptText();
+        const transitionHotspot = this.hotspotEntities?.find(h => h.hotspotData?.isTransition);
+        const navText = this.getNavPromptText(transitionHotspot);
         if (navText) this.showNavPrompt(navText);
     }
 
