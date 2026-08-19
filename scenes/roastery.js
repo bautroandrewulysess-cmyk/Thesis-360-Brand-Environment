@@ -1105,7 +1105,6 @@ class RoasteryScene extends Scene {
                 glowMat.update();
                 // Show label (only if not behind camera)
                 if (hotspotGroup.labelElement) {
-                    const cameraEntity = app.root.findByName('Camera');
                     if (cameraEntity) {
                         const worldPos = hotspotGroup.getPosition();
                         const camPos = cameraEntity.getPosition();

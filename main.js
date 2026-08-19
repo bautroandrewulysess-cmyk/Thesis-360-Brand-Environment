@@ -709,7 +709,6 @@ class Scene {
         if (now - this.lastPromptUpdate < 250) return;
         this.lastPromptUpdate = now;
 
-        const cameraEntity = app.root.findByName('Camera');
         if (!cameraEntity) return;
 
         let nearestOffScreenHotspot = null;
@@ -767,7 +766,6 @@ class Scene {
         if (!hotspot || !hotspot.hotspotData?.isTransition) {
             return null;
         }
-        const cameraEntity = app.root.findByName('Camera');
         if (!cameraEntity) return null;
 
         const hotspotPos = hotspot.getPosition();
@@ -825,7 +823,6 @@ class Scene {
         if (now - this.lastClueUpdate < 250) return;
         this.lastClueUpdate = now;
 
-        const cameraEntity = app.root.findByName('Camera');
         if (!cameraEntity) {
             this.setClue(null);
             return;
