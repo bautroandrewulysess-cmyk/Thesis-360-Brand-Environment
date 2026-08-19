@@ -690,6 +690,9 @@ class Scene {
             this.hideNavPrompt();
             return;
         }
+        if (this.isFirstVisitHintActive) {
+            return; // Don't overwrite the first-visit hint
+        }
         const prompt = document.getElementById('nav-prompt');
         if (!prompt) {
             console.warn('[NavPrompt] DOM element #nav-prompt not found');
@@ -730,7 +733,6 @@ class Scene {
             const navText = this.getNavPromptText();
             if (navText) {
                 prompt.textContent = navText;
-                console.log('[NavPrompt] Showing:', navText, 'prompt display:', prompt.style.display, 'opacity:', prompt.style.opacity);
                 if (prompt.style.display === 'none' || getComputedStyle(prompt).display === 'none') {
                     prompt.style.setProperty('display', 'block', 'important');
                     setTimeout(() => prompt.style.opacity = '1', 50);

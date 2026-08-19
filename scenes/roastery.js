@@ -1443,34 +1443,6 @@ class RoasteryScene extends Scene {
                             }
                         }
 
-                        // Item 4: Direction-aware clue for transition hotspots (throttled to ~4 Hz)
-                        if (group.hotspotData?.isTransition && this.quizPassed) {
-                            this.directionClueTimer = (this.directionClueTimer || 0) + deltaTime;
-                            if (this.directionClueTimer >= 0.25) { // ~4 updates per second
-                                this.directionClueTimer = 0;
-                                const toHotspotNorm = toHotspot.normalize();
-                                const angle = Math.acos(Math.max(-1, Math.min(1, camFwd.dot(toHotspotNorm))));
-                                const crossRight = this._crossScratch.cross(camFwd, toHotspotNorm);
-                                const rightDot = cameraEntity.right.dot(crossRight);
-                                let directionClue;
-                                if (angle < Math.PI / 6) { // < 30°
-                                    directionClue = "It's right in front of you";
-                                } else if (angle < Math.PI / 2.5) { // ~72°
-                                    directionClue = rightDot > 0 ? "Look to your right" : "Look to your left";
-                                } else if (angle < Math.PI / 1.5) { // ~120°
-                                    directionClue = rightDot > 0 ? "It's to your right" : "It's to your left";
-                                } else {
-                                    directionClue = "Turn around — it's behind you";
-                                }
-                                group._directionClue = directionClue;
-                            }
-                            // Use stored clue for display
-                            const displayText = group._directionClue || group.hotspotData.label;
-                            if (group.labelElement.textContent !== displayText) {
-                                group.labelElement.textContent = displayText;
-                            }
-                        }
-
                         // Item 5: Pulse emissive on transition hotspots with out-of-phase rings
                         if (group.hotspotData?.isTransition && this.quizPassed) {
                             const now = Date.now();
