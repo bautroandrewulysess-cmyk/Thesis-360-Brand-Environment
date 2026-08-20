@@ -1478,10 +1478,16 @@ class Scene {
         if (this.voSequenceRunning) return;
         this.voSceneKey = sceneKey;
         const lang = window.currentLanguage || 'en';
-        const segments = window.VoSegments?.[sceneKey]?.[lang];
+        let segments = window.VoSegments?.[sceneKey]?.[lang];
         if (!segments || segments.length === 0) {
-            console.warn(`[VO] No segments found for ${sceneKey}/${lang}`);
-            return;
+            if (lang !== 'en') {
+                console.warn(`[VO] No segments found for ${sceneKey}/${lang}, falling back to English`);
+                segments = window.VoSegments?.[sceneKey]?.en;
+            }
+            if (!segments || segments.length === 0) {
+                console.warn(`[VO] No segments found for ${sceneKey}/${lang}`);
+                return;
+            }
         }
 
         this.voSequenceRunning = true;
@@ -1544,7 +1550,14 @@ class Scene {
         }
 
         const lang = window.currentLanguage || 'en';
-        const segments = window.VoSegments[this.voSceneKey][lang];
+        let segments = window.VoSegments[this.voSceneKey][lang];
+        if (!segments || segments.length === 0) {
+            if (lang !== 'en') {
+                console.warn(`[VO] No segments found for ${this.voSceneKey}/${lang}, falling back to English`);
+                segments = window.VoSegments[this.voSceneKey].en;
+            }
+            if (!segments || segments.length === 0) return;
+        }
         if (this.voSequenceIndex >= segments.length) return;
 
         this.voSequenceIndex++;
@@ -1820,8 +1833,14 @@ class Scene {
             if (!this.voSceneKey) return; // No active sequence
 
             const lang = window.currentLanguage || 'en';
-            const segments = window.VoSegments?.[this.voSceneKey]?.[lang];
-            if (!segments || this.voSequenceIndex >= segments.length) return;
+            let segments = window.VoSegments?.[this.voSceneKey]?.[lang];
+            if (!segments || segments.length === 0) {
+                if (lang !== 'en') {
+                    console.warn(`[VO] No segments found for ${this.voSceneKey}/${lang}, falling back to English`);
+                    segments = window.VoSegments?.[this.voSceneKey]?.en;
+                }
+                if (!segments || this.voSequenceIndex >= segments.length) return;
+            } else if (this.voSequenceIndex >= segments.length) return;
 
             const segment = segments[this.voSequenceIndex];
             const gateType = segment.gate?.type;
@@ -1855,8 +1874,14 @@ class Scene {
             if (!this.voSceneKey) return; // No active sequence
 
             const lang = window.currentLanguage || 'en';
-            const segments = window.VoSegments?.[this.voSceneKey]?.[lang];
-            if (!segments || this.voSequenceIndex >= segments.length) return;
+            let segments = window.VoSegments?.[this.voSceneKey]?.[lang];
+            if (!segments || segments.length === 0) {
+                if (lang !== 'en') {
+                    console.warn(`[VO] No segments found for ${this.voSceneKey}/${lang}, falling back to English`);
+                    segments = window.VoSegments?.[this.voSceneKey]?.en;
+                }
+                if (!segments || this.voSequenceIndex >= segments.length) return;
+            } else if (this.voSequenceIndex >= segments.length) return;
 
             // Stop current audio and clear subtitles
             this.stopVo();

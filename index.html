@@ -176,14 +176,6 @@
             opacity: 1;
         }
 
-        #lang-toggle:hover .lang-option {
-            opacity: 0.8;
-        }
-
-        #lang-toggle:hover .lang-option.active {
-            opacity: 1;
-        }
-
         .hero {
             position: relative;
             min-height: 100vh;
@@ -497,11 +489,6 @@
             <div class="nav-links">
                 <a href="#about" class="hover-target">Our Story</a>
                 <a href="#contact" class="hover-target">Contact</a>
-                <span id="lang-toggle" class="hover-target" style="margin-left:3rem; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; user-select:none;">
-                  <span id="lang-en" class="lang-option active">EN</span>
-                  <span style="opacity:0.4; margin:0 6px;">/</span>
-                  <span id="lang-ceb" class="lang-option">BIS</span>
-                </span>
             </div>
         </nav>
 
@@ -762,10 +749,7 @@
 
             <div style="display:flex; flex-direction:column; gap:16px;">
                 <button id="lang-select-en" style="padding:16px 24px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:1rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; border-radius:6px; cursor:pointer; transition:all 0.3s ease;">English</button>
-                <button id="lang-select-bis" disabled style="padding:16px 24px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:rgba(244,208,63,0.4); font-family:'Inter',sans-serif; font-size:1rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; border-radius:6px; cursor:not-allowed; transition:all 0.3s ease; position:relative;">
-                    <span style="opacity:0.6;">Bisaya</span>
-                    <div style="position:absolute; top:50%; right:24px; transform:translateY(-50%); font-size:0.75rem; opacity:0.5; letter-spacing:0.5px;">Coming soon</div>
-                </button>
+                <button id="lang-select-bis" style="padding:16px 24px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:1rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; border-radius:6px; cursor:pointer; transition:all 0.3s ease;">Bisaya</button>
             </div>
         </div>
     </div>
@@ -903,7 +887,7 @@
 
         document.getElementById('context-begin-btn').addEventListener('click', () => {
             const contextScreen = document.getElementById('context-screen');
-            const brandStoryScreen = document.getElementById('brand-story-screen');
+            const languageSelect = document.getElementById('language-select');
             const wrapper = document.getElementById('landing-wrapper');
 
             gsap.to(contextScreen, {
@@ -913,8 +897,27 @@
                 onComplete: () => {
                     contextScreen.style.display = 'none';
                     if (wrapper) wrapper.style.display = 'none';
-                    window.currentLanguage = 'en';
-                    try { sessionStorage.setItem('language', 'en'); } catch (e) {}
+
+                    // Show language overlay
+                    languageSelect.style.display = 'flex';
+                    setTimeout(() => { languageSelect.style.opacity = '1'; }, 10);
+                }
+            });
+        });
+
+        document.getElementById('lang-select-en').addEventListener('click', async () => {
+            window.currentLanguage = 'en';
+            try { sessionStorage.setItem('language', 'en'); } catch (e) {}
+
+            const languageSelect = document.getElementById('language-select');
+            const brandStoryScreen = document.getElementById('brand-story-screen');
+
+            gsap.to(languageSelect, {
+                opacity: 0,
+                duration: 0.6,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                    languageSelect.style.display = 'none';
 
                     // Show Brand Story screen and start playback
                     brandStoryScreen.style.display = 'flex';
@@ -930,18 +933,30 @@
             });
         });
 
-        document.getElementById('lang-select-en').addEventListener('click', async () => {
-            window.currentLanguage = 'en';
-            try { sessionStorage.setItem('language', 'en'); } catch (e) {}
+        document.getElementById('lang-select-bis').addEventListener('click', async () => {
+            window.currentLanguage = 'bis';
+            try { sessionStorage.setItem('language', 'bis'); } catch (e) {}
 
             const languageSelect = document.getElementById('language-select');
+            const brandStoryScreen = document.getElementById('brand-story-screen');
+
             gsap.to(languageSelect, {
                 opacity: 0,
                 duration: 0.6,
                 ease: 'power2.inOut',
                 onComplete: () => {
                     languageSelect.style.display = 'none';
-                    proceedTo360();
+
+                    // Show Brand Story screen and start playback
+                    brandStoryScreen.style.display = 'flex';
+                    setTimeout(() => { brandStoryScreen.style.opacity = '1'; }, 10);
+
+                    // Start preloading café interior splat (during 40s of narration)
+                    const R2_BASE = 'https://assets.granjaalegre.com';
+                    fetch(`${R2_BASE}/thesisCafeInterior_optimized.sog`, { mode: 'cors' }).catch(() => {});
+
+                    // Trigger brand story playback
+                    window.startBrandStorySequence();
                 }
             });
         });
@@ -1057,32 +1072,6 @@
             // Start with first segment
             playBrandStorySegment(0);
         };
-
-        // Language toggle initialization and handlers
-        const initializeLanguageToggle = () => {
-            try {
-                window.currentLanguage = sessionStorage.getItem('language') || 'en';
-            } catch (e) {
-                window.currentLanguage = 'en';
-            }
-            updateLanguageUI();
-        };
-
-        const updateLanguageUI = () => {
-            document.getElementById('lang-en').classList.toggle('active', window.currentLanguage === 'en');
-            document.getElementById('lang-ceb').classList.toggle('active', window.currentLanguage === 'ceb');
-        };
-
-        const setLanguage = (lang) => {
-            window.currentLanguage = lang;
-            try { sessionStorage.setItem('language', lang); } catch (e) {}
-            updateLanguageUI();
-        };
-
-        document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
-        document.getElementById('lang-ceb').addEventListener('click', () => setLanguage('ceb'));
-
-        initializeLanguageToggle();
 
         // Desktop-only gate
         const checkDeviceType = () => {
