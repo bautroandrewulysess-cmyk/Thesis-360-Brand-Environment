@@ -1057,6 +1057,7 @@ class RoasteryScene extends Scene {
 
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisCafeInterior_optimized.sog`, 'cafe-interior-splat');
+                fetch(`${R2_BASE}/Videos/brewingVideo.mp4`, { mode: 'no-cors' }).catch(() => {});
             }
 
             const startVoOnInteraction = () => {
@@ -1488,9 +1489,6 @@ class RoasteryScene extends Scene {
         } else {
             cameraEntity.setLocalPosition(currentPos.x, targetY, currentPos.z);
         }
-
-        // Update nav-prompt with direction clue from nearest off-screen transition hotspot
-        this.updateOffScreenHotspotPrompt();
 
         // Update clue bar
         this.updateClue();

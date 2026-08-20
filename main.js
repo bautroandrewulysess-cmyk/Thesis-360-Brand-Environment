@@ -818,6 +818,16 @@ class Scene {
             return;
         }
 
+        if (!this.quizPassed && !window.journeyComplete) {
+            this.setClue(null);
+            return;
+        }
+
+        if (document.body.classList.contains('video-open') || document.body.classList.contains('ui-overlay-active')) {
+            this.setClue(null);
+            return;
+        }
+
         // Throttle to 250ms
         const now = Date.now();
         if (now - this.lastClueUpdate < 250) return;
