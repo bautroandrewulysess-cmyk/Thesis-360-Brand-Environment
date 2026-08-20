@@ -1,0 +1,24 @@
+[     706ms] [LOG] ThesisApp loaded. Access via window.ThesisApp @ http://localhost:8899/main.js:2717
+[    8906ms] [ERROR] Access to fetch at 'https://assets.granjaalegre.com/VO/nursery_en_01.mp3' from origin 'http://localhost:8899' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:8899/:0
+[    8907ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://assets.granjaalegre.com/VO/nursery_en_01.mp3:0
+[   66252ms] [LOG] [SceneManager] About to load scene: nursery @ :4
+[   69665ms] [WARNING] [nursery] Created label: "To Farm" for hotspot "back-to-exterior" @ :4
+[   69667ms] [WARNING] [Preload] Starting splat download: roastery-splat from https://assets.granjaalegre.com/thesisRoastery_optimized.sog @ :4
+[   69667ms] [LOG] [SceneManager] loadScene result for nursery: true @ :4
+[   70268ms] [LOG] [VO] Playing segment 1/3: nursery_en_01 @ :4
+[   72293ms] [WARNING] [Preload] Splat ready (preloaded): roastery-splat @ :4
+[   92379ms] [LOG] [VO] Paused at marker gate @ :4
+[   94514ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://assets.granjaalegre.com/Subtitles/bis/nursery_en_01.vtt?v=3:0
+[   94515ms] [WARNING] [VO] Subtitle load failed for https://assets.granjaalegre.com/Subtitles/bis/nursery_en_01.vtt?v=3, trying fallback https://assets.granjaalegre.com/Subtitles/nursery_en_01.vtt?v=3 @ :4
+[  100569ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://assets.granjaalegre.com/Subtitles/bis/farm_en_03.vtt?v=3:0
+[  100569ms] [WARNING] [VO] Subtitle load failed for https://assets.granjaalegre.com/Subtitles/bis/farm_en_03.vtt?v=3, trying fallback https://assets.granjaalegre.com/Subtitles/farm_en_03.vtt?v=3 @ :4
+[  100611ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://assets.granjaalegre.com/VO/bis/farm_bis_03.mp3:0
+[  100612ms] [WARNING] [VO] Audio load failed for https://assets.granjaalegre.com/VO/bis/farm_bis_03.mp3, retrying with English @ :4
+[  128587ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://assets.granjaalegre.com/VO/bis/farm_bis_03.mp3:0
+[  128587ms] [WARNING] [VO] Audio load failed for https://assets.granjaalegre.com/VO/bis/farm_bis_03.mp3, retrying with English @ :4
+[  128984ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://assets.granjaalegre.com/Subtitles/bis/farm_en_03.vtt?v=3:0
+[  128985ms] [WARNING] [VO] Subtitle load failed for https://assets.granjaalegre.com/Subtitles/bis/farm_en_03.vtt?v=3, trying fallback https://assets.granjaalegre.com/Subtitles/farm_en_03.vtt?v=3 @ :4
+[  184981ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://assets.granjaalegre.com/VO/bis/farm_bis_03.mp3:0
+[  184982ms] [WARNING] [VO] Audio load failed for https://assets.granjaalegre.com/VO/bis/farm_bis_03.mp3, retrying with English @ :4
+[  185031ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://assets.granjaalegre.com/Subtitles/bis/farm_en_03.vtt?v=3:0
+[  185033ms] [WARNING] [VO] Subtitle load failed for https://assets.granjaalegre.com/Subtitles/bis/farm_en_03.vtt?v=3, trying fallback @ :4

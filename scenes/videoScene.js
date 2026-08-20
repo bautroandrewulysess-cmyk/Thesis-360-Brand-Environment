@@ -150,15 +150,26 @@ class VideoScene extends Scene {
                     console.warn(`[VO] Audio load failed for ${audioPath}, retrying with English`);
                     audio.src = fallbackAudioPath;
                     audio.load();
-                    audio.play().catch(err => {
-                        console.error(`[VO] Fallback audio also failed for ${audioKey}:`, err);
-                    });
+                    setTimeout(() => {
+                        audio.play().catch(err => {
+                            // Both languages missing: advance anyway, a stalled
+                            // scene is worse than a silent one.
+                            console.error(`[VO] Fallback audio also failed for ${audioKey}:`, err);
+                            triggerQuiz();
+                        });
+                    }, 100);
                 } else {
                     console.error(`[VO] Audio load failed for ${audioPath}:`, e);
+                    triggerQuiz();
                 }
             });
 
-            audio.play().catch(e => console.warn('[VO] Autoplay blocked:', e));
+            audio.play().catch(e => {
+                // A language fallback swap rejects this pending promise; the error
+                // handler owns the retry.
+                if (audioFallbackAttempted) return;
+                console.warn('[VO] Autoplay blocked:', e);
+            });
 
             this.voAudioEndedHandler = triggerQuiz;
             return Promise.resolve();

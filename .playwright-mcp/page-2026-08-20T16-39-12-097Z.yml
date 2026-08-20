@@ -1,0 +1,67 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]: Granja Alegre
+      - generic [ref=e5]:
+        - link "Our Story" [ref=e6]:
+          - /url: "#about"
+        - link "Contact" [ref=e7]:
+          - /url: "#contact"
+    - generic [ref=e10]:
+      - heading "The Root" [level=1] [ref=e11]
+      - heading "Of Our Legacy" [level=1] [ref=e13]
+      - button "Enter 360° Experience" [ref=e16]
+    - generic [ref=e17]:
+      - heading "A Place Worth Sharing" [level=2] [ref=e19]: A PlaceWorth Sharing
+      - generic [ref=e20]:
+        - paragraph [ref=e21]:
+          - text: Nestled at the foot of
+          - strong [ref=e22]: Mount Kalatungan
+          - text: ", the fifth highest mountain range in the Philippines, our story is rooted in the land. Nature has given us rich volcanic soil, cool mountain air, and the perfect conditions to grow exceptional Arabica and Robusta coffee."
+        - paragraph [ref=e23]:
+          - text: Opened in 2023,
+          - strong [ref=e24]: Granja Alegre
+          - text: "was built with a simple purpose: to create a place where people could gather, share stories, and enjoy coffee grown right here on our family farm."
+        - paragraph [ref=e25]:
+          - text: Every cup we serve begins at
+          - emphasis [ref=e26]: Finca de Garces
+          - text: ", where coffee is carefully nurtured, harvested, and prepared with the same care and dedication that have guided our family through the years."
+    - generic [ref=e27]:
+      - heading "The Place" [level=2] [ref=e28]
+      - paragraph [ref=e30]: Granja Alegre sits at the foot of Mount Kalatungan in Pangantucan, Bukidnon. The altitude, cool highland air, and volcanic soil create conditions unlike anywhere else—the perfect foundation for exceptional coffee.
+    - generic [ref=e31]:
+      - heading "From Seed to Cup" [level=2] [ref=e32]
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]: Nursery
+          - generic [ref=e36]: Seedlings spend six to twelve months building roots, nurtured with care from the first sprout.
+        - generic [ref=e37]:
+          - generic [ref=e38]: Farm
+          - generic [ref=e39]: Trees bear their first harvest after three to four years, producing beans of deepening character.
+        - generic [ref=e40]:
+          - generic [ref=e41]: Harvest
+          - generic [ref=e42]: Only the brightest red cherries are picked by hand, sorted with precision and respect for the land.
+        - generic [ref=e43]:
+          - generic [ref=e44]: Roastery
+          - generic [ref=e45]: First crack marks the moment flavour develops, where science and craft become one.
+    - generic [ref=e46]:
+      - heading "The Family" [level=2] [ref=e47]
+      - paragraph [ref=e49]:
+        - text: The Garces family has nurtured the land through generations.
+        - emphasis [ref=e50]: Finca de Garces
+        - text: ","
+        - emphasis [ref=e51]: Granja Alegre Farm
+        - text: ", and"
+        - emphasis [ref=e52]: Alegre Café & Roastery
+        - text: are not separate chapters but one continuous story—rooted in soil, shaped by seasons, and bound by commitment to quality and community.
+    - contentinfo [ref=e53]:
+      - heading "Granja Alegre" [level=2] [ref=e54]
+      - generic [ref=e55]:
+        - generic [ref=e56]: Pangantucan, Bukidnon
+        - link "+63 975 064 8549" [ref=e57]:
+          - /url: tel:+639750648549
+  - generic: Selecting high-quality seedlings is an important part of producing specialty coffee.
+  - generic:
+    - generic: LOADING
+    - generic: Loading scene — first load may take a moment on slower connections
+    - generic: Arabica thrives in the cool highlands; Robusta prefers the warmer lowlands.

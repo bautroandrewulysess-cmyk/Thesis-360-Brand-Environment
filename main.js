@@ -432,7 +432,11 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
             }
         });
 
+        let audioFallbackAttempted = false;
+        let ended = false;
         const handleEnd = () => {
+            if (ended) return;
+            ended = true;
             audio.removeEventListener('ended', handleEnd);
             audio.removeEventListener('error', handleEnd);
             if (subtitleElement) subtitleElement.textContent = '';
@@ -443,17 +447,18 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
 
         audio.addEventListener('ended', handleEnd);
 
-        let audioFallbackAttempted = false;
         audio.addEventListener('error', () => {
             if (lang !== 'en' && !audioFallbackAttempted) {
                 audioFallbackAttempted = true;
                 console.warn(`[VO] Audio load failed for ${audioPath}, retrying with English`);
                 audio.src = fallbackAudioPath;
                 audio.load();
-                audio.play().catch(e => {
-                    console.warn(`[VO] Fallback audio also failed for ${audioKey}: ${e.name}`);
-                    handleEnd();
-                });
+                setTimeout(() => {
+                    audio.play().catch(e => {
+                        console.warn(`[VO] Fallback audio also failed for ${audioKey}: ${e.name}`);
+                        handleEnd();
+                    });
+                }, 100);
             } else {
                 console.warn(`[VO] Audio failed for ${audioKey}`);
                 handleEnd();
@@ -461,6 +466,9 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
         });
 
         audio.play().catch(e => {
+            // A language fallback swap rejects this pending promise; the error
+            // handler owns the retry, so don't tear the element down here.
+            if (audioFallbackAttempted) return;
             console.warn(`[VO] Autoplay failed: ${e.name}`);
             handleEnd();
         });
@@ -1066,6 +1074,9 @@ class Scene {
 
             setTimeout(() => {
                 audio.play().catch(err => {
+                    // A language fallback swap rejects this pending promise; the
+                    // error handler owns the retry, so don't finish the segment here.
+                    if (audioFallbackAttempted) return;
                     console.warn('[VO] Autoplay blocked:', err.message);
                     this.clearSubtitles();
                     this.isVoFinished = true;
