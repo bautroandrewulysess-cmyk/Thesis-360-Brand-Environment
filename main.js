@@ -12,6 +12,14 @@ const assetUrl = (path) => {
 };
 window.assetUrl = assetUrl;
 
+// Language-aware VO audio path helper
+const voUrl = (audioKey) => {
+    const lang = window.currentLanguage || 'en';
+    if (lang === 'en') return assetUrl(`VO/${audioKey}.mp3`);
+    return assetUrl(`VO/${lang}/${audioKey.replace('_en_', `_${lang}_`)}.mp3`);
+};
+window.voUrl = voUrl;
+
 const canvas = document.getElementById('canvas');
 const app = new pc.Application(canvas, {
     mouse: new pc.Mouse(canvas),
@@ -380,7 +388,8 @@ function fadeIn() {
 function playVoSegment(audioKey, subtitleElement, onEnded) {
     return new Promise((resolve) => {
         const lang = window.currentLanguage || 'en';
-        const audioPath = assetUrl(`VO/${audioKey}.mp3`);
+        let audioPath = voUrl(audioKey);
+        const fallbackAudioPath = assetUrl(`VO/${audioKey}.mp3`);
         const langVttPath = `${assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
         const fallbackVttPath = `${assetUrl(`Subtitles/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
 
@@ -433,9 +442,22 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
         };
 
         audio.addEventListener('ended', handleEnd);
+
+        let audioFallbackAttempted = false;
         audio.addEventListener('error', () => {
-            console.warn(`[VO] Audio failed for ${audioKey}`);
-            handleEnd();
+            if (lang !== 'en' && !audioFallbackAttempted) {
+                audioFallbackAttempted = true;
+                console.warn(`[VO] Audio load failed for ${audioPath}, retrying with English`);
+                audio.src = fallbackAudioPath;
+                audio.load();
+                audio.play().catch(e => {
+                    console.warn(`[VO] Fallback audio also failed for ${audioKey}: ${e.name}`);
+                    handleEnd();
+                });
+            } else {
+                console.warn(`[VO] Audio failed for ${audioKey}`);
+                handleEnd();
+            }
         });
 
         audio.play().catch(e => {
@@ -939,11 +961,12 @@ class Scene {
             this.setBrandStoryVideoBackground(audioKey);
 
             const lang = window.currentLanguage || 'en';
-            const audioPath = assetUrl(`VO/${audioKey}.mp3`);
+            let audioPath = voUrl(audioKey);
+            const fallbackAudioPath = assetUrl(`VO/${audioKey}.mp3`);
             const langVttPath = `${assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
             const fallbackVttPath = `${assetUrl(`Subtitles/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
 
-            
+
 
             const audio = document.createElement('audio');
             audio.crossOrigin = 'anonymous';
@@ -1016,12 +1039,29 @@ class Scene {
 
             audio.addEventListener('pause', () => this.clearSubtitles());
 
+            let audioFallbackAttempted = false;
             audio.addEventListener('error', () => {
-                console.warn(`[VO] Audio fetch failed for ${audioPath}`);
-                this.clearSubtitles();
-                this.isVoFinished = true;
-                if (isQuizEligible) triggerQuiz('audio-error');
-                resolve();
+                if (lang !== 'en' && !audioFallbackAttempted) {
+                    audioFallbackAttempted = true;
+                    console.warn(`[VO] Audio load failed for ${audioPath}, retrying with English`);
+                    audio.src = fallbackAudioPath;
+                    audio.load();
+                    setTimeout(() => {
+                        audio.play().catch(err => {
+                            console.warn(`[VO] Fallback audio also failed for ${audioKey}: ${err.message}`);
+                            this.clearSubtitles();
+                            this.isVoFinished = true;
+                            if (isQuizEligible) triggerQuiz('audio-error-fallback');
+                            resolve();
+                        });
+                    }, 100);
+                } else {
+                    console.warn(`[VO] Audio fetch failed for ${audioPath}`);
+                    this.clearSubtitles();
+                    this.isVoFinished = true;
+                    if (isQuizEligible) triggerQuiz('audio-error');
+                    resolve();
+                }
             });
 
             setTimeout(() => {

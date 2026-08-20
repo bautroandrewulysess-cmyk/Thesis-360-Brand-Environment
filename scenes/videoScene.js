@@ -114,7 +114,9 @@ class VideoScene extends Scene {
 
             this.stopVo();
 
-            const audioPath = assetUrl(`VO/${audioKey}.mp3`);
+            const lang = window.currentLanguage || 'en';
+            let audioPath = voUrl(audioKey);
+            const fallbackAudioPath = assetUrl(`VO/${audioKey}.mp3`);
             const audio = document.createElement('audio');
             audio.crossOrigin = 'anonymous';
             audio.src = audioPath;
@@ -140,8 +142,20 @@ class VideoScene extends Scene {
                 console.log('[VideoScene] VO ended');
                 triggerQuiz();
             }, { once: true });
+
+            let audioFallbackAttempted = false;
             audio.addEventListener('error', (e) => {
-                console.error(`[VO] Audio load failed for ${audioPath}:`, e);
+                if (lang !== 'en' && !audioFallbackAttempted) {
+                    audioFallbackAttempted = true;
+                    console.warn(`[VO] Audio load failed for ${audioPath}, retrying with English`);
+                    audio.src = fallbackAudioPath;
+                    audio.load();
+                    audio.play().catch(err => {
+                        console.error(`[VO] Fallback audio also failed for ${audioKey}:`, err);
+                    });
+                } else {
+                    console.error(`[VO] Audio load failed for ${audioPath}:`, e);
+                }
             });
 
             audio.play().catch(e => console.warn('[VO] Autoplay blocked:', e));
