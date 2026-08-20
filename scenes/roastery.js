@@ -1057,7 +1057,17 @@ class RoasteryScene extends Scene {
 
             if (!window.journeyComplete) {
                 this.preloadSplat(`${R2_BASE}/thesisCafeInterior_optimized.sog`, 'cafe-interior-splat');
-                fetch(`${R2_BASE}/Videos/brewingVideo.mp4`, { mode: 'no-cors' }).catch(() => {});
+                if (!window.brewingVideoPreloaded) {
+                    window.brewingVideoPreloaded = true;
+                    const v = document.createElement('video');
+                    v.preload = 'auto';
+                    v.muted = true;
+                    v.playsInline = true;
+                    v.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;';
+                    v.src = `${R2_BASE}/Videos/brewingVideo.mp4`;
+                    document.body.appendChild(v);
+                    window.brewingVideoPreloadEl = v;
+                }
             }
 
             const startVoOnInteraction = () => {

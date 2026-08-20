@@ -883,9 +883,7 @@ class Scene {
             await this.resumeVoSequence();
         }
 
-        const transitionHotspot = this.hotspotEntities?.find(h => h.hotspotData?.isTransition);
-        const navText = this.getNavPromptText(transitionHotspot);
-        if (navText) this.showNavPrompt(navText);
+        this.hideNavPrompt();
     }
 
     canTransition() {
