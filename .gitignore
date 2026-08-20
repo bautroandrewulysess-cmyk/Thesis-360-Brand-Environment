@@ -4,3 +4,5 @@ node_modules/
 Assets/
 Proj File Video/
 extras/
+
+.playwright-mcp/
