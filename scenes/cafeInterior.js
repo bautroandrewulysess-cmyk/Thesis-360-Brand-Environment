@@ -49,7 +49,7 @@ class CafeInteriorScene extends Scene {
                 position: new pc.Vec3(0.140, 1.490, -0.660),
                 isVideo: true,
                 isGateMarker: true,
-                videoSrc: `${R2_BASE}/Videos/brewingVideo.mp4`,
+                get videoSrc() { return videoUrl('brewingVideo.mp4'); },
                 isTransition: false
             },
             {
@@ -1051,7 +1051,7 @@ class CafeInteriorScene extends Scene {
         });
         if (!window.brewingVideoPreloaded) {
             window.brewingVideoPreloaded = true;
-            fetch(`${R2_BASE}/Videos/brewingVideo.mp4`, { mode: 'no-cors' }).catch(() => {});
+            fetch(videoUrl('brewingVideo.mp4'), { mode: 'no-cors' }).catch(() => {});
         }
         if (this.isReturnVisit) {
             this.hideNavPrompt();

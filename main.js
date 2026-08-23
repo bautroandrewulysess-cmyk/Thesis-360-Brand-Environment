@@ -52,6 +52,15 @@ const voUrl = (audioKey) => {
 };
 window.voUrl = voUrl;
 
+// Language-aware video path helper. Only the two videos with narration baked into
+// their audio track (brewingVideo, coffeeRoasting) have per-language versions; every
+// other video is muted or narrated by a separate VO file and must keep the base path.
+const videoUrl = (name) => {
+    const lang = window.currentLanguage || 'en';
+    return assetUrl(lang === 'en' ? `Videos/${name}` : `Videos/${lang}/${name}`);
+};
+window.videoUrl = videoUrl;
+
 const canvas = document.getElementById('canvas');
 const app = new pc.Application(canvas, {
     mouse: new pc.Mouse(canvas),
@@ -1400,6 +1409,15 @@ class Scene {
         let videoEnded = false;
         let fallbackTimeoutHandle = null;
 
+        // Mirror of the VO audio fallback: if a per-language video is missing, retry
+        // the English original exactly once. Guarded so a second failure falls through
+        // to the normal error path instead of looping.
+        const videoLang = window.currentLanguage || 'en';
+        const englishFallbackSrc = (videoLang !== 'en' && src.includes(`/Videos/${videoLang}/`))
+            ? src.replace(`/Videos/${videoLang}/`, '/Videos/')
+            : null;
+        let videoFallbackAttempted = false;
+
         if (!popup || !video) return;
 
         if (required) {
@@ -1469,6 +1487,14 @@ class Scene {
 
         const onVideoError = async () => {
             const errorCode = video.error?.code || 'unknown';
+            if (englishFallbackSrc && !videoFallbackAttempted) {
+                videoFallbackAttempted = true;
+                console.warn(`[VideoPopup] Video failed to load: ${src}, error code: ${errorCode}, retrying with English`);
+                video.addEventListener('error', onVideoError, { once: true }); // re-arm for the retry
+                video.src = englishFallbackSrc;
+                video.load();
+                return;
+            }
             console.warn(`[VideoPopup] Video failed to load: ${src}, error code: ${errorCode}`);
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
             await cleanupVideo();
@@ -1777,11 +1803,13 @@ class Scene {
                 this.resumeVoSequence();
             } else {
                 // Standard gate video playback (roasterVideo, brewingPOV, ownerInterview)
+                // Fully-resolved URLs. Only the two narrated videos go through videoUrl();
+                // ownerInterview/farmerInterview keep their English path.
                 const videoMap = {
-                    roasterVideo: 'Videos/coffeeRoasting.mp4',
-                    brewingPOV: 'Videos/brewingVideo.mp4',
-                    ownerInterview: 'Videos/ownerInterview.mp4',
-                    farmerInterview: 'Videos/farmerInterview.mp4'
+                    roasterVideo: videoUrl('coffeeRoasting.mp4'),
+                    brewingPOV: videoUrl('brewingVideo.mp4'),
+                    ownerInterview: assetUrl('Videos/ownerInterview.mp4'),
+                    farmerInterview: assetUrl('Videos/farmerInterview.mp4')
                 };
                     const videoSrc = videoMap[gate.ref];
                 const subtitleMap = {};
@@ -1791,7 +1819,7 @@ class Scene {
                 if (window.DEV_MODE) console.log(`[Gate] ref=${gate.ref}, videoSrc=${videoSrc}`);
                 if (videoSrc) {
                     if (window.DEV_MODE) console.log(`[Gate] Playing video: ${videoSrc}`);
-                        this.showVideoPopup(assetUrl(videoSrc), {
+                        this.showVideoPopup(videoSrc, {
                         required: true,
                         volume: videoVolume,
                         subtitleSrc: subtitleMap[gate.ref] ? assetUrl(subtitleMap[gate.ref]) : null,

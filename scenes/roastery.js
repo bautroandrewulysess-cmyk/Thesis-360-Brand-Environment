@@ -47,7 +47,7 @@ class RoasteryScene extends Scene {
                 id: 'roasting-beans-transition',
                 position: new pc.Vec3(0.566, 1.3, -0.740),
                 isVideo: true,
-                videoSrc: `${R2_BASE}/Videos/coffeeRoasting.mp4`,
+                get videoSrc() { return videoUrl('coffeeRoasting.mp4'); },
                 isGateMarker: true
             },
             {
@@ -1058,7 +1058,7 @@ class RoasteryScene extends Scene {
                     v.muted = true;
                     v.playsInline = true;
                     v.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;';
-                    v.src = `${R2_BASE}/Videos/brewingVideo.mp4`;
+                    v.src = videoUrl('brewingVideo.mp4');
                     document.body.appendChild(v);
                     window.brewingVideoPreloadEl = v;
                 }
