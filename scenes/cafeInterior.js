@@ -59,7 +59,13 @@ class CafeInteriorScene extends Scene {
             {
                 id: 'exit-to-exterior',
                 position: new pc.Vec3(0.780, 1.500, 1.610),
-                get label() { return window.journeyComplete ? 'Go Outside' : 'To Nursery'; },
+                // Conditional label: resolved through t() like every other string,
+                // but the key depends on journey state so it cannot be a flat lookup.
+                get label() {
+                    return window.journeyComplete
+                        ? t('cafe.exit-to-exterior.label.complete')
+                        : t('cafe.exit-to-exterior.label');
+                },
                 isTransition: true,
                 get targetScene() { return window.journeyComplete ? 'cafe-exterior' : 'nursery'; },
                 spawnPosition: [0, 1.6, 0]
@@ -177,6 +183,15 @@ class CafeInteriorScene extends Scene {
         this.pitchMax = Math.PI / 2.5;  // ~72° up
 
         this.setupEventListeners();
+    }
+
+    // Resolve a hotspot's label. Hotspots whose label depends on runtime state
+    // define their own getter (which calls t() itself); everything else is a
+    // flat key lookup. Keeps conditional labels from silently rendering blank.
+    hotspotLabel(hotspot) {
+        const own = Object.getOwnPropertyDescriptor(hotspot, 'label');
+        if (own && typeof own.get === 'function') return hotspot.label;
+        return this.t(`cafe.${hotspot.id}.label`);
     }
 
     setupEventListeners() {
@@ -1011,11 +1026,11 @@ class CafeInteriorScene extends Scene {
                 if (!group.labelElement) {
                     const label = document.createElement('div');
                     label.className = 'hotspot-label';
-                    label.textContent = this.t(`cafe.${hotspot.id}.label`);
+                    label.textContent = this.hotspotLabel(hotspot);
                     label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
                     document.body.appendChild(label);
                     group.labelElement = label;
-                    console.warn(`[cafeInterior] Created label: "${this.t(`cafe.${hotspot.id}.label`)}" for hotspot "${hotspot.id}"`);
+                    console.warn(`[cafeInterior] Created label: "${this.hotspotLabel(hotspot)}" for hotspot "${hotspot.id}"`);
                 }
             }
         });
@@ -1113,7 +1128,7 @@ class CafeInteriorScene extends Scene {
                 this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: true,
-                    caption: this.t(`cafe.${hotspot.id}.label`),
+                    caption: this.hotspotLabel(hotspot),
                     volume: 1.0,
                     onFinish: () => {
                         this.resumeAmbient();
@@ -1132,7 +1147,7 @@ class CafeInteriorScene extends Scene {
             this.pauseAmbient();
             this.showVideoPopup(hotspot.videoSrc, {
                 required: false,
-                caption: this.t(`cafe.${hotspot.id}.label`),
+                caption: this.hotspotLabel(hotspot),
                 onFinish: () => {
                     this.resumeAmbient();
                 }
@@ -1148,7 +1163,7 @@ class CafeInteriorScene extends Scene {
 
         const hotspotTitle = document.getElementById('hotspot-title');
         const hotspotDescription = document.getElementById('hotspot-description');
-        if (hotspotTitle) hotspotTitle.textContent = this.t(`cafe.${hotspot.id}.label`);
+        if (hotspotTitle) hotspotTitle.textContent = this.hotspotLabel(hotspot);
         if (hotspotDescription) hotspotDescription.textContent = this.t(`cafe.${hotspot.id}.description`);
         if (this.dom.hotspotPopup) this.dom.hotspotPopup.classList.add('active');
     }

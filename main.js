@@ -27,6 +27,23 @@ const t = (key) => {
 };
 window.t = t;
 
+// Resolve the segment manifest for a scene. Segment ids are language-neutral —
+// voUrl() maps each id to the right per-language audio file — so the 'en' list is
+// the manifest for every language. A per-language array is only consulted when the
+// key actually exists; an existing-but-empty one is a genuine authoring error.
+const voSegmentsFor = (sceneKey) => {
+    const entry = window.VoSegments?.[sceneKey];
+    if (!entry) return null;
+    const lang = window.currentLanguage || 'en';
+    if (lang !== 'en' && Object.prototype.hasOwnProperty.call(entry, lang)) {
+        const langSegments = entry[lang];
+        if (langSegments && langSegments.length > 0) return langSegments;
+        console.warn(`[VO] ${sceneKey}: '${lang}' segment list exists but is empty`);
+    }
+    return entry.en || null;
+};
+window.voSegmentsFor = voSegmentsFor;
+
 // Language-aware VO audio path helper
 const voUrl = (audioKey) => {
     const lang = window.currentLanguage || 'en';
@@ -1548,17 +1565,10 @@ class Scene {
     async playVoSequence(sceneKey) {
         if (this.voSequenceRunning) return;
         this.voSceneKey = sceneKey;
-        const lang = window.currentLanguage || 'en';
-        let segments = window.VoSegments?.[sceneKey]?.[lang];
+        const segments = voSegmentsFor(sceneKey);
         if (!segments || segments.length === 0) {
-            if (lang !== 'en') {
-                console.warn(`[VO] No segments found for ${sceneKey}/${lang}, falling back to English`);
-                segments = window.VoSegments?.[sceneKey]?.en;
-            }
-            if (!segments || segments.length === 0) {
-                console.warn(`[VO] No segments found for ${sceneKey}/${lang}`);
-                return;
-            }
+            console.warn(`[VO] No segments found for ${sceneKey}`);
+            return;
         }
 
         this.voSequenceRunning = true;
@@ -1620,15 +1630,8 @@ class Scene {
             return;
         }
 
-        const lang = window.currentLanguage || 'en';
-        let segments = window.VoSegments[this.voSceneKey][lang];
-        if (!segments || segments.length === 0) {
-            if (lang !== 'en') {
-                console.warn(`[VO] No segments found for ${this.voSceneKey}/${lang}, falling back to English`);
-                segments = window.VoSegments[this.voSceneKey].en;
-            }
-            if (!segments || segments.length === 0) return;
-        }
+        const segments = voSegmentsFor(this.voSceneKey);
+        if (!segments || segments.length === 0) return;
         if (this.voSequenceIndex >= segments.length) return;
 
         this.voSequenceIndex++;
@@ -1648,18 +1651,10 @@ class Scene {
     }
 
     getGateMarkerLabel(gateRef) {
-        const labels = {
-            'mapZoom': 'Continue',
-            'aerial': 'Continue',
-            'farmerMontage': 'Continue',
-            'ownerInterview': 'Hear the story behind Granja Alegre',
-            'treePhoto': 'See the trees',
-            'roasterVideo': 'Watch the roaster',
-            'brewingPOV': 'See the brewing',
-            'polybag': 'Get a closer look at the seedlings',
-            'monitoring': 'Learn about monitoring'
-        };
-        return labels[gateRef] || 'Watch';
+        const key = `ui.gate.${gateRef}`;
+        // Check the table directly so an unknown ref falls back quietly rather
+        // than emitting an [i18n] unknown-key warning.
+        return (window.Strings && window.Strings[key]) ? t(key) : t('ui.gate.default');
     }
 
     spawnGateMarker(gate) {
@@ -1760,6 +1755,9 @@ class Scene {
                 video.style.cssText = `max-width:90vw; max-height:90vh; object-fit:contain;`;
                 polybagOverlay.appendChild(video);
                 document.body.appendChild(polybagOverlay);
+                // Mark the overlay like every other fullscreen video so the clue bar,
+                // hotspot labels and nav prompt stay hidden while it plays.
+                document.body.classList.add('video-open');
 
                 // Fade video when it ends (not when VO ends), allowing VO to continue underneath
                 const fadeVideoOverlay = () => {
@@ -1769,6 +1767,7 @@ class Scene {
                             if (polybagOverlay.parentNode) {
                                 polybagOverlay.remove();
                             }
+                            document.body.classList.remove('video-open');
                         }, 600);
                     }
                 };
@@ -1862,7 +1861,7 @@ class Scene {
                 answered = false;
                 card.style.backgroundColor = 'rgba(139, 107, 107, 0.15)';
                 const clueMsg = document.createElement('div');
-                clueMsg.textContent = `Wrong. ${questionData.clue}`;
+                clueMsg.textContent = `${t('ui.miniquiz.wrongPrefix')} ${questionData.clue}`;
                 clueMsg.style.cssText = `color:#a68585; margin-top:15px; font-size:0.9rem; font-style:italic; line-height:1.4;`;
                 card.appendChild(clueMsg);
             }
@@ -1903,15 +1902,8 @@ class Scene {
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
-            const lang = window.currentLanguage || 'en';
-            let segments = window.VoSegments?.[this.voSceneKey]?.[lang];
-            if (!segments || segments.length === 0) {
-                if (lang !== 'en') {
-                    console.warn(`[VO] No segments found for ${this.voSceneKey}/${lang}, falling back to English`);
-                    segments = window.VoSegments?.[this.voSceneKey]?.en;
-                }
-                if (!segments || this.voSequenceIndex >= segments.length) return;
-            } else if (this.voSequenceIndex >= segments.length) return;
+            const segments = voSegmentsFor(this.voSceneKey);
+            if (!segments || this.voSequenceIndex >= segments.length) return;
 
             const segment = segments[this.voSequenceIndex];
             const gateType = segment.gate?.type;
@@ -1944,15 +1936,8 @@ class Scene {
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
-            const lang = window.currentLanguage || 'en';
-            let segments = window.VoSegments?.[this.voSceneKey]?.[lang];
-            if (!segments || segments.length === 0) {
-                if (lang !== 'en') {
-                    console.warn(`[VO] No segments found for ${this.voSceneKey}/${lang}, falling back to English`);
-                    segments = window.VoSegments?.[this.voSceneKey]?.en;
-                }
-                if (!segments || this.voSequenceIndex >= segments.length) return;
-            } else if (this.voSequenceIndex >= segments.length) return;
+            const segments = voSegmentsFor(this.voSceneKey);
+            if (!segments || this.voSequenceIndex >= segments.length) return;
 
             // Stop current audio and clear subtitles
             this.stopVo();

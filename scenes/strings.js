@@ -14,6 +14,8 @@ window.Strings = {
     'cafe.coffee-brewing.description': { en: '', bis: '' },
     'cafe.chill-section.label': { en: 'Chill Section', bis: 'Chill Section' },
     'cafe.chill-section.description': { en: 'The owners always emphasize creating connections. The chill section is where customers can play with games, cards and indulge in books to create conversation and a relaxing atmosphere whilst enjoying a cup of coffee.', bis: 'Kanunay gipasiugda sa mga tag-iya ang paghimo og koneksyon. Ang chill section mao ang dapit diin ang mga bisita makadula og mga dula ug baraha, ug makabasa og mga libro aron makamugna og panag-istoryahanay ug hayahay nga palibot samtang nagtagamtam sa usa ka tasa sa kape.' },
+    'cafe.exit-to-exterior.label': { en: 'To Nursery', bis: 'Padulong sa Binhianan' },
+    'cafe.exit-to-exterior.label.complete': { en: 'Go Outside', bis: '' },
     'cafe.exit-to-exterior.description': { en: 'Click to step outside the cafe.', bis: 'I-klik aron mogawas sa café.' },
     'cafe.quiz.question': { en: 'What was the original purpose of opening Alegre Café & Roastery?', bis: 'Unsa ang orihinal nga katuyoan sa pag-abli sa Alegre Café & Roastery?' },
     'cafe.quiz.choice.0': { en: 'To become the largest coffee exporter in the region.', bis: 'Aron mahimong pinakadako nga tig-eksport og kape sa rehiyon.' },
@@ -94,4 +96,28 @@ window.Strings = {
     'ui.clue.right': { en: 'Look to your right', bis: 'Tan-aw sa imong tuo' },
     'ui.clue.left': { en: 'Look to your left', bis: 'Tan-aw sa imong wala' },
     'ui.clue.behind': { en: 'Turn around — it\'s behind you', bis: 'Lingi — naa sa imong likod' },
+
+    // Gate-marker buttons (keyed by gate.ref in voData.js)
+    'ui.gate.default': { en: 'Watch', bis: '' },
+    'ui.gate.mapZoom': { en: 'Continue', bis: '' },
+    'ui.gate.aerial': { en: 'Continue', bis: '' },
+    'ui.gate.farmerMontage': { en: 'Continue', bis: '' },
+    'ui.gate.ownerInterview': { en: 'Hear the story behind Granja Alegre', bis: '' },
+    'ui.gate.treePhoto': { en: 'See the trees', bis: '' },
+    'ui.gate.roasterVideo': { en: 'Watch the roaster', bis: '' },
+    'ui.gate.brewingPOV': { en: 'See the brewing', bis: '' },
+    'ui.gate.polybag': { en: 'Get a closer look at the seedlings', bis: '' },
+    'ui.gate.monitoring': { en: 'Learn about monitoring', bis: '' },
+
+    // Mini-quiz UI. NOTE: the correct answer is matched by string equality against
+    // the option text, so a translated option must be paired with the same key.
+    'ui.miniquiz.wrongPrefix': { en: 'Wrong.', bis: '' },
+    'ui.miniquiz.flowers.question': { en: 'What forms after the white coffee flowers fall?', bis: '' },
+    'ui.miniquiz.flowers.a': { en: 'Small green coffee cherries', bis: '' },
+    'ui.miniquiz.flowers.b': { en: 'Small brown coffee cherries', bis: '' },
+    'ui.miniquiz.flowers.clue': { en: 'Think about color. Coffee cherries start out unripe — they only turn red much later.', bis: '' },
+    'ui.miniquiz.monitoring.question': { en: 'Why are coffee trees regularly monitored?', bis: '' },
+    'ui.miniquiz.monitoring.a': { en: 'To make the coffee trees grow faster', bis: '' },
+    'ui.miniquiz.monitoring.b': { en: 'To find pests and diseases early', bis: '' },
+    'ui.miniquiz.monitoring.clue': { en: 'Monitoring doesn\'t change how fast a tree grows. Think about what a farmer is looking for.', bis: '' },
 };

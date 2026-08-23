@@ -1498,12 +1498,14 @@ class StreetViewScene extends Scene {
 
     getMiniQuizData(gateRef) {
         if (gateRef === 'monitoring') {
+            // 'correct' is matched by string equality against the rendered option,
+            // so it reuses the same key as option 'b' and can never drift from it.
             return {
-                question: 'Why are coffee trees regularly monitored?',
-                a: 'To make the coffee trees grow faster',
-                b: 'To find pests and diseases early',
-                correct: 'To find pests and diseases early',
-                clue: 'Monitoring doesn\'t change how fast a tree grows. Think about what a farmer is looking for.'
+                get question() { return t('ui.miniquiz.monitoring.question'); },
+                get a() { return t('ui.miniquiz.monitoring.a'); },
+                get b() { return t('ui.miniquiz.monitoring.b'); },
+                get correct() { return t('ui.miniquiz.monitoring.b'); },
+                get clue() { return t('ui.miniquiz.monitoring.clue'); }
             };
         }
         return null;

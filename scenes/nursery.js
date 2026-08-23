@@ -804,13 +804,15 @@ class NurseryScene extends Scene {
     }
 
     getMiniQuizData(gateRef) {
+        // 'correct' is matched by string equality against the rendered option,
+        // so it reuses the same key as option 'a' and can never drift from it.
         const miniQuizzes = {
             flowers: {
-                question: 'What forms after the white coffee flowers fall?',
-                a: 'Small green coffee cherries',
-                b: 'Small brown coffee cherries',
-                correct: 'Small green coffee cherries',
-                clue: 'Think about color. Coffee cherries start out unripe — they only turn red much later.'
+                get question() { return t('ui.miniquiz.flowers.question'); },
+                get a() { return t('ui.miniquiz.flowers.a'); },
+                get b() { return t('ui.miniquiz.flowers.b'); },
+                get correct() { return t('ui.miniquiz.flowers.a'); },
+                get clue() { return t('ui.miniquiz.flowers.clue'); }
             }
         };
         return miniQuizzes[gateRef] || null;
