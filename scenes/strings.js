@@ -90,4 +90,8 @@ window.Strings = {
     'ui.video.continue': { en: 'Continue', bis: '' },
     'ui.video.roasteryPrompt': { en: 'Select Continue to visit the roastery', bis: '' },
     'ui.quiz.correct': { en: 'Correct!', bis: '' },
+    'ui.clue.ahead': { en: 'It\'s right in front of you', bis: '' },
+    'ui.clue.right': { en: 'Look to your right', bis: '' },
+    'ui.clue.left': { en: 'Look to your left', bis: '' },
+    'ui.clue.behind': { en: 'Turn around — it\'s behind you', bis: '' },
 };

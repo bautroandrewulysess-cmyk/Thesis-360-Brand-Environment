@@ -834,11 +834,11 @@ class Scene {
 
         let text;
         if (angleDeg <= 30) {
-            text = "It's right in front of you";
+            text = t('ui.clue.ahead');
         } else if (angleDeg > 30 && angleDeg <= 100) {
-            text = dotRight > 0 ? "Look to your right" : "Look to your left";
+            text = dotRight > 0 ? t('ui.clue.right') : t('ui.clue.left');
         } else {
-            text = "Turn around — it's behind you";
+            text = t('ui.clue.behind');
         }
         return text;
     }
