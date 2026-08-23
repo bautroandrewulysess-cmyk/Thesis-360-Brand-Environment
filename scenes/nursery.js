@@ -987,6 +987,10 @@ class NurseryScene extends Scene {
         video.style.zIndex = '9999';
         video.style.backgroundColor = '#000';
 
+        // Mark the overlay like every other fullscreen video so the clue bar, hotspot
+        // labels and nav prompt stay hidden while it plays.
+        document.body.classList.add('video-open');
+
         let transitionStarted = false;
 
         const completeTransition = async () => {
@@ -1002,6 +1006,7 @@ class NurseryScene extends Scene {
                 if (video.parentElement) {
                     video.remove();
                 }
+                document.body.classList.remove('video-open');
             }, 600);
 
             sceneManager.switchTo('street-view', spawnPosition);
@@ -1184,9 +1189,10 @@ class NurseryScene extends Scene {
                 this.splatEntity = null;
             }
 
-            // Dispose of splat asset
+            // Dispose of splat asset. releaseSplat() also drops the window._preloadedSplats
+            // reference — app.assets.remove() alone leaves the resource pinned and unfreed.
             if (this.splatAsset) {
-                app.assets.remove(this.splatAsset);
+                releaseSplat('nursery-splat', this.splatAsset);
                 this.splatAsset = null;
             }
 

@@ -1125,11 +1125,13 @@ class CafeInteriorScene extends Scene {
                 }
                 // Make this gate hotspot replayable (keep it present)
                 hotspot.isGateMarker = false;
-                this.pauseAmbient();
+                // Duck the cafe ambient to 50% rather than pausing it, matching the
+                // roastery gate video — the brewing narration reads fine over it.
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: true,
                     caption: this.hotspotLabel(hotspot),
                     volume: 1.0,
+                    duckAmbient: 0.5,
                     onFinish: () => {
                         this.resumeAmbient();
                         this.resumeVoSequence();
@@ -1322,9 +1324,10 @@ class CafeInteriorScene extends Scene {
                 this.splatEntity = null;
             }
 
-            // Dispose of splat asset
+            // Dispose of splat asset. releaseSplat() also drops the window._preloadedSplats
+            // reference — app.assets.remove() alone leaves the resource pinned and unfreed.
             if (this.splatAsset) {
-                app.assets.remove(this.splatAsset);
+                releaseSplat('cafe-interior-splat', this.splatAsset);
                 this.splatAsset = null;
             }
 

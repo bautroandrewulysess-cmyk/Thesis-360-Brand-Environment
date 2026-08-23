@@ -61,6 +61,43 @@ const videoUrl = (name) => {
 };
 window.videoUrl = videoUrl;
 
+// Fully release a gaussian splat. app.assets.remove() alone leaks: window._preloadedSplats
+// keeps a strong reference to the pc.Asset, which pins its .resource (the GPU buffers), so
+// the splat is never collected and VRAM/heap grows with every scene the user visits.
+// Releasing means: drop the cache entry, unload the resource, then remove from the registry.
+const releaseSplat = (assetName, sceneAsset = null) => {
+    const cached = window._preloadedSplats ? window._preloadedSplats[assetName] : null;
+    if (window._preloadedSplats) delete window._preloadedSplats[assetName];
+    const targets = [];
+    if (sceneAsset) targets.push(sceneAsset);
+    if (cached && cached !== sceneAsset) targets.push(cached);
+    for (const asset of targets) {
+        try {
+            app.assets.remove(asset);
+            if (asset.resource) asset.unload();
+        } catch (e) {
+            console.warn(`[Splat] Release failed for ${assetName}: ${e.message}`);
+        }
+    }
+    if (targets.length) console.warn(`[Splat] Released ${assetName} (${targets.length} asset(s))`);
+    return targets.length;
+};
+window.releaseSplat = releaseSplat;
+
+// Free every cached splat except the one the incoming scene is about to consume.
+// Catches splats preloaded for a branch the user never took, and orphans cached under
+// a name no scene reads (e.g. 'thesisCafeExterior', which nothing consumes).
+const sweepPreloadedSplats = (keepAssetName) => {
+    if (!window._preloadedSplats) return 0;
+    let freed = 0;
+    for (const name of Object.keys(window._preloadedSplats)) {
+        if (name === keepAssetName) continue;
+        freed += releaseSplat(name) ? 1 : 0;
+    }
+    return freed;
+};
+window.sweepPreloadedSplats = sweepPreloadedSplats;
+
 const canvas = document.getElementById('canvas');
 const app = new pc.Application(canvas, {
     mouse: new pc.Mouse(canvas),
@@ -305,6 +342,10 @@ class SceneManager {
             debugLog(`Switching to scene: ${sceneName}`);
             await fadeOut();
             await this.unloadScene();
+
+            // Drop splats the incoming scene will not use, so a preload for a branch
+            // the user skipped does not sit in VRAM for the rest of the journey.
+            sweepPreloadedSplats(`${sceneName}-splat`);
 
             // Show loading screen before loading new scene
             if (loadingScreen) {
@@ -1588,6 +1629,25 @@ class Scene {
         });
     }
 
+    // Fire the end-of-scene quiz without playing a VO segment. Mirrors the triggerQuiz()
+    // closure inside playVoWithSubtitles so a skipped sting still opens the quiz its gate
+    // was responsible for, instead of leaving the scene without a quiz.
+    triggerQuizDirect(audioKey) {
+        if (!this.quiz || window.journeyComplete || this.quizTriggered) return;
+        this.quizTriggered = true;
+        console.warn(`[VO] Quiz triggered directly (segment ${audioKey} skipped)`);
+        const hookMethod = this[`onVoFinished_${audioKey}`];
+        if (typeof hookMethod === 'function') {
+            hookMethod.call(this);
+            return;
+        }
+        setTimeout(() => {
+            this.showQuiz(this.quiz, () => {
+                this.onQuizPassed();
+            });
+        }, 1000);
+    }
+
     async playVoSequence(sceneKey) {
         if (this.voSequenceRunning) return;
         this.voSceneKey = sceneKey;
@@ -1612,8 +1672,18 @@ class Scene {
                 }
 
                 const isQuizSegment = gateType === 'quiz';
-                console.log(`[VO] Playing segment ${this.voSequenceIndex + 1}/${segments.length}: ${segment.id}`);
-                await this.playVoWithSubtitles(segment.id, isQuizSegment);
+                // Segments with no recording in the active language are skipped outright
+                // rather than falling back to English mid-sequence. The gate below still
+                // runs, so a skipped quiz sting still opens its quiz.
+                const missingNonEn = window.VoMissingNonEn || new Set();
+                if (missingNonEn.has(segment.id) && (window.currentLanguage || 'en') !== 'en') {
+                    console.warn(`[VO] Skipping ${segment.id} — no ${window.currentLanguage} recording`);
+                    this.isVoFinished = true;
+                    if (isQuizSegment) this.triggerQuizDirect(segment.id);
+                } else {
+                    console.log(`[VO] Playing segment ${this.voSequenceIndex + 1}/${segments.length}: ${segment.id}`);
+                    await this.playVoWithSubtitles(segment.id, isQuizSegment);
+                }
 
                 if (gateType === 'marker') {
                     console.log(`[VO] Paused at marker gate`);

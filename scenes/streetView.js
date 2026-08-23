@@ -61,11 +61,11 @@ class StreetViewScene extends Scene {
         this.toFarm14FirstArrival = true;
         this.isInputLocked = false;
         this.quiz = {
-            question: 'Why is organic fertilizer added before planting a coffee seedling?',
-            choices: ['To make the soil richer and help the roots grow well.', 'To make harvesting easier.', 'To speed up roasting.', 'To change the flavor of the coffee immediately.'],
+            get question() { return t('streetView.quiz.question'); },
+            get choices() { return [0, 1, 2, 3].map(i => t(`streetView.quiz.choice.${i}`)); },
             correct: 0,
-            clue: 'Think about what the fertilizer touches first — it goes into the hole, before the tree ever grows.',
-            feedback: 'Correct! Healthy coffee trees begin with healthy soil. Preparing the planting hole with organic fertilizer gives young trees the best possible start.'
+            get clue() { return t('streetView.quiz.clue'); },
+            get feedback() { return t('streetView.quiz.feedback'); }
         };
 
         // Journey to farm
@@ -732,7 +732,12 @@ class StreetViewScene extends Scene {
             } else if (isBackArrow) {
                 mat.diffuse = new pc.Color(0.8, 0.8, 0.8);
             } else {
-                mat.diffuse = new pc.Color(0, 0.9, 0.1);
+                // Forward discs are blue in Bisaya because the Bisaya VO says "asul nga disc";
+                // the English VO says green. Colour value only — isBackArrow above still
+                // decides which branch runs, and the label strings are untouched.
+                mat.diffuse = (window.currentLanguage === 'bis')
+                    ? new pc.Color(0.1, 0.45, 0.95)
+                    : new pc.Color(0, 0.9, 0.1);
             }
 
             mat.update();
@@ -1025,14 +1030,14 @@ class StreetViewScene extends Scene {
             const inFarmRange = isFarmRange && farmIndex >= 1 && farmIndex <= 5;
 
             if (inFarmRange && this.farm_en_01_Finished && !this.farmCloseupViewed && positionKey !== 'farm1-closeup') {
-                const hintMap = {
-                    'farm1-4': "You're really close — try looking down.",
-                    'farm1-3': "So close. Moving forward should help.",
-                    'farm1-5': "You've gone a bit far. Move back a little.",
-                    'farm1-2': "Explore the area ahead.",
-                    'farm1-1': "Keep heading forward."
+                const hintKeys = {
+                    'farm1-4': 'ui.farm.hint.farm1-4',
+                    'farm1-3': 'ui.farm.hint.farm1-3',
+                    'farm1-5': 'ui.farm.hint.farm1-5',
+                    'farm1-2': 'ui.farm.hint.farm1-2',
+                    'farm1-1': 'ui.farm.hint.farm1-1'
                 };
-                const hintText = hintMap[positionKey] || "Look around for the golden button.";
+                const hintText = t(hintKeys[positionKey] || 'ui.farm.hint.default');
                 this.setFarmHint(hintText);
             } else {
                 this.clearFarmHint();

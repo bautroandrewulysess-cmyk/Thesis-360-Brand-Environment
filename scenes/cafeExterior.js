@@ -1105,9 +1105,10 @@ class CafeExteriorScene extends Scene {
                 this.splatEntity = null;
             }
 
-            // Dispose of splat asset
+            // Dispose of splat asset. releaseSplat() also drops the window._preloadedSplats
+            // reference — app.assets.remove() alone leaves the resource pinned and unfreed.
             if (this.splatAsset) {
-                app.assets.remove(this.splatAsset);
+                releaseSplat('cafe-exterior-splat', this.splatAsset);
                 this.splatAsset = null;
             }
 
