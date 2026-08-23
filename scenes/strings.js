@@ -105,12 +105,12 @@ window.Strings = {
 
     // Farm close-up hunt hints. Shown while the golden disc at farm1-4 is unfound;
     // keyed by the player's current position. Display text, unrelated to arrow labels.
-    'ui.farm.hint.farm1-1': { en: 'Keep heading forward.', bis: '' },
-    'ui.farm.hint.farm1-2': { en: 'Explore the area ahead.', bis: '' },
-    'ui.farm.hint.farm1-3': { en: 'So close. Moving forward should help.', bis: '' },
-    'ui.farm.hint.farm1-4': { en: 'You\'re really close — try looking down.', bis: '' },
-    'ui.farm.hint.farm1-5': { en: 'You\'ve gone a bit far. Move back a little.', bis: '' },
-    'ui.farm.hint.default': { en: 'Look around for the golden button.', bis: '' },
+    'ui.farm.hint.farm1-1': { en: 'Keep heading forward.', bis: 'Padayon lang sa pag-adto sa unahan.' },
+    'ui.farm.hint.farm1-2': { en: 'Explore the area ahead.', bis: 'Suroya ang dapit sa unahan.' },
+    'ui.farm.hint.farm1-3': { en: 'So close. Moving forward should help.', bis: 'Duol na kaayo. Padayon lang sa unahan.' },
+    'ui.farm.hint.farm1-4': { en: 'You\'re really close — try looking down.', bis: 'Duol na kaayo ka — sulayi og tan-aw sa ubos.' },
+    'ui.farm.hint.farm1-5': { en: 'You\'ve gone a bit far. Move back a little.', bis: 'Nalapas na ka og gamay. Balik og diyutay.' },
+    'ui.farm.hint.default': { en: 'Look around for the golden button.', bis: 'Pangitaa ang bulawanon nga button sa imong palibot.' },
 
     // Gate-marker buttons (keyed by gate.ref in voData.js)
     'ui.gate.default': { en: 'Watch', bis: 'Tan-awa' },
