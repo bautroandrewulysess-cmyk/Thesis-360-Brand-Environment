@@ -12,6 +12,21 @@ const assetUrl = (path) => {
 };
 window.assetUrl = assetUrl;
 
+// Language-aware UI string lookup. Falls back to English whenever the current
+// language has no entry, an empty string, or the key itself is unknown, so a
+// missing translation can never render blank.
+const t = (key) => {
+    const entry = (window.Strings || {})[key];
+    if (!entry) {
+        console.warn(`[i18n] Unknown string key: ${key}`);
+        return '';
+    }
+    const lang = window.currentLanguage || 'en';
+    const val = entry[lang];
+    return (val === undefined || val === null || val === '') ? entry.en : val;
+};
+window.t = t;
+
 // Language-aware VO audio path helper
 const voUrl = (audioKey) => {
     const lang = window.currentLanguage || 'en';
@@ -621,6 +636,11 @@ const raycaster = new RaycastSystem(app, cameraEntity.camera);
 // Base class for scenes to extend.
 
 class Scene {
+    // Language-aware string lookup for scene-owned UI text. See window.t.
+    t(key) {
+        return t(key);
+    }
+
     constructor(name) {
         this.name = name;
         this.container = null;
@@ -1830,7 +1850,7 @@ class Scene {
             if (isCorrect) {
                 card.style.backgroundColor = 'rgba(76,175,80,0.2)';
                 const confirmMsg = document.createElement('div');
-                confirmMsg.textContent = 'Correct!';
+                confirmMsg.textContent = t('ui.quiz.correct');
                 confirmMsg.style.cssText = `color:#4caf50; font-weight:bold; text-align:center; margin-top:20px;`;
                 card.appendChild(confirmMsg);
 

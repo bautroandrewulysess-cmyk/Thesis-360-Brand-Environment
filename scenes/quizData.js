@@ -1,25 +1,26 @@
 // Pending quiz data for scenes that don't exist yet
+// Strings resolve lazily via t() so the language chosen at runtime wins.
 
 window.PendingQuizzes = {
     harvesting: {
-        question: 'Which coffee cherries are selected during harvesting?',
-        choices: ['Green cherries', 'Yellow cherries', 'Bright red, fully ripe cherries', 'All cherries on the branch'],
+        get question() { return t('quiz.harvesting.question'); },
+        get choices() { return [0, 1, 2, 3].map(i => t(`quiz.harvesting.choice.${i}`)); },
         correct: 2,
-        clue: 'Look closely at the colour of the cherries the pickers reach for.',
-        feedback: 'Correct! Only fully ripe cherries are hand-picked to ensure the highest coffee quality.'
+        get clue() { return t('quiz.harvesting.clue'); },
+        get feedback() { return t('quiz.harvesting.feedback'); }
     },
     backToTheCafe: {
-        question: 'What is the main message behind every cup served at Alegre Café & Roastery?',
-        choices: ['Coffee is simply a beverage.', 'Every cup reflects the care, values, and dedication of the Garces family and their community.', 'Coffee is only about roasting.', 'Great coffee depends only on expensive equipment.'],
+        get question() { return t('quiz.backToTheCafe.question'); },
+        get choices() { return [0, 1, 2, 3].map(i => t(`quiz.backToTheCafe.choice.${i}`)); },
         correct: 1,
-        clue: 'The answer is about people and values, not equipment or a single step in the process.',
-        feedback: 'Correct! Every cup represents the journey from seed to cup, honoring the people, the land, and the passion that made it possible.'
+        get clue() { return t('quiz.backToTheCafe.clue'); },
+        get feedback() { return t('quiz.backToTheCafe.feedback'); }
     },
     finalChallenge: {
-        question: 'Complete the sentence: \'Every cup of coffee begins with...\'',
-        choices: ['A coffee shop', 'A roasting machine', 'A strong foundation, patient care, and dedicated people.', 'A coffee grinder'],
+        get question() { return t('quiz.finalChallenge.question'); },
+        get choices() { return [0, 1, 2, 3].map(i => t(`quiz.finalChallenge.choice.${i}`)); },
         correct: 2,
-        clue: 'Think back to where the journey actually started — before any machine was involved.',
-        feedback: 'Congratulations! You\'ve completed the Coffee Journey. Thank you for exploring the story of Alegre Café & Roastery and discovering how every cup is shaped by the land, the people, and generations of dedication. We hope you\'ll carry this story with you every time you enjoy a cup of coffee. ☕'
+        get clue() { return t('quiz.finalChallenge.clue'); },
+        get feedback() { return t('quiz.finalChallenge.feedback'); }
     }
 };

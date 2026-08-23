@@ -29,8 +29,6 @@ class NurseryScene extends Scene {
             {
                 id: 'back-to-exterior',
                 position: new pc.Vec3(0, 1.6, 1.0),
-                label: 'Walk to the Farm',
-                description: 'Take the path to the coffee farm.',
                 isTransition: true,
                 targetScene: 'street-view',
                 spawnPosition: [0, 1.6, 0]
@@ -38,15 +36,11 @@ class NurseryScene extends Scene {
             {
                 id: 'seedlings',
                 position: new pc.Vec3(1.337, 0.8, 0.459),
-                label: 'Seedlings',
-                description: 'This is where the coffee journey begins. Young plants are nurtured under careful shade and watering conditions before being transplanted to the farm.',
                 isTransition: false
             },
             {
                 id: 'net-shading',
                 position: new pc.Vec3(3.201, 1.9, 0.738),
-                label: 'Net Shading',
-                description: 'Black net shading protects the seedlings from direct sun and helps regulate temperature.',
                 isTransition: false
             }
         ];
@@ -55,12 +49,14 @@ class NurseryScene extends Scene {
         this.isVoFinished = false;
         this.voAudio = null;
         this.quizPassed = false;
+        // Strings resolve lazily via t(): scenes are constructed before the
+        // language is chosen, so eager lookup would freeze them to English.
         this.quiz = {
-            question: 'How long do young coffee seedlings usually stay in polybags before they are ready for planting?',
-            choices: ['1–2 months', '3–4 months', '6–12 months', '2 years'],
+            get question() { return t('nursery.quiz.question'); },
+            get choices() { return [0, 1, 2, 3].map(i => t(`nursery.quiz.choice.${i}`)); },
             correct: 2,
-            clue: 'Longer than a few months — roots need real time to establish before transplanting.',
-            feedback: 'Correct! Seedlings remain in polybags for about six to twelve months, allowing them to develop strong roots before being transplanted.'
+            get clue() { return t('nursery.quiz.clue'); },
+            get feedback() { return t('nursery.quiz.feedback'); }
         };
 
         // Audio system (skipped for now)
@@ -934,7 +930,7 @@ class NurseryScene extends Scene {
             if (hotspot.isTransition) {
                 const label = document.createElement('div');
                 label.className = 'hotspot-label';
-                label.textContent = 'To Farm';
+                label.textContent = this.t('ui.nursery.toFarm');
                 label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
                 document.body.appendChild(label);
                 group.labelElement = label;
@@ -969,8 +965,8 @@ class NurseryScene extends Scene {
             this.dom.popupVideo.play();
             this.dom.videoPopup.classList.add('active');
         } else {
-            document.getElementById('hotspot-title').textContent = hotspot.label;
-            document.getElementById('hotspot-description').textContent = hotspot.description;
+            document.getElementById('hotspot-title').textContent = this.t(`nursery.${hotspot.id}.label`);
+            document.getElementById('hotspot-description').textContent = this.t(`nursery.${hotspot.id}.description`);
             this.dom.hotspotPopup.classList.add('active');
         }
     }

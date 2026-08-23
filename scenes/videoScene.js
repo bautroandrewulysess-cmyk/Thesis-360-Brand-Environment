@@ -189,7 +189,7 @@ class VideoScene extends Scene {
     }
 
     getNavPromptText() {
-        return 'Select Continue to visit the roastery';
+        return this.t('ui.video.roasteryPrompt');
     }
 
     onQuizPassed() {
@@ -228,7 +228,7 @@ class VideoScene extends Scene {
             box-shadow: 0 0 20px rgba(244, 208, 63, 0.5);
             animation: gate-marker-pulse 2s ease-in-out infinite;
         `;
-        this.forwardButton.textContent = 'Continue';
+        this.forwardButton.textContent = this.t('ui.video.continue');
         
         this.forwardButton.addEventListener('mouseenter', () => {
             this.forwardButton.style.background = '#ffffff';

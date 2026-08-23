@@ -34,8 +34,6 @@ class RoasteryScene extends Scene {
             {
                 id: 'back-to-exterior',
                 position: new pc.Vec3(-1.116, 1.600, 1.233),
-                label: 'Exit to Cafe',
-                description: 'Return to the cafe garden.',
                 isTransition: true,
                 targetScene: 'cafe-interior',
                 spawnPosition: [0, 1.6, 0.9]
@@ -43,15 +41,11 @@ class RoasteryScene extends Scene {
             {
                 id: 'roasting-machine',
                 position: new pc.Vec3(0.566, 1.5, -0.740),
-                label: 'Roasting Machine',
-                description: 'The roaster applies controlled heat to green coffee beans, moving them through drying, first crack, and development — the stages that build the sugars, acids, and oils responsible for flavour and aroma. Roast time and temperature are adjusted to draw out each bean\'s best character before cooling and packaging.',
                 isTransition: false
             },
             {
                 id: 'roasting-beans-transition',
                 position: new pc.Vec3(0.566, 1.3, -0.740),
-                label: 'Roasting Beans',
-                description: 'Watch the beans roast',
                 isVideo: true,
                 videoSrc: `${R2_BASE}/Videos/coffeeRoasting.mp4`,
                 isGateMarker: true
@@ -59,8 +53,6 @@ class RoasteryScene extends Scene {
             {
                 id: 'green-bean-packs',
                 position: new pc.Vec3(-0.471, 0.9, 0.389),
-                label: 'Green Bean Packs',
-                description: 'Arabica grows at higher elevations and is known for a smoother, more complex, slightly sweet profile with milder acidity. Robusta is hardier, carries more caffeine, and brings a bolder, more bitter character — often used to add body and crema.',
                 isTransition: false
             }
         ];
@@ -69,12 +61,14 @@ class RoasteryScene extends Scene {
         this.isVoFinished = false;
         this.voAudio = null;
         this.quizPassed = false;
+        // Strings resolve lazily via t(): scenes are constructed before the
+        // language is chosen, so eager lookup would freeze them to English.
         this.quiz = {
-            question: 'What does the \'first crack\' during roasting indicate?',
-            choices: ['The beans are ready to be planted.', 'The beans begin developing their full coffee flavor.', 'The beans have finished cooling.', 'The beans are ready to be brewed immediately.'],
+            get question() { return t('roastery.quiz.question'); },
+            get choices() { return [0, 1, 2, 3].map(i => t(`roastery.quiz.choice.${i}`)); },
             correct: 1,
-            clue: 'First crack happens in the middle of roasting, not at the end — it\'s about flavor developing.',
-            feedback: 'Correct! The first crack signals an important stage where the beans expand and develop the flavors and aromas we associate with coffee.'
+            get clue() { return t('roastery.quiz.clue'); },
+            get feedback() { return t('roastery.quiz.feedback'); }
         };
 
         // Audio system (skipped for now)
@@ -965,7 +959,7 @@ class RoasteryScene extends Scene {
                 if (!group.labelElement) {
                     const label = document.createElement('div');
                     label.className = 'hotspot-label';
-                    label.textContent = hotspot.label;
+                    label.textContent = this.t(`roastery.${hotspot.id}.label`);
                     label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
                     document.body.appendChild(label);
                     group.labelElement = label;
@@ -973,8 +967,8 @@ class RoasteryScene extends Scene {
                     if (hotspot.isGateMarker) {
                         label.style.display = 'block';
                     }
-                    console.warn(`[roastery] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
-                    if (hotspot.label === 'Exit to Cafe') {
+                    console.warn(`[roastery] Created label: "${this.t(`roastery.${hotspot.id}.label`)}" for hotspot "${hotspot.id}"`);
+                    if (hotspot.id === 'back-to-exterior') {
                         console.error(`[roastery] Exit to Cafe label created from:`, new Error().stack);
                     }
                 }
@@ -1180,7 +1174,7 @@ class RoasteryScene extends Scene {
 
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: true,
-                    caption: hotspot.label,
+                    caption: this.t(`roastery.${hotspot.id}.label`),
                     volume: 1.0,
                     duckAmbient: 0.5,
                     onFinish: () => {
@@ -1201,7 +1195,7 @@ class RoasteryScene extends Scene {
             this.pauseAmbient();
             this.showVideoPopup(hotspot.videoSrc, {
                 required: false,
-                caption: hotspot.label,
+                caption: this.t(`roastery.${hotspot.id}.label`),
                 onFinish: () => {
                     this.resumeAmbient();
                 }
@@ -1215,8 +1209,8 @@ class RoasteryScene extends Scene {
             return;
         }
 
-        document.getElementById('hotspot-title').textContent = hotspot.label;
-        document.getElementById('hotspot-description').textContent = hotspot.description;
+        document.getElementById('hotspot-title').textContent = this.t(`roastery.${hotspot.id}.label`);
+        document.getElementById('hotspot-description').textContent = this.t(`roastery.${hotspot.id}.description`);
         this.dom.hotspotPopup.classList.add('active');
     }
 

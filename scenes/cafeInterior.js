@@ -35,26 +35,18 @@ class CafeInteriorScene extends Scene {
             {
                 id: 'yfc-board',
                 position: new pc.Vec3(-1.230, 1.290, -0.880),
-                label: 'YFC Board',
-                description: 'Aside from the owners\' passion in bringing the farm to the cup, they bring the same passion in dedicating their time in building a Christ-centered community. For over ten years, they faithfully serve as Chapter 5 coordinators of the Youth for Christ Pangantucan Chapter, dedicating their time in being committed to touching countless lives through consistent providing leadership, service, guidance and support to the municipalities of Kalilangan, Pangantucan, and Wao. Their continued dedication reflects a life of selfless service, inspiring communities to grow in faith, unity, and love for God.'
             },
             {
                 id: 'finca-logo',
                 position: new pc.Vec3(0.100, 0.990, -0.570),
-                label: 'Finca de Garces Logo',
-                description: 'This was Finca de Garces\' old logo. Owners decided to renew their branding years later to bring a new face to Finca de Garces while preserving the farm\'s roots.'
             },
             {
                 id: 'bar',
                 position: new pc.Vec3(0.140, 1.290, -0.660),
-                label: 'The Bar',
-                description: 'The bar is where specialty coffee is meticulously crafted, served and discussed. Unlike traditional and commercial cafes, this is where the owners showcase the careful process of pouring a cup of specialty coffee while they engage with visitors.'
             },
             {
                 id: 'coffee-brewing',
                 position: new pc.Vec3(0.140, 1.490, -0.660),
-                label: 'Brew Coffee',
-                description: '',
                 isVideo: true,
                 isGateMarker: true,
                 videoSrc: `${R2_BASE}/Videos/brewingVideo.mp4`,
@@ -63,14 +55,11 @@ class CafeInteriorScene extends Scene {
             {
                 id: 'chill-section',
                 position: new pc.Vec3(1.140, 1.060, 0.140),
-                label: 'Chill Section',
-                description: 'The owners always emphasize creating connections. The chill section is where customers can play with games, cards and indulge in books to create conversation and a relaxing atmosphere whilst enjoying a cup of coffee.'
             },
             {
                 id: 'exit-to-exterior',
                 position: new pc.Vec3(0.780, 1.500, 1.610),
                 get label() { return window.journeyComplete ? 'Go Outside' : 'To Nursery'; },
-                description: 'Click to step outside the cafe.',
                 isTransition: true,
                 get targetScene() { return window.journeyComplete ? 'cafe-exterior' : 'nursery'; },
                 spawnPosition: [0, 1.6, 0]
@@ -88,17 +77,14 @@ class CafeInteriorScene extends Scene {
 
         this.isReturnVisit = false;
         this.quizPassed = false;
+        // Strings resolve lazily via t(): scenes are constructed before the
+        // language is chosen, so eager lookup would freeze them to English.
         this.quiz = {
-            question: 'What was the original purpose of opening Alegre Café & Roastery?',
-            choices: [
-                'To become the largest coffee exporter in the region.',
-                'To create a place where people could gather, share stories, and enjoy coffee grown on the family\'s farm.',
-                'To sell imported specialty coffee.',
-                'To promote tourism in Pangantucan.'
-            ],
+            get question() { return t('cafe.quiz.question'); },
+            get choices() { return [0, 1, 2, 3].map(i => t(`cafe.quiz.choice.${i}`)); },
             correct: 1,
-            clue: 'Think about why the family opened the café — it wasn\'t about scale or selling someone else\'s beans.',
-            feedback: 'Correct! Alegre Café & Roastery was created as a place where people can connect through coffee while learning the story behind every cup.'
+            get clue() { return t('cafe.quiz.clue'); },
+            get feedback() { return t('cafe.quiz.feedback'); }
         };
 
         // Collision boxes traced with the editor tool (position, size, Y rotation in degrees)
@@ -1025,11 +1011,11 @@ class CafeInteriorScene extends Scene {
                 if (!group.labelElement) {
                     const label = document.createElement('div');
                     label.className = 'hotspot-label';
-                    label.textContent = hotspot.label;
+                    label.textContent = this.t(`cafe.${hotspot.id}.label`);
                     label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
                     document.body.appendChild(label);
                     group.labelElement = label;
-                    console.warn(`[cafeInterior] Created label: "${hotspot.label}" for hotspot "${hotspot.id}"`);
+                    console.warn(`[cafeInterior] Created label: "${this.t(`cafe.${hotspot.id}.label`)}" for hotspot "${hotspot.id}"`);
                 }
             }
         });
@@ -1127,7 +1113,7 @@ class CafeInteriorScene extends Scene {
                 this.pauseAmbient();
                 this.showVideoPopup(hotspot.videoSrc, {
                     required: true,
-                    caption: hotspot.label,
+                    caption: this.t(`cafe.${hotspot.id}.label`),
                     volume: 1.0,
                     onFinish: () => {
                         this.resumeAmbient();
@@ -1146,7 +1132,7 @@ class CafeInteriorScene extends Scene {
             this.pauseAmbient();
             this.showVideoPopup(hotspot.videoSrc, {
                 required: false,
-                caption: hotspot.label,
+                caption: this.t(`cafe.${hotspot.id}.label`),
                 onFinish: () => {
                     this.resumeAmbient();
                 }
@@ -1162,8 +1148,8 @@ class CafeInteriorScene extends Scene {
 
         const hotspotTitle = document.getElementById('hotspot-title');
         const hotspotDescription = document.getElementById('hotspot-description');
-        if (hotspotTitle) hotspotTitle.textContent = hotspot.label;
-        if (hotspotDescription) hotspotDescription.textContent = hotspot.description;
+        if (hotspotTitle) hotspotTitle.textContent = this.t(`cafe.${hotspot.id}.label`);
+        if (hotspotDescription) hotspotDescription.textContent = this.t(`cafe.${hotspot.id}.description`);
         if (this.dom.hotspotPopup) this.dom.hotspotPopup.classList.add('active');
     }
 

@@ -29,16 +29,12 @@ class CafeExteriorScene extends Scene {
             {
                 id: 'enter-interior',
                 position: new pc.Vec3(0, 1.6, 1.0),
-                label: 'Enter Cafe',
-                description: 'Click to go inside.',
                 isTransition: true,
                 targetScene: 'cafe-interior'
             },
             {
                 id: 'to-roastery',
                 position: new pc.Vec3(-3.42, 1.14, 5.26),
-                label: 'Enter the Roastery',
-                description: 'Step inside and see where the coffee is roasted.',
                 isTransition: true,
                 targetScene: 'roastery',
                 spawnPosition: [-0.7, 1.6, 0.8]
@@ -46,8 +42,6 @@ class CafeExteriorScene extends Scene {
             {
                 id: 'to-nursery',
                 position: new pc.Vec3(-2.374, 1.600, -1.254),
-                label: 'Enter the Nursery',
-                description: 'Visit the coffee seedling nursery.',
                 isTransition: true,
                 targetScene: 'nursery',
                 spawnPosition: [0, 1.6, 0]
@@ -55,8 +49,6 @@ class CafeExteriorScene extends Scene {
             {
                 id: 'walk-to-farm',
                 position: new pc.Vec3(-2.0, 1.6, -1.4),
-                label: 'Walk to the Farm',
-                description: 'Take the path from the cafe to the coffee farm.',
                 isTransition: true,
                 targetScene: 'street-view'
             }
@@ -998,8 +990,8 @@ class CafeExteriorScene extends Scene {
             this.dom.popupVideo.play();
             this.dom.videoPopup.classList.add('active');
         } else {
-            document.getElementById('hotspot-title').textContent = hotspot.label;
-            document.getElementById('hotspot-description').textContent = hotspot.description;
+            document.getElementById('hotspot-title').textContent = this.t(`cafeExterior.${hotspot.id}.label`);
+            document.getElementById('hotspot-description').textContent = this.t(`cafeExterior.${hotspot.id}.description`);
             this.dom.hotspotPopup.classList.add('active');
         }
     }
