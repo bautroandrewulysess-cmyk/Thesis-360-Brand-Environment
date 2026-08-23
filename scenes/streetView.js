@@ -81,6 +81,23 @@ class StreetViewScene extends Scene {
         this.farmCloseupViewed = false;
         this.farmCloseupClickInProgress = false;
 
+        // ---------------------------------------------------------------------
+        // WARNING: `label` below is LOAD-BEARING CONTROL FLOW, not display text.
+        // Nothing ever renders these strings to the player — the arrows are flat
+        // untextured discs. The label IS the discriminator, read by .includes('Back')
+        // and === comparisons at lines 460, 476, 492, 668, 670, 672, 673, 710, 888, 988.
+        // Those reads pick arrow material colour (green forward / white back) and
+        // drive forward/back arrow selection and the toFarm14 / farm1-1 gates.
+        //
+        // DO NOT translate, localise, or rename these. Under a non-English language
+        // 'Balik' does not contain 'Back', so every back arrow would render green as
+        // a forward arrow and the gates would silently stop firing. This is why they
+        // are deliberately absent from scenes/strings.js.
+        //
+        // To make an arrow label visible to players, add a separate display field
+        // (e.g. labelKey: 'ui.arrow.goBack') and a language-neutral discriminator
+        // (e.g. kind: 'back') — leave `label` itself alone.
+        // ---------------------------------------------------------------------
         // Position graph: 31 total positions
         this.positions = {
             // === Cafe → Farm main walk (14 positions) ===

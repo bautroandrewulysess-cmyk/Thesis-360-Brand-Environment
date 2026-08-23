@@ -1,7 +1,13 @@
 // Central UI string table. One entry per user-visible string.
 // Read through Scene.prototype.t(key) / window.t(key) — never index this directly.
 // 'bis' values are intentionally empty; t() falls back to 'en' until they are filled.
-// streetView arrow labels are deliberately NOT here (see commit notes).
+// streetView arrow labels are deliberately NOT here, and must never be added:
+// they are control-flow identifiers, not display text. Nothing renders them to
+// the player (those arrows are flat untextured discs) — the string itself is the
+// discriminator, read via .includes('Back') and === comparisons to pick arrow
+// material colour and drive forward/back selection. Translating them would break
+// navigation for zero visible benefit. See the warning above this.positions in
+// scenes/streetView.js.
 
 window.Strings = {
     'cafe.yfc-board.label': { en: 'YFC Board', bis: 'YFC Board' },
