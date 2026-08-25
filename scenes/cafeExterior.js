@@ -1112,6 +1112,8 @@ class CafeExteriorScene extends Scene {
                 this.splatAsset = null;
             }
 
+            this.stopVo();
+
             // Destroy hotspot entities and labels
             this.hotspotEntities.forEach(group => { if (group) { if (group.labelElement) group.labelElement.remove(); this.unregisterInteractiveObject(group); group.destroy(); } });
             this.hotspotEntities = [];

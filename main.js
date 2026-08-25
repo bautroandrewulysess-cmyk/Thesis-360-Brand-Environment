@@ -2,7 +2,7 @@
 // CORE PLAYCANVAS SETUP
 // ============================================================================
 
-const R2_BASE = 'https://assets.granjaalegre.com';
+const R2_BASE = 'http://localhost:8899/r2';
 const SUBTITLE_VERSION = 3;
 window.R2_BASE = R2_BASE;
 
@@ -714,6 +714,7 @@ class Scene {
         this.interactiveObjects = [];
         this.registeredWithRaycaster = new Set(); // Track all raycaster registrations
         this.voWarningTimer = null;
+        this.voSafetyTimeoutHandle = null; // armed inside playVoWithSubtitles; cancelled by stopVo()
         this.quizTriggered = false;
         this.videoPending = false;
         this.storedAmbientGain = null;
@@ -737,6 +738,11 @@ class Scene {
         this.quizTriggered = false;
         this.voSequenceIndex = 0;
         this.voSceneKey = null;
+        // Safety net: a scene must never start with a stale running flag, whatever
+        // happened on the way out last time.
+        this.voSequenceRunning = false;
+        this.voGateType = null;
+        this.isVoFinished = false;
 
         // Register dev VO shortcuts
         if (window.DEV_MODE) {
@@ -753,7 +759,23 @@ class Scene {
         this.hideNavPrompt();
         this.despawnGateMarker();
         this.hideMiniQuiz();
+        this.hideQuiz(true);
         this.setClue(null);
+
+        // Cancel this scene's VO sequence state. Leaving mid-segment means playVoSequence
+        // never reaches its finally, so voSequenceRunning would stay true forever and the
+        // `if (this.voSequenceRunning) return;` guard would silently mute this scene's VO
+        // on every later visit.
+        this.voSequenceRunning = false;
+        this.voGateType = null;
+        this.isVoFinished = false;
+
+        // Backstop: cafeExterior aside, every scene calls stopVo() itself, but an unload
+        // path that skips it must still not leave an armed timer behind.
+        if (this.voSafetyTimeoutHandle) {
+            clearTimeout(this.voSafetyTimeoutHandle);
+            this.voSafetyTimeoutHandle = null;
+        }
 
         // Remove clue bar element so it cannot leak into video scenes
         const clueBar = document.getElementById('clue-bar');
@@ -1107,6 +1129,13 @@ class Scene {
             });
 
             const triggerQuiz = (path) => {
+                // Belt-and-braces for any in-flight callback that outlived its scene.
+                // A null activeScene means a load is in progress, so only bail when a
+                // *different* scene is demonstrably active.
+                if (sceneManager.activeScene && sceneManager.activeScene !== this) {
+                    console.warn(`[VO] Ignoring quiz trigger via ${path} — ${this.name} is no longer the active scene`);
+                    return;
+                }
                 const requiresEnded = path === 'ended';
                 const audioEndedCheck = requiresEnded ? audio.ended === true : true;
                 if (this.quiz && !window.journeyComplete && !this.quizTriggered && this.isVoFinished === true && audioEndedCheck) {
@@ -1181,7 +1210,7 @@ class Scene {
                 timeoutArmed = true;
                 if (safetyTimeoutHandle) clearTimeout(safetyTimeoutHandle);
                 const remainingTime = (audio.duration - audio.currentTime) * 1000 + 2000;
-                safetyTimeoutHandle = setTimeout(() => {
+                safetyTimeoutHandle = this.voSafetyTimeoutHandle = setTimeout(() => {
                     if (!audio.paused && audio.currentTime < audio.duration - 1) {
                         console.warn('[VO] Safety timeout fired but audio still playing, re-arming');
                         timeoutArmed = false;
@@ -1206,6 +1235,14 @@ class Scene {
     }
 
     stopVo() {
+        // Cancel the armed safety timeout first. It is a bare setTimeout closure that
+        // nothing else clears, so after a scene change it would fire against the stale
+        // scene and trigger a quiz or spawn a gate marker into whatever scene is active
+        // by then. Runs outside the voAudio guard so it is cancelled either way.
+        if (this.voSafetyTimeoutHandle) {
+            clearTimeout(this.voSafetyTimeoutHandle);
+            this.voSafetyTimeoutHandle = null;
+        }
         if (this.voAudio) {
             this.voAudio.pause();
             const textTracks = this.voAudio.textTracks;
@@ -1373,22 +1410,29 @@ class Scene {
         }, 50);
     }
 
-    hideQuiz() {
+    // immediate=true tears the overlay down synchronously instead of after the 800ms
+    // fade. Scene unload uses it so the quiz cannot linger into the next scene.
+    hideQuiz(immediate = false) {
         const overlay = document.getElementById('quiz-overlay');
         const choicesEl = document.getElementById('quiz-choices');
         const feedbackEl = document.getElementById('quiz-feedback');
 
-        if (DEV_MODE) {
+        if (!overlay) return;
+
+        if (DEV_MODE && !immediate) {
             console.log(`[quiz] hideQuiz() called — THIS SHOULD NOT BE CALLED DURING A QUIZ SET`);
             console.trace();
         }
-        overlay.style.opacity = '0';
-        setTimeout(() => {
+        const clear = () => {
             overlay.style.display = 'none';
-            choicesEl.innerHTML = '';
-            feedbackEl.textContent = '';
-            feedbackEl.style.color = '#f4f4f4';
-        }, 800);
+            if (choicesEl) choicesEl.innerHTML = '';
+            if (feedbackEl) {
+                feedbackEl.textContent = '';
+                feedbackEl.style.color = '#f4f4f4';
+            }
+        };
+        overlay.style.opacity = '0';
+        if (immediate) clear(); else setTimeout(clear, 800);
     }
 
     registerInteractiveObject(entity, callback, radius = 0.15) {
@@ -1633,6 +1677,12 @@ class Scene {
     // closure inside playVoWithSubtitles so a skipped sting still opens the quiz its gate
     // was responsible for, instead of leaving the scene without a quiz.
     triggerQuizDirect(audioKey) {
+        // Same stale-scene guard as the triggerQuiz closure: never open a quiz for a
+        // scene the player has already left.
+        if (sceneManager.activeScene && sceneManager.activeScene !== this) {
+            console.warn(`[VO] Ignoring direct quiz trigger (${audioKey}) — ${this.name} is no longer the active scene`);
+            return;
+        }
         if (!this.quiz || window.journeyComplete || this.quizTriggered) return;
         this.quizTriggered = true;
         console.warn(`[VO] Quiz triggered directly (segment ${audioKey} skipped)`);
@@ -1754,6 +1804,12 @@ class Scene {
     }
 
     spawnGateMarker(gate) {
+        // Belt-and-braces: never spawn a marker for a scene the player has already left.
+        if (sceneManager.activeScene && sceneManager.activeScene !== this) {
+            console.warn(`[Gate] Ignoring marker spawn (${gate?.ref}) — ${this.name} is no longer the active scene`);
+            return;
+        }
+
         // Clean up any existing marker
         this.despawnGateMarker();
 
@@ -1803,10 +1859,11 @@ class Scene {
     }
 
     despawnGateMarker() {
-        if (this.gateMarkerButton && this.gateMarkerButton.parentNode) {
-            this.gateMarkerButton.parentNode.removeChild(this.gateMarkerButton);
-            this.gateMarkerButton = null;
-        }
+        // Sweep every marker in the DOM by class, not just this scene's reference: an
+        // orphan spawned by a dead scene has no live reference anyone can clear, which
+        // is what left a stranded marker on screen after a scene change.
+        document.querySelectorAll('.gate-marker-button').forEach(el => el.remove());
+        this.gateMarkerButton = null;
     }
 
     onGateMarkerClick(gate) {
