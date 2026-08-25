@@ -2,7 +2,7 @@
 // CORE PLAYCANVAS SETUP
 // ============================================================================
 
-const R2_BASE = 'http://localhost:8899/r2';
+const R2_BASE = 'https://assets.granjaalegre.com';
 const SUBTITLE_VERSION = 3;
 window.R2_BASE = R2_BASE;
 
