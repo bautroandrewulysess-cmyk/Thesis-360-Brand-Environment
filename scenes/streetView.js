@@ -924,7 +924,7 @@ class StreetViewScene extends Scene {
             this.toFarm14FirstArrival = false;
             const required = !window.journeyComplete;
             console.warn('[FarmerInterview] showVideoPopup called, required:', required);
-            const videoSrc = assetUrl('Videos/farmerInterview.mp4');
+            const videoSrc = videoUrl('farmerInterview.mp4');
             console.warn('[FarmerInterview] video src:', videoSrc);
             if (required) {
                 this.isInputLocked = true;
@@ -1013,7 +1013,7 @@ class StreetViewScene extends Scene {
                 // Preload farmer interview video at start of toFarm chain
                 if (!window.farmerInterviewPreloaded) {
                     window.farmerInterviewPreloaded = true;
-                    fetch(assetUrl('Videos/farmerInterview.mp4'), { mode: 'no-cors' }).catch(() => {});
+                    fetch(videoUrl('farmerInterview.mp4'), { mode: 'no-cors' }).catch(() => {});
                 }
                 this.playVoWithSubtitles('journeyToFarm_en_02', false);
             } else if (positionKey === 'toFarm7') {
@@ -1546,7 +1546,7 @@ class StreetViewScene extends Scene {
             this.isVoFinished = false;
             this.playVoWithSubtitles('journeyToFarm_en_02', false);
             // Preload farmerInterview video for toFarm14 so it plays immediately
-            this.preloadVideo(assetUrl('Videos/farmerInterview.mp4'));
+            this.preloadVideo(videoUrl('farmerInterview.mp4'));
         }
     }
 

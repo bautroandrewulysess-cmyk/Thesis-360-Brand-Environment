@@ -1935,8 +1935,8 @@ class Scene {
                 const videoMap = {
                     roasterVideo: videoUrl('coffeeRoasting.mp4'),
                     brewingPOV: videoUrl('brewingVideo.mp4'),
-                    ownerInterview: assetUrl('Videos/ownerInterview.mp4'),
-                    farmerInterview: assetUrl('Videos/farmerInterview.mp4')
+                    ownerInterview: videoUrl('ownerInterview.mp4'),
+                    farmerInterview: videoUrl('farmerInterview.mp4')
                 };
                     const videoSrc = videoMap[gate.ref];
                 const subtitleMap = {};

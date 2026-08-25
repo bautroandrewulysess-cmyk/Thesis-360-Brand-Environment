@@ -1260,7 +1260,7 @@ class CafeInteriorScene extends Scene {
                 }
                 if (!window.ownerInterviewPreloaded) {
                     window.ownerInterviewPreloaded = true;
-                    fetch(`${R2_BASE}/Videos/ownerInterview.mp4`, { mode: 'no-cors' }).catch(() => {});
+                    fetch(videoUrl('ownerInterview.mp4'), { mode: 'no-cors' }).catch(() => {});
                 }
             }
 

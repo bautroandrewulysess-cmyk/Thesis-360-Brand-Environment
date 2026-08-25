@@ -7,7 +7,13 @@
 class VideoScene extends Scene {
     constructor({ name, videoSrc, audioKey, quizKey, nextScene, nextSpawn, suppressSubtitles }) {
         super(name);
-        this.videoSrc = videoSrc;
+        // videoSrc may be a function so the URL resolves at read time, after the player
+        // has chosen a language. A plain string is still accepted unchanged.
+        if (typeof videoSrc === 'function') {
+            Object.defineProperty(this, 'videoSrc', { get: videoSrc, configurable: true });
+        } else {
+            this.videoSrc = videoSrc;
+        }
         this.audioKey = audioKey;
         this.quizKey = quizKey;
         this.nextScene = nextScene;
@@ -279,7 +285,7 @@ class VideoScene extends Scene {
 // Register harvesting scene
 sceneManager.registerScene('harvesting', new VideoScene({
     name: 'harvesting',
-    videoSrc: `${R2_BASE}/Videos/harvestingWeb.mp4`,
+    videoSrc: () => videoUrl('harvestingWeb.mp4'),
     audioKey: 'harvesting',
     quizKey: 'harvesting',
     nextScene: 'roastery',
