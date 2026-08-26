@@ -103,6 +103,15 @@ window.Strings = {
     'ui.clue.left': { en: 'Look to your left', bis: 'Tan-aw sa imong wala' },
     'ui.clue.behind': { en: 'Turn around — it\'s behind you', bis: 'Lingi — naa sa imong likod' },
 
+    // Loading-screen journey progress labels, in narrative order.
+    'ui.progress.cafeInterior': { en: 'Cafe', bis: '' },
+    'ui.progress.nursery': { en: 'Nursery', bis: '' },
+    'ui.progress.journeyToFarm': { en: 'To the Farm', bis: '' },
+    'ui.progress.farm': { en: 'Farm', bis: '' },
+    'ui.progress.harvesting': { en: 'Harvest', bis: '' },
+    'ui.progress.roastery': { en: 'Roastery', bis: '' },
+    'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: '' },
+
     // Farm close-up hunt hints. Shown while the golden disc at farm1-4 is unfound;
     // keyed by the player's current position. Display text, unrelated to arrow labels.
     'ui.farm.hint.farm1-1': { en: 'Keep heading forward.', bis: 'Padayon lang sa pag-adto sa unahan.' },

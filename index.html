@@ -369,6 +369,70 @@
             letter-spacing: 2px;
         }
 
+        /* Journey progress track: one node per narrative step, joined by lines.
+           Purely decorative — hidden entirely in free-roam. */
+        #journey-progress {
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            margin-top: 8px;
+            padding: 0 16px;
+            font-family: 'Inter', sans-serif;
+            max-width: 100%;
+        }
+        #journey-progress.visible { display: flex; }
+
+        .jp-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 0 0 auto;
+            width: 92px;
+        }
+        .jp-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(244, 244, 244, 0.22);
+            border: 1px solid rgba(244, 244, 244, 0.3);
+            box-sizing: border-box;
+            transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        .jp-label {
+            margin-top: 8px;
+            font-size: 0.62rem;
+            letter-spacing: 0.4px;
+            text-align: center;
+            line-height: 1.3;
+            color: rgba(244, 244, 244, 0.35);
+            transition: color 0.4s ease;
+        }
+        .jp-link {
+            flex: 1 1 auto;
+            height: 1px;
+            min-width: 12px;
+            margin-top: 5px;
+            background: rgba(244, 244, 244, 0.22);
+            transition: background 0.4s ease;
+        }
+
+        .jp-step.done .jp-dot,
+        .jp-step.current .jp-dot {
+            background: #f4d03f;
+            border-color: #f4d03f;
+        }
+        .jp-step.current .jp-dot {
+            box-shadow: 0 0 10px rgba(244, 208, 63, 0.6);
+        }
+        .jp-step.done .jp-label { color: rgba(244, 208, 63, 0.7); }
+        .jp-step.current .jp-label { color: #f4d03f; }
+        .jp-link.done { background: #f4d03f; }
+
+        @media (max-width: 760px) {
+            .jp-step { width: 46px; }
+            .jp-label { display: none; }
+        }
+
         #fade-overlay {
             position: fixed;
             inset: 0;
@@ -635,6 +699,7 @@
         </svg>
         <div class="loading-text">LOADING</div>
         <div style="margin-top:16px; font-size:0.75rem; opacity:0.5; color:#f4f4f4; font-family:'Inter',sans-serif; letter-spacing:0.5px;">Loading scene — first load may take a moment on slower connections</div>
+        <div id="journey-progress" aria-hidden="true"></div>
         <div id="loading-trivia-text" style="margin-top:16px; font-size:0.9rem; opacity:0.8; color:#f4f4f4; font-family:'Inter',sans-serif; max-width:480px; text-align:center; line-height:1.6; transition:opacity 0.4s ease;"></div>
     </div>
 
@@ -758,16 +823,16 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=16"></script>
-    <script src="./scenes/voData.js?v=16"></script>
-    <script src="./main.js?v=16"></script>
-    <script src="./scenes/quizData.js?v=16"></script>
-    <script src="./scenes/videoScene.js?v=16"></script>
-    <script src="./scenes/cafeInterior.js?v=16"></script>
-    <script src="./scenes/cafeExterior.js?v=16"></script>
-    <script src="./scenes/roastery.js?v=16"></script>
-    <script src="./scenes/nursery.js?v=16"></script>
-    <script src="./scenes/streetView.js?v=16"></script>
+    <script src="./scenes/strings.js?v=17"></script>
+    <script src="./scenes/voData.js?v=17"></script>
+    <script src="./main.js?v=17"></script>
+    <script src="./scenes/quizData.js?v=17"></script>
+    <script src="./scenes/videoScene.js?v=17"></script>
+    <script src="./scenes/cafeInterior.js?v=17"></script>
+    <script src="./scenes/cafeExterior.js?v=17"></script>
+    <script src="./scenes/roastery.js?v=17"></script>
+    <script src="./scenes/nursery.js?v=17"></script>
+    <script src="./scenes/streetView.js?v=17"></script>
 
     <script>
         const cursorCup = document.querySelector('.cursor-cup');

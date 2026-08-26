@@ -557,7 +557,65 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
     });
 }
 
+// Journey progress for the loading screen. Narrative order, which is not the same as
+// the scene list: 'street-view' covers two steps (the walk out and the farm itself) and
+// 'cafe-interior' is both the first and last step. Index is therefore tracked as a
+// monotonic counter rather than derived from the scene name alone — a second
+// cafe-interior load is 'Back to the Cafe', not a return to step 0.
+const JOURNEY_STEPS = [
+    { key: 'cafeInterior',  scene: 'cafe-interior' },
+    { key: 'nursery',       scene: 'nursery' },
+    { key: 'journeyToFarm', scene: 'street-view' },
+    { key: 'farm',          scene: null },   // same scene as the step above, no load screen of its own
+    { key: 'harvesting',    scene: 'harvesting' },
+    { key: 'roastery',      scene: 'roastery' },
+    { key: 'backToCafe',    scene: 'cafe-interior' }
+];
+let journeyProgressStep = -1;
+
+// Advance to the earliest step matching this scene that we have not already passed,
+// then paint. Scenes outside the narrative (cafe-exterior) leave the track untouched.
+function updateJourneyProgress(targetScene) {
+    const el = document.getElementById('journey-progress');
+    if (!el) return;
+
+    if (window.journeyComplete) {           // free roam: no journey to show
+        el.classList.remove('visible');
+        el.innerHTML = '';
+        return;
+    }
+
+    const next = JOURNEY_STEPS.findIndex((s, i) => s.scene === targetScene && i > journeyProgressStep);
+    if (next !== -1) journeyProgressStep = next;
+    if (journeyProgressStep < 0) {
+        el.classList.remove('visible');
+        return;
+    }
+
+    el.innerHTML = '';
+    JOURNEY_STEPS.forEach((step, i) => {
+        if (i > 0) {
+            const link = document.createElement('div');
+            link.className = 'jp-link' + (i <= journeyProgressStep ? ' done' : '');
+            el.appendChild(link);
+        }
+        const wrap = document.createElement('div');
+        wrap.className = 'jp-step' + (i < journeyProgressStep ? ' done' : i === journeyProgressStep ? ' current' : '');
+        const dot = document.createElement('div');
+        dot.className = 'jp-dot';
+        wrap.appendChild(dot);
+        const label = document.createElement('div');
+        label.className = 'jp-label';
+        label.textContent = t(`ui.progress.${step.key}`);
+        wrap.appendChild(label);
+        el.appendChild(wrap);
+    });
+    el.classList.add('visible');
+}
+window.updateJourneyProgress = updateJourneyProgress;
+
 function showLoadingTrivia(targetScene) {
+    updateJourneyProgress(targetScene);
     const triviaEl = document.getElementById('loading-trivia-text');
     if (!triviaEl) return;
 
@@ -1109,6 +1167,12 @@ class Scene {
             const cuechangeHandler = () => {
                 const subtitleBar = document.getElementById('subtitle-bar');
                 if (!subtitleBar) return;
+                // Scenes whose video has subtitles burned into the picture set
+                // suppressSubtitles so the overlay does not double up on them.
+                if (this.suppressSubtitles) {
+                    subtitleBar.style.display = 'none';
+                    return;
+                }
                 if (textTrack.activeCues && textTrack.activeCues.length > 0) {
                     subtitleBar.textContent = textTrack.activeCues[0].text;
                     subtitleBar.style.display = 'block';

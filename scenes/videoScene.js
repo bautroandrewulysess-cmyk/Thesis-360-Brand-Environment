@@ -112,76 +112,14 @@ class VideoScene extends Scene {
     }
 
     playVoWithSubtitles(audioKey, isQuizEligible = false) {
-        // Override to suppress subtitles if suppressSubtitles flag is set
+        // suppressSubtitles is honoured inside the shared Scene.playVoWithSubtitles
+        // (it keeps #subtitle-bar hidden), so this scene needs no separate VO path.
+        // It previously had one, which also skipped the scene's quiz entirely.
         if (this.suppressSubtitles) {
-            // Hide subtitle bar and play audio without VTT track
             const subtitleBar = document.getElementById('subtitle-bar');
             if (subtitleBar) subtitleBar.style.display = 'none';
-
-            this.stopVo();
-
-            const lang = window.currentLanguage || 'en';
-            let audioPath = voUrl(audioKey);
-            const fallbackAudioPath = assetUrl(`VO/${audioKey}.mp3`);
-            const audio = document.createElement('audio');
-            audio.crossOrigin = 'anonymous';
-            audio.src = audioPath;
-            audio.preload = 'auto';
-            audio.hidden = true;
-
-            document.body.appendChild(audio);
-            this.voAudio = audio;
-
-            const triggerQuiz = () => {
-                if (this.quiz && !window.journeyComplete && !this.quizTriggered) {
-                    this.quizTriggered = true;
-                    const hookMethod = this[`onVoFinished_${audioKey}`];
-                    if (typeof hookMethod === 'function') {
-                        hookMethod.call(this);
-                    } else {
-                        this.onQuizPassed();
-                    }
-                }
-            };
-
-            audio.addEventListener('ended', () => {
-                console.log('[VideoScene] VO ended');
-                triggerQuiz();
-            }, { once: true });
-
-            let audioFallbackAttempted = false;
-            audio.addEventListener('error', (e) => {
-                if (lang !== 'en' && !audioFallbackAttempted) {
-                    audioFallbackAttempted = true;
-                    console.warn(`[VO] Audio load failed for ${audioPath}, retrying with English`);
-                    audio.src = fallbackAudioPath;
-                    audio.load();
-                    setTimeout(() => {
-                        audio.play().catch(err => {
-                            // Both languages missing: advance anyway, a stalled
-                            // scene is worse than a silent one.
-                            console.error(`[VO] Fallback audio also failed for ${audioKey}:`, err);
-                            triggerQuiz();
-                        });
-                    }, 100);
-                } else {
-                    console.error(`[VO] Audio load failed for ${audioPath}:`, e);
-                    triggerQuiz();
-                }
-            });
-
-            audio.play().catch(e => {
-                // A language fallback swap rejects this pending promise; the error
-                // handler owns the retry.
-                if (audioFallbackAttempted) return;
-                console.warn('[VO] Autoplay blocked:', e);
-            });
-
-            this.voAudioEndedHandler = triggerQuiz;
-            return Promise.resolve();
         }
 
-        // Otherwise use parent class implementation, passing through isQuizEligible
         return super.playVoWithSubtitles(audioKey, isQuizEligible);
     }
 
@@ -288,6 +226,9 @@ sceneManager.registerScene('harvesting', new VideoScene({
     videoSrc: () => videoUrl('harvestingWeb.mp4'),
     audioKey: 'harvesting',
     quizKey: 'harvesting',
+    // The harvesting footage has subtitles burned into the picture in both
+    // languages, so the overlay would render a second copy on top.
+    suppressSubtitles: true,
     nextScene: 'roastery',
     nextSpawn: [0, 1.6, 0]
 }));
