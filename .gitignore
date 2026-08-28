@@ -6,3 +6,5 @@ Proj File Video/
 extras/
 
 .playwright-mcp/
+
+test/.asset-cache/
