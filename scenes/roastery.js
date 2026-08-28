@@ -968,9 +968,6 @@ class RoasteryScene extends Scene {
                         label.style.display = 'block';
                     }
                     console.warn(`[roastery] Created label: "${this.t(`roastery.${hotspot.id}.label`)}" for hotspot "${hotspot.id}"`);
-                    if (hotspot.id === 'back-to-exterior') {
-                        console.error(`[roastery] Exit to Cafe label created from:`, new Error().stack);
-                    }
                 }
             }
         });
