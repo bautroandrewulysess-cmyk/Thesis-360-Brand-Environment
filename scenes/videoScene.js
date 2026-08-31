@@ -13,6 +13,15 @@
 const VIDEO_SCENE_FALLBACK_GRACE_MS = 30000;
 const VIDEO_SCENE_FALLBACK_UNKNOWN_MS = 90000;
 
+// The harvesting picture carries burned-in subtitles while the narration plays from
+// a separate mp3, so the two must share one start point or the subtitles drift out of
+// step with the voice. Playback is held until the loading screen clears and the VO is
+// then started from the video's own 'playing' event, so picture and voice begin
+// together and both are visible. This timeout is measured from that same moment — it
+// is the escape hatch for a video that never starts (failed load, blocked autoplay),
+// so the scene is never left silent with its quiz unreachable.
+const VIDEO_SCENE_VO_START_FALLBACK_MS = 5000;
+
 class VideoScene extends Scene {
     constructor({ name, videoSrc, audioKey, quizKey, nextScene, nextSpawn, suppressSubtitles }) {
         super(name);
@@ -36,10 +45,15 @@ class VideoScene extends Scene {
         this.forwardButton = null;
         this.sceneLoadTime = null;
         this.fallbackTimeoutHandle = null;
+        this.voStarted = false;
+        this.voStartFallbackHandle = null;
+        this.videoPlaybackStarted = false;
     }
 
     async onLoad() {
         await super.onLoad();
+        this.voStarted = false;
+        this.videoPlaybackStarted = false;
 
         try {
             document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
@@ -68,14 +82,11 @@ class VideoScene extends Scene {
 
             if (this.videoSrc) {
                 this.videoElement.src = this.videoSrc;
-                // Delay video playback by 1 second for harvest scene
+                // Harvesting holds playback until the loading screen clears, so the
+                // picture does not run on unseen ahead of the narration. Started from
+                // startVideoPlayback, not here.
                 if (this.name === 'harvesting') {
                     this.sceneLoadTime = Date.now();
-                    setTimeout(() => {
-                        this.videoElement.play().catch(() => {
-                            // Autoplay may fail; video will start on first user interaction
-                        });
-                    }, 1000);
                 } else {
                     this.videoElement.play().catch(() => {
                         // Autoplay may fail; video will start on first user interaction
@@ -91,9 +102,17 @@ class VideoScene extends Scene {
                 await this.initAmbient(assetUrl('Music/farmAmbienceSound.mp3'), 0.3);
             }
 
-            // Start VO + subtitles (auto-triggers quiz on end)
-            // For harvesting, defer VO until loading screen dismisses
-            if (this.audioKey && this.audioKey !== 'harvesting') {
+            // Start VO + subtitles (auto-triggers quiz on end).
+            // Harvesting instead starts its VO from the video's first frame, so the
+            // narration lines up with the subtitles burned into the picture.
+            if (this.audioKey === 'harvesting') {
+                this.bindVoToVideoStart();
+                // The dismissal may already have happened — a free-roam revisit or a
+                // fast load leaves no event still to come.
+                if (!this.isLoadingScreenVisible()) {
+                    this.startVideoPlayback('loading screen already dismissed');
+                }
+            } else if (this.audioKey) {
                 await this.playVoWithSubtitles(this.audioKey);
             }
 
@@ -161,12 +180,71 @@ class VideoScene extends Scene {
         }, delayMs);
     }
 
+    // Single entry point for starting the narration. The video is loop=true and
+    // outruns the VO in both languages (en 82.8s vs 65.0s, bis 107.6s vs 98.4s), so
+    // 'playing' fires again on every loop — this must only ever run once.
+    startVoOnce(why) {
+        if (this.voStarted) return;
+        this.voStarted = true;
+        if (this.voStartFallbackHandle) {
+            clearTimeout(this.voStartFallbackHandle);
+            this.voStartFallbackHandle = null;
+        }
+        console.log(`[VideoScene] Starting VO (${why})`);
+        this.playVoSequence(this.audioKey).catch(e => {
+            console.error('[VideoScene] Failed to play VO sequence:', e);
+        });
+    }
+
+    bindVoToVideoStart() {
+        const video = this.videoElement;
+        if (!video) {
+            this.startVoOnce('no video element');
+            return;
+        }
+
+        video.addEventListener('playing', () => this.startVoOnce('video playing'), { once: true });
+        // A dead video must not leave the scene silent with its quiz unreachable.
+        video.addEventListener('error', () => this.startVoOnce('video error'), { once: true });
+
+        // The event may already have passed by the time the listener attaches.
+        if (video.readyState >= 3 && !video.paused) {
+            this.startVoOnce('video already playing');
+        }
+    }
+
+    isLoadingScreenVisible() {
+        const loadingScreen = document.getElementById('loading-screen');
+        return !!loadingScreen && !loadingScreen.classList.contains('hidden');
+    }
+
+    // Picture and voice both begin here: the video is played, and the VO follows from
+    // its 'playing' event a frame later. The fallback is armed from this moment rather
+    // than from onLoad, so it cannot expire while the loading screen is still up.
+    startVideoPlayback(why) {
+        if (this.videoPlaybackStarted) return;
+        this.videoPlaybackStarted = true;
+        console.log(`[VideoScene] Starting video playback (${why})`);
+
+        this.voStartFallbackHandle = setTimeout(
+            () => this.startVoOnce(`video did not start within ${VIDEO_SCENE_VO_START_FALLBACK_MS / 1000}s`),
+            VIDEO_SCENE_VO_START_FALLBACK_MS,
+        );
+
+        if (!this.videoElement) {
+            this.startVoOnce('no video element');
+            return;
+        }
+        this.videoElement.play().catch(() => {
+            // Autoplay may fail; the VO fallback above still starts the narration.
+        });
+    }
+
     onLoadingScreenDismissed() {
-        // Start VO for harvesting after loading screen fades out
-        if (this.audioKey === 'harvesting') {
-            this.playVoSequence(this.audioKey).catch(e => {
-                console.error('[VideoScene] Failed to play VO sequence:', e);
-            });
+        // Release the held picture. The VO follows from the video's own 'playing'
+        // event (see bindVoToVideoStart), so both start together and both are seen.
+        if (this.name === 'harvesting') {
+            this.startVideoPlayback('loading screen dismissed');
         }
     }
 
@@ -261,7 +339,15 @@ class VideoScene extends Scene {
 
         if (this.fallbackTimeoutHandle) {
             clearTimeout(this.fallbackTimeoutHandle);
+            this.fallbackTimeoutHandle = null;
         }
+
+        if (this.voStartFallbackHandle) {
+            clearTimeout(this.voStartFallbackHandle);
+            this.voStartFallbackHandle = null;
+        }
+        this.voStarted = false;
+        this.videoPlaybackStarted = false;
 
         if (this.videoElement) {
             this.videoElement.pause();
