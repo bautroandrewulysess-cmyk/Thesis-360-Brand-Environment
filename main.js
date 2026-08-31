@@ -1881,7 +1881,7 @@ class Scene {
         const button = document.createElement('button');
         button.className = 'gate-marker-button';
         button.textContent = this.getGateMarkerLabel(gate.ref);
-        button.style.cssText = `position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:14px 28px; background:#f4d03f; border:none; color:#050505; font-family:'Inter',sans-serif; font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; z-index:1010; outline:none; animation:gate-marker-pulse 2s ease-in-out infinite; box-shadow: 0 0 20px rgba(244,208,63,0.5);`;
+        button.style.cssText = `position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:14px 28px; background:#f4d03f; border:none; color:#050505; font-family:'Inter',sans-serif; font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; border-radius:6px; cursor:pointer; transition:all 0.3s ease; z-index:940; outline:none; animation:gate-marker-pulse 2s ease-in-out infinite; box-shadow: 0 0 20px rgba(244,208,63,0.5);`;
 
         // Guard against double-clicks and drag-clicks
         let clicked = false;
