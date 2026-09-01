@@ -50,6 +50,10 @@ class CafeInteriorScene extends Scene {
                 isVideo: true,
                 isGateMarker: true,
                 get videoSrc() { return videoUrl('brewingVideo.mp4'); },
+                // Carried on the hotspot so the gate play and the later replay resolve
+                // the same subtitles; the replay cannot key off voSceneKey, which is
+                // null by the time the sequence has finished.
+                subtitleRef: 'brewingPOV',
                 isTransition: false
             },
             {
@@ -1133,7 +1137,7 @@ class CafeInteriorScene extends Scene {
                     volume: 1.0,
                     // The brewing narration is baked into this video's audio track, so
                     // the VO sequence is parked here and cannot drive the subtitle bar.
-                    subtitleSrc: videoSubtitleUrl('brewingPOV'),
+                    subtitleSrc: videoSubtitleUrl(hotspot.subtitleRef),
                     duckAmbient: 0.5,
                     onFinish: () => {
                         this.resumeAmbient();
@@ -1148,11 +1152,14 @@ class CafeInteriorScene extends Scene {
                 return;
             }
 
-            // Normal video hotspot click
+            // Normal video hotspot click. Replays of a narrated gate video land here
+            // once its sequence has finished, so they resolve subtitles too — the gate
+            // branch above is unreachable by then.
             this.pauseAmbient();
             this.showVideoPopup(hotspot.videoSrc, {
                 required: false,
                 caption: this.hotspotLabel(hotspot),
+                subtitleSrc: videoSubtitleUrl(hotspot.subtitleRef),
                 onFinish: () => {
                     this.resumeAmbient();
                 }

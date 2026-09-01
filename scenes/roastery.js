@@ -48,6 +48,10 @@ class RoasteryScene extends Scene {
                 position: new pc.Vec3(0.566, 1.3, -0.740),
                 isVideo: true,
                 get videoSrc() { return videoUrl('coffeeRoasting.mp4'); },
+                // Carried on the hotspot so the gate play and the later replay resolve
+                // the same subtitles; the replay cannot key off voSceneKey, which is
+                // null by the time the sequence has finished.
+                subtitleRef: 'roasterVideo',
                 isGateMarker: true
             },
             {
@@ -1175,7 +1179,7 @@ class RoasteryScene extends Scene {
                     volume: 1.0,
                     // The roasting narration is baked into this video's audio track, so
                     // the VO sequence is parked here and cannot drive the subtitle bar.
-                    subtitleSrc: videoSubtitleUrl('roasterVideo'),
+                    subtitleSrc: videoSubtitleUrl(hotspot.subtitleRef),
                     duckAmbient: 0.5,
                     onFinish: () => {
                         this.resumeAmbient();
@@ -1191,11 +1195,14 @@ class RoasteryScene extends Scene {
                 return;
             }
 
-            // Normal video hotspot click
+            // Normal video hotspot click. Replays of a narrated gate video land here
+            // once its sequence has finished, so they resolve subtitles too — the gate
+            // branch above is unreachable by then.
             this.pauseAmbient();
             this.showVideoPopup(hotspot.videoSrc, {
                 required: false,
                 caption: this.t(`roastery.${hotspot.id}.label`),
+                subtitleSrc: videoSubtitleUrl(hotspot.subtitleRef),
                 onFinish: () => {
                     this.resumeAmbient();
                 }
