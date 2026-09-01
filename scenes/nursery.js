@@ -984,7 +984,11 @@ class NurseryScene extends Scene {
         video.style.left = '0';
         video.style.width = '100%';
         video.style.height = '100%';
-        video.style.zIndex = '9999';
+        // Below #subtitle-bar (9998) so journeyToFarm_en_01's cues are visible over the
+        // footage — at 9999 this opaque element painted over them and the narration ran
+        // with no subtitles in either language. Still above the canvas (1), the dev
+        // menus (940) and .hotspot-label (5000), which it must cover.
+        video.style.zIndex = '9997';
         video.style.backgroundColor = '#000';
 
         // Mark the overlay like every other fullscreen video so the clue bar, hotspot

@@ -61,6 +61,28 @@ const videoUrl = (name) => {
 };
 window.videoUrl = videoUrl;
 
+// Language-aware subtitle path helper. Mirrors voUrl: English at the Subtitles
+// root, every other language in a folder named for it. Version-stamped so a VTT
+// correction ships without waiting out the CDN cache.
+const subtitleUrl = (name) => {
+    const lang = window.currentLanguage || 'en';
+    const path = lang === 'en' ? `Subtitles/${name}` : `Subtitles/${lang}/${name}`;
+    return `${assetUrl(path)}?v=${SUBTITLE_VERSION}`;
+};
+window.subtitleUrl = subtitleUrl;
+
+// Subtitles for the videos that carry their own narration in their audio track.
+// playVoWithSubtitles never runs for these, so without this nothing would fill the
+// subtitle bar while they play. Keyed by gate ref, resolved per language.
+// Two call sites reach these videos — the generic gate handler in onGateMarkerClick
+// and RoasteryScene's own gate-marker branch in handleHotspotClick — so the mapping
+// lives here rather than in either of them.
+const VIDEO_SUBTITLES = {
+    roasterVideo: 'roasting_video.vtt'
+};
+const videoSubtitleUrl = (ref) => (VIDEO_SUBTITLES[ref] ? subtitleUrl(VIDEO_SUBTITLES[ref]) : null);
+window.videoSubtitleUrl = videoSubtitleUrl;
+
 // Fully release a gaussian splat. app.assets.remove() alone leaks: window._preloadedSplats
 // keeps a strong reference to the pc.Asset, which pins its .resource (the GPU buffers), so
 // the splat is never collected and VRAM/heap grows with every scene the user visits.
@@ -959,6 +981,74 @@ class Scene {
         }
     }
 
+    // Drive #subtitle-bar from a VTT that runs alongside a popup video whose narration
+    // is baked into its own audio track. Same hidden-track pattern as playVoWithSubtitles:
+    // the browser parses the VTT and fires cuechange, but mode='hidden' keeps it from
+    // painting its own cue boxes, which look nothing like the overlay every other
+    // subtitle in the tour uses.
+    //
+    // The VTT is fetched and handed to the track as a same-origin blob: URL rather than
+    // pointed straight at R2. A cross-origin <track> src would force crossOrigin on the
+    // <video>, which turns the video fetch itself into a CORS request — untested against
+    // R2 for these files, and a failure there costs the video, not just the subtitles.
+    //
+    // Returns a detach function; call it on every path that tears the video down.
+    attachVideoSubtitles(video, subtitleSrc) {
+        let blobUrl = null;
+        let track = null;
+        let textTrack = null;
+        let cuechangeHandler = null;
+        let detached = false;
+
+        const detach = () => {
+            detached = true;
+            if (textTrack && cuechangeHandler) textTrack.removeEventListener('cuechange', cuechangeHandler);
+            if (track && track.parentNode) track.parentNode.removeChild(track);
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            blobUrl = null;
+            this.clearSubtitles();
+        };
+
+        fetch(subtitleSrc)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.text();
+            })
+            .then(vtt => {
+                if (detached) return; // video already ended or was skipped mid-fetch
+                blobUrl = URL.createObjectURL(new Blob([vtt], { type: 'text/vtt' }));
+                track = document.createElement('track');
+                track.kind = 'subtitles';
+                track.srclang = window.currentLanguage || 'en';
+                track.src = blobUrl;
+                video.appendChild(track);
+
+                textTrack = track.track;
+                textTrack.mode = 'hidden'; // hidden, not showing: cues fire, nothing renders
+
+                cuechangeHandler = () => {
+                    const subtitleBar = document.getElementById('subtitle-bar');
+                    if (!subtitleBar) return;
+                    if (this.suppressSubtitles) {
+                        subtitleBar.style.display = 'none';
+                        return;
+                    }
+                    if (textTrack.activeCues && textTrack.activeCues.length > 0) {
+                        subtitleBar.textContent = textTrack.activeCues[0].text;
+                        subtitleBar.style.display = 'block';
+                    } else {
+                        subtitleBar.style.display = 'none';
+                    }
+                };
+                textTrack.addEventListener('cuechange', cuechangeHandler);
+            })
+            .catch(err => {
+                console.warn(`[VideoPopup] Subtitle load failed for ${subtitleSrc}: ${err.message}`);
+            });
+
+        return detach;
+    }
+
     getNavPromptText(hotspot) {
         if (!hotspot || !hotspot.hotspotData?.isTransition) {
             return null;
@@ -1138,7 +1228,7 @@ class Scene {
             const lang = window.currentLanguage || 'en';
             let audioPath = voUrl(audioKey);
             const fallbackAudioPath = assetUrl(`VO/${audioKey}.mp3`);
-            const langVttPath = `${assetUrl(lang === 'en' ? `Subtitles/${audioKey}.vtt` : `Subtitles/${lang}/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
+            const langVttPath = subtitleUrl(`${audioKey}.vtt`);
             const fallbackVttPath = `${assetUrl(`Subtitles/${audioKey}.vtt`)}?v=${SUBTITLE_VERSION}`;
 
 
@@ -1565,6 +1655,12 @@ class Scene {
         const englishFallbackSrc = (videoLang !== 'en' && src.includes(`/Videos/${videoLang}/`))
             ? src.replace(`/Videos/${videoLang}/`, '/Videos/')
             : null;
+        // If the video falls back to English, its subtitles have to follow — the
+        // per-language cuts differ in length, so the other language's timings would be
+        // wrong against it.
+        const englishFallbackSubtitleSrc = (subtitleSrc && videoLang !== 'en' && subtitleSrc.includes(`/Subtitles/${videoLang}/`))
+            ? subtitleSrc.replace(`/Subtitles/${videoLang}/`, '/Subtitles/')
+            : null;
         let videoFallbackAttempted = false;
 
         if (!popup || !video) return;
@@ -1592,19 +1688,11 @@ class Scene {
         video.src = src;
         skipBtn.style.display = required ? 'none' : 'block';
 
-        // Add subtitle track if provided (requires CORS for canvas access)
-        if (subtitleSrc) {
-            video.crossOrigin = 'anonymous';
-            const track = document.createElement('track');
-            track.kind = 'subtitles';
-            track.srclang = 'en';
-            track.label = 'English';
-            track.src = subtitleSrc;
-            track.default = true;
-            video.appendChild(track);
-        } else {
-            video.removeAttribute('crossorigin');
-        }
+        // Overlay subtitles for videos whose narration lives in their own audio track.
+        // attachVideoSubtitles renders into #subtitle-bar rather than letting the browser
+        // draw cues, and never sets crossOrigin on the video — see the comment there.
+        video.removeAttribute('crossorigin');
+        let detachSubtitles = subtitleSrc ? this.attachVideoSubtitles(video, subtitleSrc) : null;
 
         // Play narration if specified
         if (narrationId) {
@@ -1612,6 +1700,12 @@ class Scene {
         }
 
         const cleanupVideo = async () => {
+            // Before the fade, not after: a subtitle lingering over a fading video reads
+            // as a bug.
+            if (detachSubtitles) {
+                detachSubtitles();
+                detachSubtitles = null;
+            }
             const startVol = video.volume;
             for (let i = 0; i <= 40; i++) {
                 video.volume = Math.max(0, startVol * (1 - (i / 40)));
@@ -1640,6 +1734,12 @@ class Scene {
                 videoFallbackAttempted = true;
                 console.warn(`[VideoPopup] Video failed to load: ${src}, error code: ${errorCode}, retrying with English`);
                 video.addEventListener('error', onVideoError, { once: true }); // re-arm for the retry
+                if (detachSubtitles) {
+                    detachSubtitles();
+                    detachSubtitles = englishFallbackSubtitleSrc
+                        ? this.attachVideoSubtitles(video, englishFallbackSubtitleSrc)
+                        : null;
+                }
                 video.src = englishFallbackSrc;
                 video.load();
                 return;
@@ -2003,7 +2103,6 @@ class Scene {
                     farmerInterview: videoUrl('farmerInterview.mp4')
                 };
                     const videoSrc = videoMap[gate.ref];
-                const subtitleMap = {};
                 // Dialogue videos (roaster, owner, farmer, brewing) at full volume; ambience videos at 15%
                 const dialogueRefs = ['roasterVideo', 'ownerInterview', 'farmerInterview', 'brewingPOV'];
                 const videoVolume = dialogueRefs.includes(gate.ref) ? 1.0 : 0.15;
@@ -2013,7 +2112,7 @@ class Scene {
                         this.showVideoPopup(videoSrc, {
                         required: true,
                         volume: videoVolume,
-                        subtitleSrc: subtitleMap[gate.ref] ? assetUrl(subtitleMap[gate.ref]) : null,
+                        subtitleSrc: videoSubtitleUrl(gate.ref),
                         duckAmbient: ['roasterVideo', 'ownerInterview', 'farmerInterview', 'brewingPOV'].includes(gate.ref),
                         onFinish: () => this.resumeVoSequence()
                     });

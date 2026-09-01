@@ -1173,6 +1173,9 @@ class RoasteryScene extends Scene {
                     required: true,
                     caption: this.t(`roastery.${hotspot.id}.label`),
                     volume: 1.0,
+                    // The roasting narration is baked into this video's audio track, so
+                    // the VO sequence is parked here and cannot drive the subtitle bar.
+                    subtitleSrc: videoSubtitleUrl('roasterVideo'),
                     duckAmbient: 0.5,
                     onFinish: () => {
                         this.resumeAmbient();

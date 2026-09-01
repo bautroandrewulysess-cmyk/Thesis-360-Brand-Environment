@@ -909,6 +909,17 @@ class StreetViewScene extends Scene {
             return;
         }
 
+        // Hold the player at farm1-4 until the close-up orb has been opened. The wall
+        // already existed one position later, at farm1-5, where canTransition() refuses
+        // the harvest disc — but that is past the answer and reads as a refusal. Moving
+        // it back to the position where the orb actually is lets the message say what to
+        // do instead. Keyed on arrow.target, never arrow.label.
+        if (this.currentPosition === 'farm1-4' && arrow.target === 'farm1-5'
+            && this.farm_en_01_Finished && !this.farmCloseupViewed && !window.journeyComplete) {
+            this.showVoWarning(t('ui.farm.closeupFirst'));
+            return;
+        }
+
         if (arrow.targetScene) {
             await sceneManager.switchTo(arrow.targetScene, arrow.spawnPosition || null);
         } else if (arrow.target) {
@@ -1038,7 +1049,7 @@ class StreetViewScene extends Scene {
                     'farm1-1': 'ui.farm.hint.farm1-1'
                 };
                 const hintText = t(hintKeys[positionKey] || 'ui.farm.hint.default');
-                this.setFarmHint(hintText);
+                this.setFarmHint(hintText, positionKey === 'farm1-5' ? 'overshoot' : 'default');
             } else {
                 this.clearFarmHint();
             }
@@ -1156,11 +1167,26 @@ class StreetViewScene extends Scene {
         }
     }
 
-    setFarmHint(text) {
+    // bottom:24vh clears the whole crowded bottom band — #nav-prompt (3vh), #clue-bar
+    // (24px) and #subtitle-bar (8vh, two lines deep in Bisaya) — rather than stacking
+    // above the subtitle, which would only invert which of the two hides the other.
+    setFarmHint(text, variant = 'default') {
         if (!this.farmHintElement) {
             this.farmHintElement = document.createElement('div');
-            this.farmHintElement.style.cssText = 'position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#f4d03f; padding:14px 24px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.95rem; z-index:100; font-weight:500;';
+            this.farmHintElement.style.cssText = 'position:fixed; bottom:24vh; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#f4d03f; padding:14px 24px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.95rem; z-index:100; font-weight:500; border:1px solid transparent; max-width:70vw; text-align:center;';
             document.body.appendChild(this.farmHintElement);
+        }
+        // The overshoot line has to read as a correction, not as more of the same
+        // furniture the player has already learned to ignore at the four positions
+        // before it. Warm red on near-black stays legible against the farm plates.
+        if (variant === 'overshoot') {
+            this.farmHintElement.style.background = 'rgba(20,4,4,0.88)';
+            this.farmHintElement.style.color = '#ffb4a8';
+            this.farmHintElement.style.border = '2px solid rgba(239,68,68,0.9)';
+        } else {
+            this.farmHintElement.style.background = 'rgba(0,0,0,0.8)';
+            this.farmHintElement.style.color = '#f4d03f';
+            this.farmHintElement.style.border = '1px solid transparent';
         }
         this.farmHintElement.textContent = text;
         this.farmHintElement.style.display = 'block';

@@ -120,6 +120,7 @@ window.Strings = {
     'ui.farm.hint.farm1-4': { en: 'You\'re really close — try looking down.', bis: 'Duol na kaayo ka — sulayi og tan-aw sa ubos.' },
     'ui.farm.hint.farm1-5': { en: 'You\'ve gone a bit far. Move back a little.', bis: 'Nalapas na ka og gamay. Balik og diyutay.' },
     'ui.farm.hint.default': { en: 'Look around for the golden button.', bis: 'Pangitaa ang bulawanon nga button sa imong palibot.' },
+    'ui.farm.closeupFirst': { en: 'Look down and click the golden button first.', bis: 'Tan-awa sa ubos ug i-klik ang bulawanon nga button una.' },
 
     // Gate-marker buttons (keyed by gate.ref in voData.js)
     'ui.gate.default': { en: 'Watch', bis: 'Tan-awa' },
