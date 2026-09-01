@@ -3,7 +3,7 @@
 // ============================================================================
 
 const R2_BASE = 'https://assets.granjaalegre.com';
-const SUBTITLE_VERSION = 3;
+const SUBTITLE_VERSION = 4;
 window.R2_BASE = R2_BASE;
 
 // Global asset URL helper: encodes path segments while preserving directory structure
@@ -74,11 +74,16 @@ window.subtitleUrl = subtitleUrl;
 // Subtitles for the videos that carry their own narration in their audio track.
 // playVoWithSubtitles never runs for these, so without this nothing would fill the
 // subtitle bar while they play. Keyed by gate ref, resolved per language.
-// Two call sites reach these videos — the generic gate handler in onGateMarkerClick
-// and RoasteryScene's own gate-marker branch in handleHotspotClick — so the mapping
-// lives here rather than in either of them.
+// Several call sites reach these videos — the generic gate handler in
+// onGateMarkerClick, plus RoasteryScene's and CafeInteriorScene's own gate-marker
+// branches in onHotspotClick — so the mapping lives here rather than in any of them.
+//
+// steps_en_01 is not in any VO sequence: its narration is baked into the brewing
+// video's audio track, and its timings already line up from zero, so the segment
+// VTT is used as-is rather than merged and offset like the roasting one.
 const VIDEO_SUBTITLES = {
-    roasterVideo: 'roasting_video.vtt'
+    roasterVideo: 'roasting_video.vtt',
+    brewingPOV: 'steps_en_01.vtt'
 };
 const videoSubtitleUrl = (ref) => (VIDEO_SUBTITLES[ref] ? subtitleUrl(VIDEO_SUBTITLES[ref]) : null);
 window.videoSubtitleUrl = videoSubtitleUrl;

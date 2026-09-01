@@ -1131,6 +1131,9 @@ class CafeInteriorScene extends Scene {
                     required: true,
                     caption: this.hotspotLabel(hotspot),
                     volume: 1.0,
+                    // The brewing narration is baked into this video's audio track, so
+                    // the VO sequence is parked here and cannot drive the subtitle bar.
+                    subtitleSrc: videoSubtitleUrl('brewingPOV'),
                     duckAmbient: 0.5,
                     onFinish: () => {
                         this.resumeAmbient();
