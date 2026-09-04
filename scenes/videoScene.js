@@ -54,6 +54,7 @@ class VideoScene extends Scene {
         this.voStarted = false;
         this.voStartFallbackHandle = null;
         this.videoPlaybackStarted = false;
+        this.detachVideoSubtitles = null;
     }
 
     async onLoad() {
@@ -82,11 +83,11 @@ class VideoScene extends Scene {
                 will-change: transform;
                 backface-visibility: hidden;
             `;
-            // The Bisaya harvesting cut carries its narration in the video's own audio
-            // track. It must therefore be audible, and it must not loop: at 107.6s a
-            // loop would restart the narration from the top. Every other video, and
-            // English harvesting, keeps the muted/looping backdrop behaviour.
-            this.narratedByVideo = this.name === 'harvesting' && (window.currentLanguage || 'en') !== 'en';
+            // Both harvesting cuts carry their narration in the video's own audio track
+            // (en 82.8s, bis 107.6s). They must therefore be audible, and must not loop:
+            // a loop would restart the narration from the top. Every other video keeps
+            // the muted, looping backdrop behaviour.
+            this.narratedByVideo = this.name === 'harvesting';
             this.videoElement.muted = !this.narratedByVideo;
             this.videoElement.loop = !this.narratedByVideo;
             this.videoElement.playsInline = true;
@@ -117,7 +118,10 @@ class VideoScene extends Scene {
             // Harvesting instead starts its VO from the video's first frame, so the
             // narration lines up with the subtitles burned into the picture.
             if (this.audioKey === 'harvesting') {
-                if (this.narratedByVideo) this.bindQuizToVideoEnd();
+                if (this.narratedByVideo) {
+                    this.bindQuizToVideoEnd();
+                    this.bindSubtitlesToVideo();
+                }
                 this.bindVoToVideoStart();
                 // The dismissal may already have happened — a free-roam revisit or a
                 // fast load leaves no event still to come.
@@ -264,6 +268,20 @@ class VideoScene extends Scene {
         rearm();
     }
 
+    // The subtitle bar used to be driven by the narration mp3's own text track inside
+    // playVoWithSubtitles. With the narration moved into the video there is no audio
+    // element left to carry it, so the same VTT is hung off the video instead, reusing
+    // the hidden-track renderer the popup videos already use — cues follow the picture,
+    // which is now also the voice. Languages with burned-in subtitles skip this.
+    bindSubtitlesToVideo() {
+        if (this.suppressSubtitles || !this.videoElement) return;
+        const segments = window.voSegmentsFor ? window.voSegmentsFor(this.audioKey) : null;
+        const segmentId = (segments && segments[0]) ? segments[0].id : this.audioKey;
+        const src = subtitleUrl(`${segmentId}.vtt`);
+        console.log(`[VideoScene] Attaching subtitles to video: ${src}`);
+        this.detachVideoSubtitles = this.attachVideoSubtitles(this.videoElement, src);
+    }
+
     isLoadingScreenVisible() {
         const loadingScreen = document.getElementById('loading-screen');
         return !!loadingScreen && !loadingScreen.classList.contains('hidden');
@@ -387,6 +405,11 @@ class VideoScene extends Scene {
 
     async onUnload() {
         this.stopVo();
+
+        if (this.detachVideoSubtitles) {
+            this.detachVideoSubtitles();
+            this.detachVideoSubtitles = null;
+        }
 
         if (this.fallbackTimeoutHandle) {
             clearTimeout(this.fallbackTimeoutHandle);
