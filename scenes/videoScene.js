@@ -36,7 +36,13 @@ class VideoScene extends Scene {
         this.quizKey = quizKey;
         this.nextScene = nextScene;
         this.nextSpawn = nextSpawn || [0, 1.6, 0];
-        this.suppressSubtitles = suppressSubtitles || false;
+        // Resolved at read time, like videoSrc: scenes are constructed before the
+        // player picks a language, so a literal would freeze to English.
+        if (typeof suppressSubtitles === 'function') {
+            Object.defineProperty(this, 'suppressSubtitles', { get: suppressSubtitles, configurable: true });
+        } else {
+            this.suppressSubtitles = suppressSubtitles || false;
+        }
 
         this.videoElement = null;
         this.voAudio = null;
@@ -76,8 +82,13 @@ class VideoScene extends Scene {
                 will-change: transform;
                 backface-visibility: hidden;
             `;
-            this.videoElement.muted = true;
-            this.videoElement.loop = true;
+            // The Bisaya harvesting cut carries its narration in the video's own audio
+            // track. It must therefore be audible, and it must not loop: at 107.6s a
+            // loop would restart the narration from the top. Every other video, and
+            // English harvesting, keeps the muted/looping backdrop behaviour.
+            this.narratedByVideo = this.name === 'harvesting' && (window.currentLanguage || 'en') !== 'en';
+            this.videoElement.muted = !this.narratedByVideo;
+            this.videoElement.loop = !this.narratedByVideo;
             this.videoElement.playsInline = true;
 
             if (this.videoSrc) {
@@ -106,6 +117,7 @@ class VideoScene extends Scene {
             // Harvesting instead starts its VO from the video's first frame, so the
             // narration lines up with the subtitles burned into the picture.
             if (this.audioKey === 'harvesting') {
+                if (this.narratedByVideo) this.bindQuizToVideoEnd();
                 this.bindVoToVideoStart();
                 // The dismissal may already have happened — a free-roam revisit or a
                 // fast load leaves no event still to come.
@@ -190,6 +202,12 @@ class VideoScene extends Scene {
             clearTimeout(this.voStartFallbackHandle);
             this.voStartFallbackHandle = null;
         }
+        if (this.narratedByVideo) {
+            // Narration plays from the video's audio track; the quiz hangs off the
+            // video's 'ended' instead (see bindQuizToVideoEnd).
+            console.log(`[VideoScene] Narration is in the video's own audio track (${why}); no separate VO`);
+            return;
+        }
         console.log(`[VideoScene] Starting VO (${why})`);
         this.playVoSequence(this.audioKey).catch(e => {
             console.error('[VideoScene] Failed to play VO sequence:', e);
@@ -211,6 +229,39 @@ class VideoScene extends Scene {
         if (video.readyState >= 3 && !video.paused) {
             this.startVoOnce('video already playing');
         }
+    }
+
+    // With no mp3 there is no audio 'ended' to hang the quiz on. Route the video's
+    // 'ended' through the same triggerQuizDirect the skipped-segment path uses, so the
+    // quiz keeps its stale-scene guard and its once-only flag rather than gaining a
+    // second, parallel trigger.
+    bindQuizToVideoEnd() {
+        const video = this.videoElement;
+        if (!video) return;
+
+        video.addEventListener('ended', () => {
+            console.log('[VideoScene] Video ended — embedded narration finished, triggering quiz');
+            this.isVoFinished = true;
+            const segments = window.voSegmentsFor ? window.voSegmentsFor(this.audioKey) : null;
+            const segmentId = (segments && segments[0]) ? segments[0].id : this.audioKey;
+            this.triggerQuizDirect(segmentId);
+        }, { once: true });
+
+        // Continue must never appear before the quiz exists. The unknown-duration
+        // fallback armed in onLoad is 90s against a 107.6s video, so re-arm against the
+        // video's own length exactly as trackVoForFallback does against the mp3's.
+        const rearm = () => {
+            if (!isFinite(video.duration) || video.duration <= 0) return;
+            const remainingMs = Math.max(0, video.duration - video.currentTime) * 1000;
+            this.armForwardFallback(
+                remainingMs + VIDEO_SCENE_FALLBACK_GRACE_MS,
+                `video ${video.duration.toFixed(1)}s + ${VIDEO_SCENE_FALLBACK_GRACE_MS / 1000}s grace`,
+            );
+        };
+        video.addEventListener('loadedmetadata', rearm);
+        video.addEventListener('durationchange', rearm);
+        video.addEventListener('playing', rearm);
+        rearm();
     }
 
     isLoadingScreenVisible() {
@@ -377,9 +428,10 @@ sceneManager.registerScene('harvesting', new VideoScene({
     videoSrc: () => videoUrl('harvestingWeb.mp4'),
     audioKey: 'harvesting',
     quizKey: 'harvesting',
-    // The harvesting footage has subtitles burned into the picture in both
-    // languages, so the overlay would render a second copy on top.
-    suppressSubtitles: true,
+    // Only the Bisaya cut has subtitles burned into the picture, where the overlay
+    // would render a second copy on top. English has none, so it uses the normal
+    // subtitle bar fed by Subtitles/harvesting_en_01.vtt.
+    suppressSubtitles: () => (window.currentLanguage || 'en') !== 'en',
     nextScene: 'roastery',
     nextSpawn: [0, 1.6, 0]
 }));

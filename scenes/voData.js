@@ -13,7 +13,7 @@
 // skipped entirely rather than falling back to English mid-sequence — a 1.5s English sting
 // dropped into a Bisaya narration is more jarring than no sting at all. Their gate still
 // runs, so a skipped quiz sting still opens its quiz (see triggerQuizDirect in main.js).
-window.VoMissingNonEn = new Set(['quizTime_en_01']);
+window.VoMissingNonEn = new Set(['quizTime_en_01', 'harvesting_en_02']);
 
 window.VoSegments = {
     brandStoryIntro: {
