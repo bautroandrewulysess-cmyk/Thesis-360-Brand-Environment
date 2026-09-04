@@ -279,7 +279,7 @@ class VideoScene extends Scene {
         const segmentId = (segments && segments[0]) ? segments[0].id : this.audioKey;
         const src = subtitleUrl(`${segmentId}.vtt`);
         console.log(`[VideoScene] Attaching subtitles to video: ${src}`);
-        this.detachVideoSubtitles = this.attachVideoSubtitles(this.videoElement, src);
+        this.detachVideoSubtitles = this.attachVideoSubtitles(this.videoElement, src).detach;
     }
 
     isLoadingScreenVisible() {

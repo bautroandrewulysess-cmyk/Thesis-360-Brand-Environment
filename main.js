@@ -997,8 +997,12 @@ class Scene {
     // <video>, which turns the video fetch itself into a CORS request — untested against
     // R2 for these files, and a failure there costs the video, not just the subtitles.
     //
-    // Returns a detach function; call it on every path that tears the video down.
+    // Returns { detach, ready }. `ready` resolves once the track is attached, or on
+    // failure — never rejects — so a caller can wait for subtitles without a dead VTT
+    // ever holding up the picture. Call detach on every path that tears the video down.
     attachVideoSubtitles(video, subtitleSrc) {
+        let signalReady;
+        const ready = new Promise((r) => { signalReady = r; });
         let blobUrl = null;
         let track = null;
         let textTrack = null;
@@ -1014,6 +1018,7 @@ class Scene {
             this.clearSubtitles();
         };
 
+        const fetchStart = performance.now();
         fetch(subtitleSrc)
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1033,6 +1038,18 @@ class Scene {
 
                 cuechangeHandler = () => {
                     const subtitleBar = document.getElementById('subtitle-bar');
+                    if (window.DEV_MODE && textTrack.activeCues && textTrack.activeCues.length) {
+                        // Measured inside the handler: how far past a cue's own start time
+                        // the picture already is when that cue is handed to us. Immune to
+                        // any external polling, unlike sampling the bar from outside.
+                        const cue = textTrack.activeCues[0];
+                        (window.__cueLag = window.__cueLag || []).push({
+                            src: subtitleSrc.split('/').slice(-1)[0],
+                            cueStart: Number(cue.startTime.toFixed(3)),
+                            at: Number(video.currentTime.toFixed(3)),
+                            lag: Number((video.currentTime - cue.startTime).toFixed(3)),
+                        });
+                    }
                     if (!subtitleBar) return;
                     if (this.suppressSubtitles) {
                         subtitleBar.style.display = 'none';
@@ -1046,12 +1063,17 @@ class Scene {
                     }
                 };
                 textTrack.addEventListener('cuechange', cuechangeHandler);
+                if (window.DEV_MODE) {
+                    console.warn(`[VideoPopup] Subtitle track attached after ${Math.round(performance.now() - fetchStart)}ms `
+                        + `(video currentTime ${video.currentTime.toFixed(2)}s, paused=${video.paused})`);
+                }
             })
             .catch(err => {
                 console.warn(`[VideoPopup] Subtitle load failed for ${subtitleSrc}: ${err.message}`);
-            });
+            })
+            .finally(() => signalReady());
 
-        return detach;
+        return { detach, ready };
     }
 
     getNavPromptText(hotspot) {
@@ -1697,7 +1719,7 @@ class Scene {
         // attachVideoSubtitles renders into #subtitle-bar rather than letting the browser
         // draw cues, and never sets crossOrigin on the video — see the comment there.
         video.removeAttribute('crossorigin');
-        let detachSubtitles = subtitleSrc ? this.attachVideoSubtitles(video, subtitleSrc) : null;
+        let detachSubtitles = subtitleSrc ? this.attachVideoSubtitles(video, subtitleSrc).detach : null;
 
         // Play narration if specified
         if (narrationId) {
@@ -1742,7 +1764,7 @@ class Scene {
                 if (detachSubtitles) {
                     detachSubtitles();
                     detachSubtitles = englishFallbackSubtitleSrc
-                        ? this.attachVideoSubtitles(video, englishFallbackSubtitleSrc)
+                        ? this.attachVideoSubtitles(video, englishFallbackSubtitleSrc).detach
                         : null;
                 }
                 video.src = englishFallbackSrc;
