@@ -835,6 +835,8 @@ class Scene {
     async onUnload() {
         debugLog(`${this.name} onUnload called`);
 
+        this.removeHotspotBadges();
+
         this.hideNavPrompt();
         this.despawnGateMarker();
         this.hideMiniQuiz();
@@ -998,6 +1000,102 @@ class Scene {
             .finally(() => signalReady());
 
         return { detach, ready };
+    }
+
+    // ------------------------------------------------------------------
+    // Hotspot badges: icon = action.
+    //
+    // Colour is largely fixed by the voiceover ("golden marker", "blue ones reveal
+    // something"), so shape and icon are what separate one orb from another. This
+    // matters most in the roastery, which shows a gate orb and a transition orb at
+    // the same time — both gold, so only the icon distinguishes them.
+    //
+    // Delivered as DOM rather than 3D: camera-facing for free, pointer-events:none so
+    // it can never absorb a click, and crisp at any distance. Inline SVG rather than
+    // Unicode because the obvious glyphs render as colour emoji on macOS.
+    // ------------------------------------------------------------------
+    hotspotIconKind(hotspot) {
+        if (!hotspot) return 'info';
+        if (hotspot.isGateMarker || hotspot.isVideo) return 'play';
+        if (hotspot.isTransition) return 'exit';
+        return 'info';
+    }
+
+    hotspotIconSvg(kind) {
+        const gold = '#f4d03f', blue = '#4fc3f7';
+        const stroke = kind === 'info' ? blue : gold;
+        const open = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">`;
+        if (kind === 'play') {
+            // Solid triangle reads as "plays a video" at small sizes better than an outline.
+            return `<svg width="18" height="18" viewBox="0 0 24 24" fill="${gold}"><path d="M8 5.5v13l11-6.5z"/></svg>`;
+        }
+        if (kind === 'exit') {
+            // Door with an arrow leaving it: changes scene.
+            return open + '<path d="M14 3H5v18h9"/><path d="M13 12h8"/><path d="M18 8l4 4-4 4"/></svg>';
+        }
+        return open + '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.6" r="0.9" fill="' + blue + '" stroke="none"/></svg>';
+    }
+
+    createHotspotBadges() {
+        this.removeHotspotBadges();
+        for (const group of (this.hotspotEntities || [])) {
+            const hotspot = group && group.hotspotData;
+            if (!hotspot) continue;
+            const kind = this.hotspotIconKind(hotspot);
+            const accent = kind === 'info' ? 'rgba(79,195,247,0.85)' : 'rgba(244,208,63,0.85)';
+            const badge = document.createElement('div');
+            // 'hotspot-label' too, so the sweeps those scenes already run also catch it.
+            badge.className = 'hotspot-label hotspot-badge';
+            badge.style.cssText = 'position:fixed; pointer-events:none; z-index:5001; display:none; '
+                + 'transform:translate(-50%,-50%); width:30px; height:30px; border-radius:50%; '
+                + 'background:rgba(12,12,12,0.72); border:1px solid ' + accent + '; '
+                + 'box-shadow:0 0 10px ' + accent + '; align-items:center; justify-content:center;';
+            badge.innerHTML = this.hotspotIconSvg(kind);
+            document.body.appendChild(badge);
+            group.badgeElement = badge;
+        }
+    }
+
+    removeHotspotBadges() {
+        document.querySelectorAll('.hotspot-badge').forEach(el => el.remove());
+        for (const group of (this.hotspotEntities || [])) {
+            if (group) group.badgeElement = null;
+        }
+    }
+
+    updateHotspotBadges() {
+        if (!this.hotspotEntities || !cameraEntity) return;
+        // Self-healing: scenes rebuild their hotspots at various points (quiz pass,
+        // free-roam), so rather than asking every scene to remember a second call,
+        // notice a hotspot without a badge and rebuild the set here.
+        if (this.hotspotEntities.some(g => g && g.hotspotData && !g.badgeElement)) {
+            this.createHotspotBadges();
+        }
+        const overlayActive = document.getElementById('quiz-overlay')?.style.display === 'flex'
+            || document.getElementById('completion-panel')?.style.display === 'flex'
+            || document.body.classList.contains('video-open');
+        const camPos = cameraEntity.getPosition();
+        const camFwd = cameraEntity.forward;
+        for (const group of this.hotspotEntities) {
+            const badge = group && group.badgeElement;
+            if (!badge) continue;
+            if (overlayActive || !group.enabled || group._destroyed) {
+                if (badge.style.display !== 'none') badge.style.display = 'none';
+                continue;
+            }
+            const worldPos = group.getPosition();
+            const screen = this.worldToScreen(worldPos);
+            const toHotspot = new pc.Vec3().sub2(worldPos, camPos);
+            const behind = toHotspot.dot(camFwd) <= 0;
+            const off = screen.x < 0 || screen.x > window.innerWidth
+                     || screen.y < 0 || screen.y > window.innerHeight;
+            const show = !behind && !off;
+            badge.style.display = show ? 'flex' : 'none';
+            if (show) {
+                badge.style.left = `${screen.x}px`;
+                badge.style.top = `${screen.y}px`;
+            }
+        }
     }
 
     getNavPromptText(hotspot) {

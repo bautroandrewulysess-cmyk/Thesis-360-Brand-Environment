@@ -218,6 +218,17 @@ await page.waitForFunction(
 );
 console.log(`[harness] app ready at ${el()}s`);
 
+// Start the render loop. The harness drives sceneManager directly and never goes
+// through startup(), which is where production calls app.start() — so without this
+// the renderer never ticks and every screenshot comes back black while scene state
+// and the DOM still look correct. Guarded because startup() may have run already;
+// app.start() is not idempotent.
+await page.evaluate(() => {
+    try {
+        if (!app._inFrameUpdate && !app.frame) app.start();
+    } catch { /* already started */ }
+});
+
 // Language must be set before the jump: scene constructors and quiz getters read it.
 await page.evaluate((lang) => {
     window.currentLanguage = lang;

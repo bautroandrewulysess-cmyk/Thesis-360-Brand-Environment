@@ -60,6 +60,7 @@ class StreetViewScene extends Scene {
         this.highlightFarm1_5Forward = false;
         this.toFarm14FirstArrival = true;
         this.preloadedVideoElements = [];
+        this._screenPos = new pc.Vec3();
         this.isInputLocked = false;
         this.quiz = {
             get question() { return t('streetView.quiz.question'); },
@@ -510,6 +511,111 @@ class StreetViewScene extends Scene {
         if (window.DEV_MODE) console.log('Photo sphere created with placeholder material (mirrored X scale, CULLFACE_NONE)');
     }
 
+    // ------------------------------------------------------------------
+    // Disc faces are drawn to a canvas and applied as a texture, rather than
+    // built from extra child entities. Nothing new is added to the Immediate
+    // layer, so the existing arrow teardown stays sufficient.
+    //
+    // The whole face is baked — fill colour and glyph together — and the
+    // material's diffuse is left white, so the colour on screen is exactly the
+    // colour passed in here. That is what lets a back disc stay white while its
+    // glyph is dark: an emissive overlay could only ever lighten it.
+    // ------------------------------------------------------------------
+    discFaceCanvas(fill, kind, text) {
+        const S = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = S; canvas.height = S;
+        const ctx = canvas.getContext('2d');
+        const r = Math.round(fill.r * 255), g = Math.round(fill.g * 255), b = Math.round(fill.b * 255);
+
+        ctx.clearRect(0, 0, S, S);
+        // The cylinder's top cap samples the texture rotated by 180 degrees (verified
+        // by rendering text: it came out upside down but not mirrored). Pre-rotating
+        // here cancels that, so both the chevron and the harvest text land upright.
+        ctx.translate(S, S);
+        ctx.rotate(Math.PI);
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.beginPath();
+        ctx.arc(S / 2, S / 2, S / 2 - 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glyph contrast picked from the fill's luminance, so the white back disc
+        // and the dark green forward disc both stay readable.
+        const lum = 0.299 * fill.r + 0.587 * fill.g + 0.114 * fill.b;
+        const ink = lum > 0.55 ? 'rgba(20,20,20,0.92)' : 'rgba(255,255,255,0.95)';
+        ctx.fillStyle = ink; ctx.strokeStyle = ink;
+
+        if (kind === 'text') {
+            // Harvest disc: wraps to two lines so Bisaya fits at the same size.
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            const words = String(text || '').trim().split(/\s+/);
+            const lines = [];
+            let line = '';
+            for (const w of words) {
+                const next = line ? line + ' ' + w : w;
+                ctx.font = 'bold 30px Inter, Helvetica, Arial, sans-serif';
+                if (ctx.measureText(next).width > S * 0.82 && line) { lines.push(line); line = w; }
+                else line = next;
+            }
+            if (line) lines.push(line);
+            const lh = 34;
+            const y0 = S / 2 - ((lines.length - 1) * lh) / 2;
+            lines.forEach((t, i) => ctx.fillText(t, S / 2, y0 + i * lh));
+        } else {
+            // Chevron pointing toward -Z in the disc's local frame. The disc is
+            // rotated by its own yaw, so this always ends up pointing away from
+            // the camera — see the setLocalEulerAngles call in createArrows.
+            const cx = S / 2, cy = S / 2;
+            ctx.lineWidth = 26; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(cx - 52, cy + 26);
+            ctx.lineTo(cx, cy - 34);
+            ctx.lineTo(cx + 52, cy + 26);
+            ctx.stroke();
+        }
+        return canvas;
+    }
+
+    // Textures are cached per appearance and reused across navigations, since
+    // createArrows runs on every move. Released in onUnload.
+    discFaceTexture(fill, kind, text) {
+        const key = `${kind}|${text || ''}|${fill.r.toFixed(3)},${fill.g.toFixed(3)},${fill.b.toFixed(3)}`;
+        if (!this._discTextures) this._discTextures = new Map();
+        const hit = this._discTextures.get(key);
+        if (hit) return hit;
+        const canvas = this.discFaceCanvas(fill, kind, text);
+        const tex = new pc.Texture(app.graphicsDevice, {
+            width: canvas.width, height: canvas.height,
+            format: pc.PIXELFORMAT_R8_G8_B8_A8, mipmaps: true
+        });
+        tex.setSource(canvas);
+        this._discTextures.set(key, tex);
+        return tex;
+    }
+
+    // Entities on the Immediate/UI layers must have their mesh instances pulled out
+    // of the layer before being destroyed, or the layer keeps rendering them — the
+    // stray-disc class of bug. destroy() alone is not enough here, and children are
+    // just as affected as the entity itself, so walk the whole subtree.
+    releaseImmediateEntity(entity) {
+        if (!entity) return;
+        const layers = ['Immediate', 'UI']
+            .map(n => app.scene.layers.getLayerByName(n))
+            .filter(Boolean);
+        const walk = (e) => {
+            if (e.render && e.render.meshInstances && e.render.meshInstances.length) {
+                for (const layer of layers) {
+                    if (e.render.meshInstances.some(mi => layer.meshInstances.includes(mi))) {
+                        layer.removeMeshInstances(e.render.meshInstances);
+                    }
+                }
+            }
+            (e.children || []).slice().forEach(walk);
+        };
+        walk(entity);
+        entity.destroy();
+    }
+
     createNadirTextureCanvas() {
         const canvas = document.createElement('canvas');
         canvas.width = 1024;
@@ -599,18 +705,7 @@ class StreetViewScene extends Scene {
         // Clear previous arrows — MUST remove mesh instances from layer first
         this.arrowEntities.forEach(arrow => {
             this.unregisterInteractiveObject(arrow);
-            // Remove mesh instances from render layers before destroying entity
-            if (arrow.render && arrow.render.meshInstances) {
-                const immediateLayer = app.scene.layers.getLayerByName('Immediate');
-                const uiLayer = app.scene.layers.getLayerByName('UI');
-                if (immediateLayer && arrow.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
-                    immediateLayer.removeMeshInstances(arrow.render.meshInstances);
-                }
-                if (uiLayer && arrow.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
-                    uiLayer.removeMeshInstances(arrow.render.meshInstances);
-                }
-            }
-            arrow.destroy();
+            this.releaseImmediateEntity(arrow);
         });
         this.arrowEntities = [];
         this.arrowLabels.forEach(label => label.remove());
@@ -619,19 +714,10 @@ class StreetViewScene extends Scene {
         // Clear previous farm close-up orb if exists
         if (this.farmCloseupOrb) {
             this.unregisterInteractiveObject(this.farmCloseupOrb);
-            // Remove mesh instances from render layers before destroying entity
-            if (this.farmCloseupOrb.render && this.farmCloseupOrb.render.meshInstances) {
-                const immediateLayer = app.scene.layers.getLayerByName('Immediate');
-                const uiLayer = app.scene.layers.getLayerByName('UI');
-                if (immediateLayer && this.farmCloseupOrb.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
-                    immediateLayer.removeMeshInstances(this.farmCloseupOrb.render.meshInstances);
-                }
-                if (uiLayer && this.farmCloseupOrb.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
-                    uiLayer.removeMeshInstances(this.farmCloseupOrb.render.meshInstances);
-                }
-            }
-            this.farmCloseupOrb.destroy();
+            // Subtree-aware: the beam is a child and would otherwise stay in the layer.
+            this.releaseImmediateEntity(this.farmCloseupOrb);
             this.farmCloseupOrb = null;
+            this.farmCloseupBadge = null;
         }
 
         const posData = this.positions[this.currentPosition];
@@ -681,7 +767,12 @@ class StreetViewScene extends Scene {
             // Flat disc: cylinder already has its flat face pointing up (Y axis)
             // No rotation needed, just position and scale
             arrowEntity.setLocalPosition(arrowPos.x, arrowPos.y, arrowPos.z);
-            arrowEntity.setLocalEulerAngles(0, 0, 0); // Flat orientation
+            // Yaw the disc so its local -Z points along the same ray that placed it,
+            // i.e. radially away from the camera. Forward and back discs sit at
+            // opposite yaws (136-179 deg apart across the graph), so their glyphs
+            // oppose automatically and no arrow label is ever read to decide this.
+            // The cylinder is symmetric about Y, so the disc itself is unchanged.
+            arrowEntity.setLocalEulerAngles(0, yawDeg, 0);
             arrowEntity.setLocalScale(0.8, 0.04, 0.8);
 
             // Material: green for forward, white for back arrows; gold for highlighted farm1-5 forward
@@ -718,22 +809,30 @@ class StreetViewScene extends Scene {
                     : new pc.Color(0, 0.9, 0.1);
             }
 
+            // Bake the face (fill + glyph) into a texture and neutralise diffuse, so
+            // the rendered colour is exactly the locked colour chosen above.
+            const discFill = mat.diffuse.clone();
+            const glyphKind = isHarvestMarker ? 'text' : 'arrow';
+            const glyphText = isHarvestMarker ? t('ui.disc.toHarvest') : null;
+            const faceTex = this.discFaceTexture(discFill, glyphKind, glyphText);
+            mat.diffuse = new pc.Color(1, 1, 1);
+            mat.diffuseMap = faceTex;
+            mat.opacityMap = faceTex;
+            mat.blendType = pc.BLEND_NORMAL;
+
             mat.update();
 
             arrowEntity.render.meshInstances[0].material = mat;
             arrowEntity.arrowData = arrow;
             arrowEntity.arrowIndex = index;
 
-            // Add pulsing animation for harvest marker
+            // The harvest disc pulses so the exit reads as the way out. This used to be
+            // assigned to arrowEntity.update, which the engine never calls — only
+            // activeScene.update(deltaTime) runs — so it had never animated. Driven from
+            // the scene loop now, at the same gentle amplitude as the close-up orb.
             if (isHarvestMarker) {
-                const pulseScale = 1.2;
-                const pulseDuration = 1.2;
-                let scaleTime = 0;
-                arrowEntity.update = (dt) => {
-                    scaleTime = (scaleTime + dt) % pulseDuration;
-                    const pulse = 1 + (Math.sin(scaleTime / pulseDuration * Math.PI * 2) * 0.3);
-                    arrowEntity.setLocalScale(2.5 * pulse, 0.12, 2.5 * pulse);
-                };
+                arrowEntity.isHarvestMarker = true;
+                arrowEntity.baseScale = new pc.Vec3(1.2, 0.06, 1.2);
             }
 
             this.container.addChild(arrowEntity);
@@ -781,13 +880,56 @@ class StreetViewScene extends Scene {
 
         orbEntity.render.meshInstances[0].material = mat;
 
+        // A vertical beam rising from the orb. Testers missed the orb because it sits
+        // below the sight line and they were looking forward; the beam is what puts
+        // something in view at eye level. Purely decorative — never registered with the
+        // raycaster, and hit-testing is ray-vs-sphere against the registered radius, so
+        // it cannot absorb or shift a single click.
+        const beam = new pc.Entity('farm-closeup-beam');
+        beam.addComponent('render', { type: 'cylinder' });
+        beam.setLocalPosition(0, 6, 0);        // rises from the orb, orb is 0.5 across
+        beam.setLocalScale(0.28, 12, 0.28);
+        if (layer) beam.render.meshInstances[0].layer = layer.id;
+
+        const beamMat = new pc.StandardMaterial();
+        beamMat.cull = pc.CULLFACE_NONE;
+        beamMat.diffuse = new pc.Color(0, 0, 0);
+        beamMat.emissive = new pc.Color(1, 0.85, 0.2);   // same gold the VO names
+        beamMat.emissiveIntensity = 0.9;
+        beamMat.opacity = 0.22;
+        beamMat.blendType = pc.BLEND_ADDITIVE;
+        beamMat.depthWrite = false;
+        beamMat.update();
+        beam.render.meshInstances[0].material = beamMat;
+        orbEntity.addChild(beam);
+
         this.container.addChild(orbEntity);
         this.farmCloseupOrb = orbEntity;
+        this.farmCloseupBaseScale = 0.5;
+        this.farmCloseupPulseTime = 0;
 
-        // Register for clicking with small raycast radius to avoid blocking forward arrow
+        // Register for clicking with small raycast radius to avoid blocking forward arrow.
+        // 0.35 deliberately: the beam and the badge above do not change it.
         this.registerInteractiveObject(orbEntity, () => {
             this.onFarmCloseupOrbClick();
         }, 0.35);
+
+        // Magnifier badge. street-view has no hotspot-label system, and a texture on a
+        // sphere would distort and only read from one angle, so this is a DOM element
+        // positioned from the orb's screen projection: camera-facing by construction and
+        // pointer-events:none. It rides this.arrowLabels, whose teardown already exists.
+        const badge = document.createElement('div');
+        badge.className = 'farm-closeup-badge';
+        badge.style.cssText = 'position:fixed; pointer-events:none; z-index:5000; display:none; '
+            + 'transform:translate(-50%,-50%); width:34px; height:34px; border-radius:50%; '
+            + 'background:rgba(20,16,4,0.72); border:1px solid rgba(244,208,63,0.85); '
+            + 'box-shadow:0 0 12px rgba(244,208,63,0.5); align-items:center; justify-content:center;';
+        badge.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" '
+            + 'stroke="#f4d03f" stroke-width="2.2" stroke-linecap="round">'
+            + '<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>';
+        document.body.appendChild(badge);
+        this.arrowLabels.push(badge);
+        this.farmCloseupBadge = badge;
 
         if (window.DEV_MODE) console.log('[farm-closeup] Orb created at farm1-4');
     }
@@ -1170,6 +1312,13 @@ class StreetViewScene extends Scene {
         this.farmHintElement.style.display = 'block';
     }
 
+    // Same helper cafeInterior and roastery already carry; street-view had none
+    // because nothing here projected world positions to the screen before.
+    worldToScreen(worldPos) {
+        cameraEntity.camera.worldToScreen(worldPos, this._screenPos);
+        return this._screenPos;
+    }
+
     clearFarmHint() {
         if (this.farmHintElement) {
             this.farmHintElement.style.display = 'none';
@@ -1255,6 +1404,14 @@ class StreetViewScene extends Scene {
     }
 
     async onUnload() {
+        // Release the cached disc-face textures (one per colour/glyph combination).
+        if (this._discTextures) {
+            for (const tex of this._discTextures.values()) {
+                try { tex.destroy(); } catch (e) { /* already gone */ }
+            }
+            this._discTextures.clear();
+        }
+
         // Release the hidden prefetch <video> elements: they live on document.body,
         // so nothing else would ever collect them.
         for (const v of this.preloadedVideoElements) {
@@ -1268,18 +1425,7 @@ class StreetViewScene extends Scene {
         try {
             this.arrowEntities.forEach(arrow => {
                 this.unregisterInteractiveObject(arrow);
-                // Remove mesh instances from render layers before destroying entity
-                if (arrow.render && arrow.render.meshInstances) {
-                    const immediateLayer = app.scene.layers.getLayerByName('Immediate');
-                    const uiLayer = app.scene.layers.getLayerByName('UI');
-                    if (immediateLayer && arrow.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
-                        immediateLayer.removeMeshInstances(arrow.render.meshInstances);
-                    }
-                    if (uiLayer && arrow.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
-                        uiLayer.removeMeshInstances(arrow.render.meshInstances);
-                    }
-                }
-                arrow.destroy();
+                this.releaseImmediateEntity(arrow);
             });
             this.arrowEntities = [];
         } catch (error) {
@@ -1296,19 +1442,10 @@ class StreetViewScene extends Scene {
         try {
             if (this.farmCloseupOrb) {
                 this.unregisterInteractiveObject(this.farmCloseupOrb);
-                // Remove mesh instances from render layers before destroying entity
-                if (this.farmCloseupOrb.render && this.farmCloseupOrb.render.meshInstances) {
-                    const immediateLayer = app.scene.layers.getLayerByName('Immediate');
-                    const uiLayer = app.scene.layers.getLayerByName('UI');
-                    if (immediateLayer && this.farmCloseupOrb.render.meshInstances.some(mi => immediateLayer.meshInstances.includes(mi))) {
-                        immediateLayer.removeMeshInstances(this.farmCloseupOrb.render.meshInstances);
-                    }
-                    if (uiLayer && this.farmCloseupOrb.render.meshInstances.some(mi => uiLayer.meshInstances.includes(mi))) {
-                        uiLayer.removeMeshInstances(this.farmCloseupOrb.render.meshInstances);
-                    }
-                }
-                this.farmCloseupOrb.destroy();
+                // Subtree-aware: the beam child must leave the layer too.
+                this.releaseImmediateEntity(this.farmCloseupOrb);
                 this.farmCloseupOrb = null;
+                this.farmCloseupBadge = null;
             }
         } catch (error) {
             console.error('Error cleaning up farm closeup orb:', error);
@@ -1507,6 +1644,41 @@ class StreetViewScene extends Scene {
         } else {
             this.journeyIdleTimer = 0;
             this.journeyIdleTimerActive = false;
+        }
+
+        // Harvest disc pulse (see the note where baseScale is set).
+        this.harvestPulseTime = ((this.harvestPulseTime || 0) + deltaTime) % 1.6;
+        const harvestK = 1 + Math.sin(this.harvestPulseTime / 1.6 * Math.PI * 2) * 0.08;
+        for (const a of this.arrowEntities) {
+            if (a && !a._destroyed && a.isHarvestMarker && a.baseScale) {
+                a.setLocalScale(a.baseScale.x * harvestK, a.baseScale.y, a.baseScale.z * harvestK);
+            }
+        }
+
+        // Close-up orb: gentle scale pulse plus the magnifier badge's screen position.
+        // Driven from here because only activeScene.update(deltaTime) is ever called —
+        // entity.update is never invoked by the engine in this project.
+        if (this.farmCloseupOrb && !this.farmCloseupOrb._destroyed) {
+            this.farmCloseupPulseTime = (this.farmCloseupPulseTime + deltaTime) % 1.6;
+            const k = 1 + Math.sin(this.farmCloseupPulseTime / 1.6 * Math.PI * 2) * 0.08;
+            const base = this.farmCloseupBaseScale || 0.5;
+            this.farmCloseupOrb.setLocalScale(base * k, base * k, base * k);
+
+            const badge = this.farmCloseupBadge;
+            if (badge) {
+                const worldPos = this.farmCloseupOrb.getPosition();
+                const screen = this.worldToScreen(worldPos);
+                const toOrb = new pc.Vec3().sub2(worldPos, cameraEntity.getPosition());
+                const behind = toOrb.dot(cameraEntity.forward) <= 0;
+                const off = screen.x < 0 || screen.x > window.innerWidth
+                         || screen.y < 0 || screen.y > window.innerHeight;
+                const show = !behind && !off && !document.body.classList.contains('video-open');
+                badge.style.display = show ? 'flex' : 'none';
+                if (show) {
+                    badge.style.left = `${screen.x}px`;
+                    badge.style.top = `${screen.y}px`;
+                }
+            }
         }
 
         // Update coordinate display periodically
