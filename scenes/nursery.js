@@ -936,7 +936,7 @@ class NurseryScene extends Scene {
                 label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
                 document.body.appendChild(label);
                 group.labelElement = label;
-                console.warn(`[nursery] Created label: "To Farm" for hotspot "${hotspot.id}"`);
+                if (window.DEV_MODE) console.warn(`[nursery] Created label: "${label.textContent}" for hotspot "${hotspot.id}"`);
             }
         });
     }
@@ -1033,7 +1033,7 @@ class NurseryScene extends Scene {
 
         // Play VO narration — when it ends, complete transition (cuts video, not when video ends)
         await this.playVoWithSubtitles('journeyToFarm_en_01', false);
-        console.log('[Nursery] Drone video: VO ended, completing transition');
+        if (window.DEV_MODE) console.log('[Nursery] Drone video: VO ended, completing transition');
         await completeTransition();
 
         // Safety fallback: if transition doesn't complete within 20s, force it
@@ -1059,7 +1059,7 @@ class NurseryScene extends Scene {
             // Check if splat was preloaded
             if (window._preloadedSplats && window._preloadedSplats['nursery-splat']) {
                 this.splatAsset = window._preloadedSplats['nursery-splat'];
-                console.warn('[Nursery] Using preloaded splat');
+                if (window.DEV_MODE) console.warn('[Nursery] Using preloaded splat');
             } else {
                 this.splatAsset = new pc.Asset('nursery-splat', 'gsplat', {
                     url: `${R2_BASE}/thesisNursery_optimized.sog`

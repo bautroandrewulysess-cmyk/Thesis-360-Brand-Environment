@@ -950,7 +950,7 @@ class RoasteryScene extends Scene {
                 group.enabled = true;
             }
             this.hotspotEntities.push(group);
-            console.log(`[roastery] Created hotspot: "${hotspot.id}" (transition=${hotspot.isTransition})`);
+            if (window.DEV_MODE) console.log(`[roastery] Created hotspot: "${hotspot.id}" (transition=${hotspot.isTransition})`);
 
 
             this.registerInteractiveObject(group, () => {
@@ -971,23 +971,23 @@ class RoasteryScene extends Scene {
                     if (hotspot.isGateMarker) {
                         label.style.display = 'block';
                     }
-                    console.warn(`[roastery] Created label: "${this.t(`roastery.${hotspot.id}.label`)}" for hotspot "${hotspot.id}"`);
+                    if (window.DEV_MODE) console.warn(`[roastery] Created label: "${this.t(`roastery.${hotspot.id}.label`)}" for hotspot "${hotspot.id}"`);
                 }
             }
         });
     }
 
     async onLoad() {
-        console.log('[Roastery] onLoad called');
+        if (window.DEV_MODE) console.log('[Roastery] onLoad called');
         await super.onLoad();
 
         if (this.isLoaded) {
-            console.log('[Roastery] Already loaded, returning');
+            if (window.DEV_MODE) console.log('[Roastery] Already loaded, returning');
             return;
         }
 
         try {
-            console.log('[Roastery] Starting load sequence');
+            if (window.DEV_MODE) console.log('[Roastery] Starting load sequence');
             document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
 
             window.ThesisApp.debugLog('Loading roastery splat...');
@@ -995,7 +995,7 @@ class RoasteryScene extends Scene {
             // Check if splat was preloaded
             if (window._preloadedSplats && window._preloadedSplats['roastery-splat']) {
                 this.splatAsset = window._preloadedSplats['roastery-splat'];
-                console.warn('[Roastery] Using preloaded splat');
+                if (window.DEV_MODE) console.warn('[Roastery] Using preloaded splat');
             } else {
                 this.splatAsset = new pc.Asset('roastery-splat', 'gsplat', {
                     url: `${R2_BASE}/thesisRoastery_optimized.sog`
@@ -1094,7 +1094,7 @@ class RoasteryScene extends Scene {
             throw error;
         }
         this.isLoaded = true;
-        console.log('[Roastery] onLoad completed successfully');
+        if (window.DEV_MODE) console.log('[Roastery] onLoad completed successfully');
     }
 
     spawnGateMarker(gate) {
@@ -1123,7 +1123,7 @@ class RoasteryScene extends Scene {
                         this.highlightLabel = hotspotGroup.labelElement;
                     }
                 }
-                console.log('[Roastery] roasterVideo gate reached - roasting-beans-transition orb highlighted');
+                if (window.DEV_MODE) console.log('[Roastery] roasterVideo gate reached - roasting-beans-transition orb highlighted');
             }
             return;
         }

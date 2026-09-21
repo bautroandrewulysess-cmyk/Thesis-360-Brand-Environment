@@ -187,18 +187,20 @@ class VideoScene extends Scene {
 
     armForwardFallback(delayMs, why) {
         if (this.fallbackTimeoutHandle) clearTimeout(this.fallbackTimeoutHandle);
-        console.log(`[VideoScene] Continue fallback armed for ${(delayMs / 1000).toFixed(1)}s (${why})`);
+        if (window.DEV_MODE) console.log(`[VideoScene] Continue fallback armed for ${(delayMs / 1000).toFixed(1)}s (${why})`);
         this.fallbackTimeoutHandle = setTimeout(() => {
             this.fallbackTimeoutHandle = null;
             if (this.quizPassed) return;
-            console.log('[VideoScene] Continue fallback fired');
+            if (window.DEV_MODE) console.log('[VideoScene] Continue fallback fired');
             this.showForwardButton();
         }, delayMs);
     }
 
-    // Single entry point for starting the narration. The video is loop=true and
-    // outruns the VO in both languages (en 82.8s vs 65.0s, bis 107.6s vs 98.4s), so
-    // 'playing' fires again on every loop — this must only ever run once.
+    // Single entry point for starting the narration. Harvesting no longer loops in
+    // either language — both cuts carry their own narration, so the video ends rather
+    // than repeating (see the muted/loop assignment in onLoad). Every other video
+    // scene still loops, and 'playing' fires again on each pass, so this must only
+    // ever run once.
     startVoOnce(why) {
         if (this.voStarted) return;
         this.voStarted = true;
@@ -209,10 +211,10 @@ class VideoScene extends Scene {
         if (this.narratedByVideo) {
             // Narration plays from the video's audio track; the quiz hangs off the
             // video's 'ended' instead (see bindQuizToVideoEnd).
-            console.log(`[VideoScene] Narration is in the video's own audio track (${why}); no separate VO`);
+            if (window.DEV_MODE) console.log(`[VideoScene] Narration is in the video's own audio track (${why}); no separate VO`);
             return;
         }
-        console.log(`[VideoScene] Starting VO (${why})`);
+        if (window.DEV_MODE) console.log(`[VideoScene] Starting VO (${why})`);
         this.playVoSequence(this.audioKey).catch(e => {
             console.error('[VideoScene] Failed to play VO sequence:', e);
         });
@@ -244,7 +246,7 @@ class VideoScene extends Scene {
         if (!video) return;
 
         video.addEventListener('ended', () => {
-            console.log('[VideoScene] Video ended — embedded narration finished, triggering quiz');
+            if (window.DEV_MODE) console.log('[VideoScene] Video ended — embedded narration finished, triggering quiz');
             this.isVoFinished = true;
             const segments = window.voSegmentsFor ? window.voSegmentsFor(this.audioKey) : null;
             const segmentId = (segments && segments[0]) ? segments[0].id : this.audioKey;
@@ -278,7 +280,7 @@ class VideoScene extends Scene {
         const segments = window.voSegmentsFor ? window.voSegmentsFor(this.audioKey) : null;
         const segmentId = (segments && segments[0]) ? segments[0].id : this.audioKey;
         const src = subtitleUrl(`${segmentId}.vtt`);
-        console.log(`[VideoScene] Attaching subtitles to video: ${src}`);
+        if (window.DEV_MODE) console.log(`[VideoScene] Attaching subtitles to video: ${src}`);
         this.detachVideoSubtitles = this.attachVideoSubtitles(this.videoElement, src).detach;
     }
 
@@ -293,7 +295,7 @@ class VideoScene extends Scene {
     startVideoPlayback(why) {
         if (this.videoPlaybackStarted) return;
         this.videoPlaybackStarted = true;
-        console.log(`[VideoScene] Starting video playback (${why})`);
+        if (window.DEV_MODE) console.log(`[VideoScene] Starting video playback (${why})`);
 
         this.voStartFallbackHandle = setTimeout(
             () => this.startVoOnce(`video did not start within ${VIDEO_SCENE_VO_START_FALLBACK_MS / 1000}s`),
@@ -323,10 +325,10 @@ class VideoScene extends Scene {
 
     onQuizPassed() {
         this.quizPassed = true;
-        console.log(`[VideoScene] Quiz passed for ${this.name}`);
+        if (window.DEV_MODE) console.log(`[VideoScene] Quiz passed for ${this.name}`);
         if (this.fallbackTimeoutHandle) {
             clearTimeout(this.fallbackTimeoutHandle);
-            console.log('[VideoScene] 90s fallback cleared after quiz pass');
+            if (window.DEV_MODE) console.log('[VideoScene] 90s fallback cleared after quiz pass');
         }
         // Show Continue button for all scenes
         this.showForwardButton();
@@ -390,7 +392,7 @@ class VideoScene extends Scene {
                 this.triggerQuizDirect(this.audioKey);
                 return;
             }
-            console.log(`[VideoScene] Continue clicked, transitioning to ${this.nextScene} with spawn ${JSON.stringify(this.nextSpawn)}`);
+            if (window.DEV_MODE) console.log(`[VideoScene] Continue clicked, transitioning to ${this.nextScene} with spawn ${JSON.stringify(this.nextSpawn)}`);
             sceneManager.switchTo(this.nextScene, this.nextSpawn);
         });
 

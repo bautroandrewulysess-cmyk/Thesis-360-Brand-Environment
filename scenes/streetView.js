@@ -59,6 +59,7 @@ class StreetViewScene extends Scene {
         this.quizPassed = false;
         this.highlightFarm1_5Forward = false;
         this.toFarm14FirstArrival = true;
+        this.preloadedVideoElements = [];
         this.isInputLocked = false;
         this.quiz = {
             get question() { return t('streetView.quiz.question'); },
@@ -72,7 +73,12 @@ class StreetViewScene extends Scene {
         this.journeyVideoPlayed = false;
         this.journeyIdleTimer = 0;
         this.journeyIdleTimerActive = false;
-        this.journeyEncouragementLastLine = {}; // Track last played line per position (toFarm1: '03', toFarm7: '06', etc.)
+        // Last encouragement line played anywhere on the walk, so the two lines
+        // alternate across positions. Deliberately not keyed by position: the
+        // previous version chose the leading line from the position's number
+        // parity, which silently stopped alternating when positions were removed
+        // from the graph and left consecutive stops playing the same line first.
+        this.journeyEncouragementLastLine = null;
 
         // Farm directional hint
         this.farmHintVisible = false;
@@ -98,9 +104,9 @@ class StreetViewScene extends Scene {
         // (e.g. labelKey: 'ui.arrow.goBack') and a language-neutral discriminator
         // (e.g. kind: 'back') — leave `label` itself alone.
         // ---------------------------------------------------------------------
-        // Position graph: 31 total positions
+        // Position graph: 28 total positions
         this.positions = {
-            // === Cafe → Farm main walk (14 positions) ===
+            // === Cafe → Farm main walk (10 positions) ===
             'toFarm1': {
                 photo: assetUrl('Photos (360)/aGoing Main/toFarm1.jpg'),
                 arrows: [
@@ -111,36 +117,22 @@ class StreetViewScene extends Scene {
             'toFarm2': {
                 photo: assetUrl('Photos (360)/aGoing Main/toFarm2.jpg'),
                 arrows: [
-                    { label: 'Continue', yaw: 174.1, pitch: -6.9, target: 'toFarm3' },
+                    { label: 'Continue', yaw: 174.1, pitch: -6.9, target: 'toFarm4' },
                     { label: 'Go Back', yaw: -9.7, pitch: -13.2, target: 'toFarm1' }
-                ]
-            },
-            'toFarm3': {
-                photo: assetUrl('Photos (360)/aGoing Main/toFarm3.jpg'),
-                arrows: [
-                    { label: 'Continue', yaw: -175.6, pitch: -7.4, target: 'toFarm4' },
-                    { label: 'Go Back', yaw: -3.7, pitch: -17.8, target: 'toFarm2' }
                 ]
             },
             'toFarm4': {
                 photo: assetUrl('Photos (360)/aGoing Main/toFarm4.jpg'),
                 arrows: [
-                    { label: 'Continue', yaw: -171.4, pitch: -11.5, target: 'toFarm5' },
-                    { label: 'Go Back', yaw: 14.5, pitch: -20.1, target: 'toFarm3' }
-                ]
-            },
-            'toFarm5': {
-                photo: assetUrl('Photos (360)/aGoing Main/toFarm5.jpg'),
-                arrows: [
-                    { label: 'Continue', yaw: -171.4, pitch: -6, target: 'toFarm6' },
-                    { label: 'Go Back', yaw: 19.4, pitch: -22.3, target: 'toFarm4' }
+                    { label: 'Continue', yaw: -171.4, pitch: -11.5, target: 'toFarm6' },
+                    { label: 'Go Back', yaw: 14.5, pitch: -20.1, target: 'toFarm2' }
                 ]
             },
             'toFarm6': {
                 photo: assetUrl('Photos (360)/aGoing Main/toFarm6.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: -158.5, pitch: -3.7, target: 'toFarm7' },
-                    { label: 'Go Back', yaw: 15.4, pitch: -22.2, target: 'toFarm5' }
+                    { label: 'Go Back', yaw: 15.4, pitch: -22.2, target: 'toFarm4' }
                 ]
             },
             'toFarm7': {
@@ -160,36 +152,22 @@ class StreetViewScene extends Scene {
             'toFarm9': {
                 photo: assetUrl('Photos (360)/aGoing Main/toFarm9.jpg'),
                 arrows: [
-                    { label: 'Continue', yaw: 154.5, pitch: -26.4, target: 'toFarm10' },
+                    { label: 'Continue', yaw: 154.5, pitch: -26.4, target: 'toFarm11' },
                     { label: 'Go Back', yaw: -24.5, pitch: -17.6, target: 'toFarm8' }
-                ]
-            },
-            'toFarm10': {
-                photo: assetUrl('Photos (360)/aGoing Main/toFarm10.jpg'),
-                arrows: [
-                    { label: 'Continue', yaw: -170.3, pitch: -23.3, target: 'toFarm11' },
-                    { label: 'Go Back', yaw: -36.2, pitch: -20.7, target: 'toFarm9' }
                 ]
             },
             'toFarm11': {
                 photo: assetUrl('Photos (360)/aGoing Main/toFarm11.jpg'),
                 arrows: [
-                    { label: 'Continue', yaw: -177.1, pitch: -19.3, target: 'toFarm12' },
-                    { label: 'Go Back', yaw: 8.2, pitch: -13.3, target: 'toFarm10' }
-                ]
-            },
-            'toFarm12': {
-                photo: assetUrl('Photos (360)/aGoing Main/toFarm12.jpg'),
-                arrows: [
-                    { label: 'Continue', yaw: 177.4, pitch: -18.4, target: 'toFarm13' },
-                    { label: 'Go Back', yaw: 6.8, pitch: -24.2, target: 'toFarm11' }
+                    { label: 'Continue', yaw: -177.1, pitch: -19.3, target: 'toFarm13' },
+                    { label: 'Go Back', yaw: 8.2, pitch: -13.3, target: 'toFarm9' }
                 ]
             },
             'toFarm13': {
                 photo: assetUrl('Photos (360)/aGoing Main/toFarm13.jpg'),
                 arrows: [
                     { label: 'Continue', yaw: 161.9, pitch: -17.9, target: 'toFarm14' },
-                    { label: 'Go Back', yaw: -9.8, pitch: -25.6, target: 'toFarm12' }
+                    { label: 'Go Back', yaw: -9.8, pitch: -25.6, target: 'toFarm11' }
                 ]
             },
             'toFarm14': {
@@ -438,7 +416,7 @@ class StreetViewScene extends Scene {
                         `\n        ]\n    }`;
                 }).join(',\n') +
                 `\n}`;
-            console.log(`[aim-export] Exported ${positionKeys.length} positions:\n${jsCode}`);
+            if (window.DEV_MODE) console.log(`[aim-export] Exported ${positionKeys.length} positions:\n${jsCode}`);
             navigator.clipboard.writeText(jsCode);
             return;
         }
@@ -459,13 +437,13 @@ class StreetViewScene extends Scene {
         if (event.key === 'y' || event.key === 'Y') {
             const arrowIdx = posData.arrows.findIndex(a => !a.label.includes('Back'));
             if (arrowIdx < 0) {
-                console.log(`[aim] ${this.currentPosition}: no forward arrow`);
+                if (window.DEV_MODE) console.log(`[aim] ${this.currentPosition}: no forward arrow`);
                 return;
             }
             const arrow = posData.arrows[arrowIdx];
             arrow.yaw = yaw;
             arrow.pitch = pitch;
-            console.log(`[aim] ${this.currentPosition} forward "${arrow.label}" → yaw ${arrow.yaw}°, pitch ${arrow.pitch}°`);
+            if (window.DEV_MODE) console.log(`[aim] ${this.currentPosition} forward "${arrow.label}" → yaw ${arrow.yaw}°, pitch ${arrow.pitch}°`);
             this.createArrows();
             if (window.updateDiscValues) window.updateDiscValues(this.currentPosition, posData.arrows);
             return;
@@ -475,13 +453,13 @@ class StreetViewScene extends Scene {
         if (event.key === 'i' || event.key === 'I') {
             const forwardArrows = posData.arrows.filter(a => !a.label.includes('Back'));
             if (forwardArrows.length < 2) {
-                console.log(`[aim] ${this.currentPosition}: no second forward arrow`);
+                if (window.DEV_MODE) console.log(`[aim] ${this.currentPosition}: no second forward arrow`);
                 return;
             }
             const arrow = forwardArrows[1];
             arrow.yaw = yaw;
             arrow.pitch = pitch;
-            console.log(`[aim] ${this.currentPosition} forward "${arrow.label}" → yaw ${arrow.yaw}°, pitch ${arrow.pitch}°`);
+            if (window.DEV_MODE) console.log(`[aim] ${this.currentPosition} forward "${arrow.label}" → yaw ${arrow.yaw}°, pitch ${arrow.pitch}°`);
             this.createArrows();
             if (window.updateDiscValues) window.updateDiscValues(this.currentPosition, posData.arrows);
             return;
@@ -491,13 +469,13 @@ class StreetViewScene extends Scene {
         if (event.key === 'u' || event.key === 'U') {
             const arrowIdx = posData.arrows.findIndex(a => a.label.includes('Back'));
             if (arrowIdx < 0) {
-                console.log(`[aim] ${this.currentPosition}: no back arrow`);
+                if (window.DEV_MODE) console.log(`[aim] ${this.currentPosition}: no back arrow`);
                 return;
             }
             const arrow = posData.arrows[arrowIdx];
             arrow.yaw = yaw;
             arrow.pitch = pitch;
-            console.log(`[aim] ${this.currentPosition} back "${arrow.label}" → yaw ${arrow.yaw}°, pitch ${arrow.pitch}°`);
+            if (window.DEV_MODE) console.log(`[aim] ${this.currentPosition} back "${arrow.label}" → yaw ${arrow.yaw}°, pitch ${arrow.pitch}°`);
             this.createArrows();
             if (window.updateDiscValues) window.updateDiscValues(this.currentPosition, posData.arrows);
             return;
@@ -811,19 +789,19 @@ class StreetViewScene extends Scene {
             this.onFarmCloseupOrbClick();
         }, 0.35);
 
-        console.log('[farm-closeup] Orb created at farm1-4');
+        if (window.DEV_MODE) console.log('[farm-closeup] Orb created at farm1-4');
     }
 
     async onFarmCloseupOrbClick() {
         // Guard against double-firing (raycast can trigger multiple times per click)
         if (this.farmCloseupClickInProgress) {
-            console.log('[Farm Close-up] Click already in progress, ignoring');
+            if (window.DEV_MODE) console.log('[Farm Close-up] Click already in progress, ignoring');
             return;
         }
         this.farmCloseupClickInProgress = true;
 
         try {
-            console.log('[Farm Close-up] Orb clicked');
+            if (window.DEV_MODE) console.log('[Farm Close-up] Orb clicked');
             this.currentPosition = 'farm1-closeup';
             await this.loadPosition('farm1-closeup');
 
@@ -838,11 +816,11 @@ class StreetViewScene extends Scene {
             this.createArrows();
 
             // After position loads, resume the VO sequence to play farm_en_02
-            console.log('[Farm Close-up] Resuming VO sequence');
+            if (window.DEV_MODE) console.log('[Farm Close-up] Resuming VO sequence');
             this.farmCloseupViewed = true;
             this.clearFarmHint();
             await this.resumeVoSequence();
-            console.log('[Farm Close-up] VO sequence resumed');
+            if (window.DEV_MODE) console.log('[Farm Close-up] VO sequence resumed');
         } finally {
             this.farmCloseupClickInProgress = false;
         }
@@ -929,14 +907,14 @@ class StreetViewScene extends Scene {
     }
 
     async checkFarmerInterviewAtToFarm14() {
-        console.warn('[FarmerInterview] checkFarmerInterviewAtToFarm14 entered');
-        console.warn('[FarmerInterview] currentPosition:', this.currentPosition, 'toFarm14FirstArrival:', this.toFarm14FirstArrival);
+        if (window.DEV_MODE) console.warn('[FarmerInterview] checkFarmerInterviewAtToFarm14 entered');
+        if (window.DEV_MODE) console.warn('[FarmerInterview] currentPosition:', this.currentPosition, 'toFarm14FirstArrival:', this.toFarm14FirstArrival);
         if (this.currentPosition === 'toFarm14' && this.toFarm14FirstArrival) {
             this.toFarm14FirstArrival = false;
             const required = !window.journeyComplete;
-            console.warn('[FarmerInterview] showVideoPopup called, required:', required);
+            if (window.DEV_MODE) console.warn('[FarmerInterview] showVideoPopup called, required:', required);
             const videoSrc = videoUrl('farmerInterview.mp4');
-            console.warn('[FarmerInterview] video src:', videoSrc);
+            if (window.DEV_MODE) console.warn('[FarmerInterview] video src:', videoSrc);
             if (required) {
                 this.isInputLocked = true;
                 for (let arrow of this.arrowEntities) arrow.enabled = false;
@@ -945,7 +923,7 @@ class StreetViewScene extends Scene {
                 required,
                 caption: 'Meet the farmer',
                 onFinish: () => {
-                    console.warn('[FarmerInterview] onFinish callback fired');
+                    if (window.DEV_MODE) console.warn('[FarmerInterview] onFinish callback fired');
                     if (this.ambientGain && this.audioContext) {
                         this.ambientGain.gain.setTargetAtTime(0.8, this.audioContext.currentTime, 0.3);
                     }
@@ -961,21 +939,21 @@ class StreetViewScene extends Scene {
             }
             if (video) {
                 const checkReadyState = () => {
-                    console.warn('[FarmerInterview] readyState:', video.readyState, 'duration:', video.duration, 'src:', video.src);
+                    if (window.DEV_MODE) console.warn('[FarmerInterview] readyState:', video.readyState, 'duration:', video.duration, 'src:', video.src);
                     if (video.readyState < 4) {
                         setTimeout(checkReadyState, 5000);
                     }
                 };
                 video.addEventListener('canplay', () => {
-                    console.warn('[FarmerInterview] canplay event fired');
+                    if (window.DEV_MODE) console.warn('[FarmerInterview] canplay event fired');
                 }, { once: true });
                 video.addEventListener('error', (e) => {
-                    console.warn('[FarmerInterview] error event fired:', e);
+                    if (window.DEV_MODE) console.warn('[FarmerInterview] error event fired:', e);
                 }, { once: true });
                 setTimeout(checkReadyState, 5000);
             }
         } else {
-            console.warn('[FarmerInterview] Check skipped - not at toFarm14 or not first arrival');
+            if (window.DEV_MODE) console.warn('[FarmerInterview] Check skipped - not at toFarm14 or not first arrival');
         }
     }
 
@@ -1122,7 +1100,7 @@ class StreetViewScene extends Scene {
             mat.update();
 
             this.photoSphere.render.meshInstances[0].material = mat;
-            console.log(`[position] ✓ ${positionKey} loaded`);
+            if (window.DEV_MODE) console.log(`[position] ✓ ${positionKey} loaded`);
         } catch (error) {
             console.error(`Position load failed: ${error.message}`);
             throw error;
@@ -1149,7 +1127,7 @@ class StreetViewScene extends Scene {
                                 app.assets.remove(this.preloadedAssets[oldest]);
                                 delete this.preloadedAssets[oldest];
                             }
-                            console.log('Preloaded:', arrow.target);
+                            if (window.DEV_MODE) console.log('Preloaded:', arrow.target);
                         })
                         .catch(err => {
                             console.warn('Preload failed (non-blocking):', arrow.target, err);
@@ -1277,6 +1255,15 @@ class StreetViewScene extends Scene {
     }
 
     async onUnload() {
+        // Release the hidden prefetch <video> elements: they live on document.body,
+        // so nothing else would ever collect them.
+        for (const v of this.preloadedVideoElements) {
+            v.removeAttribute('src');
+            v.load();
+            v.remove();
+        }
+        this.preloadedVideoElements = [];
+
         // Arrow and interactive object cleanup FIRST (before anything else)
         try {
             this.arrowEntities.forEach(arrow => {
@@ -1479,54 +1466,40 @@ class StreetViewScene extends Scene {
 
         // Reset journeyIdleTimerActive when VO finishes, allowing next encouragement to play
         if (this.isVoFinished && this.journeyIdleTimerActive) {
-            console.log(`[encouragement] VO finished, resetting journeyIdleTimerActive`);
+            if (window.DEV_MODE) console.log(`[encouragement] VO finished, resetting journeyIdleTimerActive`);
             this.journeyIdleTimerActive = false;
         }
 
         if (inToFarm1_6) {
             this.journeyIdleTimer += deltaTime;
             if (this.journeyIdleTimer >= 10 && !this.journeyIdleTimerActive) {
-                console.log(`[encouragement] toFarm1-6: timer=${this.journeyIdleTimer.toFixed(1)}s, isVoFinished=${this.isVoFinished}, videoOpen=${document.body.classList.contains('video-open')}`);
+                if (window.DEV_MODE) console.log(`[encouragement] toFarm1-6: timer=${this.journeyIdleTimer.toFixed(1)}s, isVoFinished=${this.isVoFinished}, videoOpen=${document.body.classList.contains('video-open')}`);
                 // Don't play if VO or video already playing
                 if (!this.isVoFinished || document.body.classList.contains('video-open')) {
-                    console.log(`[encouragement] skipped (VO running or video open)`);
+                    if (window.DEV_MODE) console.log(`[encouragement] skipped (VO running or video open)`);
                     // Skip only the encouragement block, not the coordinate display update below
                 } else {
                     this.journeyIdleTimerActive = true;
-                    const lastLine = this.journeyEncouragementLastLine[pos];
-                    // Extract position number (toFarm1 → 1, toFarm2 → 2, etc)
-                    const posMatch = pos.match(/toFarm(\d+)/);
-                    const posNum = posMatch ? parseInt(posMatch[1]) : 0;
-                    // Swap leading line by position: odd positions start with _03, even with _04
-                    const shouldPlay03First = (posNum % 2) === 1;
-                    const firstLine = shouldPlay03First ? '03' : '04';
-                    const secondLine = shouldPlay03First ? '04' : '03';
-
-                    if (lastLine === secondLine || lastLine === undefined) {
-                        // Last was second line or undefined, play first line
-                        console.log(`[encouragement] playing journeyToFarm_en_${firstLine} at ${pos}`);
-                        this.playVoWithSubtitles(`journeyToFarm_en_${firstLine}`, false);
-                        this.journeyEncouragementLastLine[pos] = firstLine;
-                    } else {
-                        // Last was first line, play second line
-                        console.log(`[encouragement] playing journeyToFarm_en_${secondLine} at ${pos}`);
-                        this.playVoWithSubtitles(`journeyToFarm_en_${secondLine}`, false);
-                        this.journeyEncouragementLastLine[pos] = secondLine;
-                    }
+                    // Alternate on what was actually played last, not on the position's
+                    // number, so the sequence survives positions being added or removed.
+                    const nextLine = this.journeyEncouragementLastLine === '03' ? '04' : '03';
+                    if (window.DEV_MODE) console.log(`[encouragement] playing journeyToFarm_en_${nextLine} at ${pos}`);
+                    this.playVoWithSubtitles(`journeyToFarm_en_${nextLine}`, false);
+                    this.journeyEncouragementLastLine = nextLine;
                     this.journeyIdleTimer = 0;
                 }
             }
         } else if (inToFarm7_13) {
             this.journeyIdleTimer += deltaTime;
             if (this.journeyIdleTimer >= 15 && !this.journeyIdleTimerActive) {
-                console.log(`[encouragement] toFarm7-13: timer=${this.journeyIdleTimer.toFixed(1)}s, isVoFinished=${this.isVoFinished}, videoOpen=${document.body.classList.contains('video-open')}`);
+                if (window.DEV_MODE) console.log(`[encouragement] toFarm7-13: timer=${this.journeyIdleTimer.toFixed(1)}s, isVoFinished=${this.isVoFinished}, videoOpen=${document.body.classList.contains('video-open')}`);
                 // Don't play if VO or video already playing
                 if (!this.isVoFinished || document.body.classList.contains('video-open')) {
-                    console.log(`[encouragement] skipped (VO running or video open)`);
+                    if (window.DEV_MODE) console.log(`[encouragement] skipped (VO running or video open)`);
                     // Skip only the encouragement block, not the coordinate display update below
                 } else {
                     this.journeyIdleTimerActive = true;
-                    console.log(`[encouragement] playing journeyToFarm_en_06 at ${pos}`);
+                    if (window.DEV_MODE) console.log(`[encouragement] playing journeyToFarm_en_06 at ${pos}`);
                     this.playVoWithSubtitles('journeyToFarm_en_06', false);
                     this.journeyIdleTimer = 0;
                 }
@@ -1576,18 +1549,22 @@ class StreetViewScene extends Scene {
         }
     }
 
+    // Hidden metadata-only prefetch so the farmer interview starts without a stall.
+    // The element is kept on the instance because it is appended to document.body and
+    // would otherwise outlive the scene — one orphan per street-view visit.
     preloadVideo(src) {
         const video = document.createElement('video');
         video.style.display = 'none';
         video.src = src;
         video.preload = 'metadata';
         document.body.appendChild(video);
+        this.preloadedVideoElements.push(video);
     }
 
     spawnGateMarker(gate) {
         // Detect when farm_en_01 finishes by observing treePhoto gate spawn
         if (gate.ref === 'treePhoto' && this.voSceneKey === 'farm') {
-            console.log('[Farm] farm_en_01 finished, treePhoto gate spawned');
+            if (window.DEV_MODE) console.log('[Farm] farm_en_01 finished, treePhoto gate spawned');
             this.farm_en_01_Finished = true;
             // For treePhoto gate, don't show the 2D button — the 3D orb at farm1-4 is the only trigger
             this.despawnGateMarker();
@@ -1604,7 +1581,7 @@ class StreetViewScene extends Scene {
     onGateMarkerClick(gate) {
         // Mark farm closeup as viewed when treePhoto is opened (hides hint on return)
         if (gate.ref === 'treePhoto') {
-            console.log('[Farm] treePhoto gate clicked, marking closeup as viewed');
+            if (window.DEV_MODE) console.log('[Farm] treePhoto gate clicked, marking closeup as viewed');
             this.farmCloseupViewed = true;
             this.farmHintVisible = false;
         }

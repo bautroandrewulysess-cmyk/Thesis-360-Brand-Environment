@@ -97,6 +97,7 @@ window.Strings = {
     'ui.nursery.toFarm': { en: 'To Farm', bis: 'Padulong sa Umahan' },
     'ui.video.continue': { en: 'Continue', bis: 'Padayon' },
     'ui.video.roasteryPrompt': { en: 'Select Continue to visit the roastery', bis: 'I-klik ang Padayon aron moadto sa sanlaganan' },
+    'ui.quiz.encouragement': { en: 'It\'s okay to get it wrong — just give it your best guess!', bis: 'Okay ra kung masayop ka — sulayi lang ang imong labing maayong tubag!' },
     'ui.quiz.correct': { en: 'Correct!', bis: 'Sakto!' },
     'ui.clue.ahead': { en: 'It\'s right in front of you', bis: 'Naa ra sa imong atubangan' },
     'ui.clue.right': { en: 'Look to your right', bis: 'Tan-aw sa imong tuo' },

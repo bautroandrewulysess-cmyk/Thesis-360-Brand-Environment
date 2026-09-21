@@ -1010,7 +1010,7 @@ class CafeExteriorScene extends Scene {
             // Check if splat was preloaded
             if (window._preloadedSplats && window._preloadedSplats['cafe-exterior-splat']) {
                 this.splatAsset = window._preloadedSplats['cafe-exterior-splat'];
-                console.warn('[CafeExterior] Using preloaded splat');
+                if (window.DEV_MODE) console.warn('[CafeExterior] Using preloaded splat');
             } else {
                 this.splatAsset = new pc.Asset('cafe-exterior-splat', 'gsplat', {
                     url: `${R2_BASE}/thesisCafeExterior_optimized.sog`

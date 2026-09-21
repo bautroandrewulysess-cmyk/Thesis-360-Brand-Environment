@@ -899,7 +899,7 @@ class CafeInteriorScene extends Scene {
 
         const labelCountBefore = document.querySelectorAll('.hotspot-label').length;
         const hotspotCountBefore = this.hotspotEntities.length;
-        console.warn(`[cafeInterior] createHotspots called: ${hotspotCountBefore} existing hotspots, ${labelCountBefore} existing labels`);
+        if (window.DEV_MODE) console.warn(`[cafeInterior] createHotspots called: ${hotspotCountBefore} existing hotspots, ${labelCountBefore} existing labels`);
 
         document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
 
@@ -1034,14 +1034,14 @@ class CafeInteriorScene extends Scene {
                     label.style.cssText = `position:fixed; pointer-events:none; z-index:5000; color:#f4f4f4; font-family:'Inter',sans-serif; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.6); padding:6px 12px; border-radius:4px; border:1px solid rgba(244,208,63,0.4); display:none; transform:translateX(-50%);`;
                     document.body.appendChild(label);
                     group.labelElement = label;
-                    console.warn(`[cafeInterior] Created label: "${this.hotspotLabel(hotspot)}" for hotspot "${hotspot.id}"`);
+                    if (window.DEV_MODE) console.warn(`[cafeInterior] Created label: "${this.hotspotLabel(hotspot)}" for hotspot "${hotspot.id}"`);
                 }
             }
         });
 
         const labelCountAfter = document.querySelectorAll('.hotspot-label').length;
         const hotspotCountAfter = this.hotspotEntities.length;
-        console.warn(`[cafeInterior] createHotspots complete: ${hotspotCountAfter} hotspots, ${labelCountAfter} labels created`);
+        if (window.DEV_MODE) console.warn(`[cafeInterior] createHotspots complete: ${hotspotCountAfter} hotspots, ${labelCountAfter} labels created`);
     }
 
     onQuizPassed() {
@@ -1050,7 +1050,7 @@ class CafeInteriorScene extends Scene {
         this.hotspotEntities.forEach(group => {
             if ((group.hotspotData?.isVideo || group.hotspotData?.isTransition) && !group.hotspotData?.isGateMarker) {
                 group.enabled = true;
-                console.log(`[CafeInterior] Re-enabled video hotspot: "${group.hotspotData.id}"`);
+                if (window.DEV_MODE) console.log(`[CafeInterior] Re-enabled video hotspot: "${group.hotspotData.id}"`);
             }
         });
         if (!window.brewingVideoPreloaded) {
@@ -1061,11 +1061,6 @@ class CafeInteriorScene extends Scene {
             this.hideNavPrompt();
             this.showCompletionPanel('Coffee Journey Complete', window.PendingQuizzes.finalChallenge.feedback, 'https://forms.gle/UmT9jCX7bCieUKDW9');
         }
-    }
-
-    onVoFinished_brandStory() {
-        // Quiz is now shown by onGateMarkerClick for the ownerInterview gate
-        // This callback is kept for backwards compatibility if needed
     }
 
     spawnGateMarker(gate) {
@@ -1194,7 +1189,7 @@ class CafeInteriorScene extends Scene {
             // Check if splat was preloaded
             if (window._preloadedSplats && window._preloadedSplats['cafe-interior-splat']) {
                 this.splatAsset = window._preloadedSplats['cafe-interior-splat'];
-                console.warn('[CafeInterior] Using preloaded splat');
+                if (window.DEV_MODE) console.warn('[CafeInterior] Using preloaded splat');
             } else {
                 // Create and load Gaussian splat asset
                 this.splatAsset = new pc.Asset('cafe-interior-splat', 'gsplat', {
@@ -1344,7 +1339,7 @@ class CafeInteriorScene extends Scene {
             this.stopVo();
 
             // Destroy hotspot entities and labels
-            console.warn(`[cafeInterior] onUnload: destroying ${this.hotspotEntities.length} hotspots and their labels`);
+            if (window.DEV_MODE) console.warn(`[cafeInterior] onUnload: destroying ${this.hotspotEntities.length} hotspots and their labels`);
             this.hotspotEntities.forEach(group => { if (group) { if (group.labelElement) group.labelElement.remove(); group.destroy(); } });
             this.hotspotEntities = [];
             this.activeHotspotEntity = null;

@@ -106,7 +106,7 @@ const releaseSplat = (assetName, sceneAsset = null) => {
             console.warn(`[Splat] Release failed for ${assetName}: ${e.message}`);
         }
     }
-    if (targets.length) console.warn(`[Splat] Released ${assetName} (${targets.length} asset(s))`);
+    if (targets.length && window.DEV_MODE) console.warn(`[Splat] Released ${assetName} (${targets.length} asset(s))`);
     return targets.length;
 };
 window.releaseSplat = releaseSplat;
@@ -341,7 +341,7 @@ class SceneManager {
 
     async switchTo(sceneName, spawnPosition = null) {
         if (appState.isTransitioning || appState.isLoadingScene) {
-            console.warn(`[SceneManager] Queued switch to ${sceneName} — waiting for current transition`);
+            if (window.DEV_MODE) console.warn(`[SceneManager] Queued switch to ${sceneName} — waiting for current transition`);
             // Wait for current transition to complete
             await new Promise(resolve => {
                 const checkInterval = setInterval(() => {
@@ -383,14 +383,14 @@ class SceneManager {
                 showLoadingTrivia(sceneName);
             }
 
-            console.log(`[SceneManager] About to load scene: ${sceneName}`);
+            if (window.DEV_MODE) console.log(`[SceneManager] About to load scene: ${sceneName}`);
             const success = await this.loadScene(sceneName);
             loadSuccess = success;
-            console.log(`[SceneManager] loadScene result for ${sceneName}: ${success}`);
+            if (window.DEV_MODE) console.log(`[SceneManager] loadScene result for ${sceneName}: ${success}`);
 
             if (success) {
                 if (spawnPosition) {
-                    console.log(`[SceneManager] Setting spawn position: ${JSON.stringify(spawnPosition)}`);
+                    if (window.DEV_MODE) console.log(`[SceneManager] Setting spawn position: ${JSON.stringify(spawnPosition)}`);
                     cameraEntity.setLocalPosition(spawnPosition[0], spawnPosition[1], spawnPosition[2]);
                 }
                 appState.nextSceneName = null;
@@ -463,9 +463,6 @@ class SceneManager {
         return this.activeScene;
     }
 
-    getCurrentSceneName() {
-        return appState.currentSceneName;
-    }
 }
 
 const sceneManager = new SceneManager(app);
@@ -775,9 +772,6 @@ class RaycastSystem {
         this.interactiveObjects.clear();
     }
 
-    setEnabled(enabled) {
-        this.isEnabled = enabled;
-    }
 }
 
 const raycaster = new RaycastSystem(app, cameraEntity.camera);
@@ -831,7 +825,7 @@ class Scene {
 
         // Register dev VO shortcuts
         if (window.DEV_MODE) {
-            console.log('[VO Shortcuts] Registering Shift+A/S/D shortcuts');
+            if (window.DEV_MODE) console.log('[VO Shortcuts] Registering Shift+A/S/D shortcuts');
             window.addEventListener('keydown', this.onKeyVoSkip);
             window.addEventListener('keydown', this.onKeyVoReplay);
             window.addEventListener('keydown', this.onKeyVoResume);
@@ -900,81 +894,11 @@ class Scene {
         }
     }
 
-    showNavPrompt(text) {
-        const prompt = document.getElementById('nav-prompt');
-        if (prompt) {
-            prompt.textContent = text;
-            prompt.style.display = 'block';
-            setTimeout(() => prompt.style.opacity = '1', 50);
-        }
-    }
-
     hideNavPrompt() {
         const prompt = document.getElementById('nav-prompt');
         if (prompt) {
             prompt.style.opacity = '0';
             setTimeout(() => prompt.style.display = 'none', 600);
-        }
-    }
-
-    updateOffScreenHotspotPrompt() {
-        if (!this.hotspotEntities) {
-            return;
-        }
-        const prompt = document.getElementById('nav-prompt');
-        if (!prompt) {
-            console.warn('[NavPrompt] DOM element #nav-prompt not found');
-            return;
-        }
-
-        // Throttle to ~4 updates per second (250ms)
-        const now = Date.now();
-        if (!this.lastPromptUpdate) this.lastPromptUpdate = 0;
-        if (now - this.lastPromptUpdate < 250) return;
-        this.lastPromptUpdate = now;
-
-        if (!cameraEntity) return;
-
-        let nearestOffScreenHotspot = null;
-        let minDist = Infinity;
-
-        for (const group of this.hotspotEntities) {
-            if (!group.hotspotData?.isTransition || !group.enabled) continue;
-
-            const worldPos = group.getPosition();
-            const screen = this.worldToScreen(worldPos);
-            const camPos = cameraEntity.getPosition();
-            const toHotspot = new pc.Vec3().sub2(worldPos, camPos);
-            const dist = toHotspot.length();
-
-            const isBehind = toHotspot.dot(cameraEntity.forward) <= 0;
-            const isOffScreen = screen.x < 0 || screen.x > window.innerWidth || screen.y < 0 || screen.y > window.innerHeight;
-
-            if ((isOffScreen || isBehind) && dist < minDist) {
-                nearestOffScreenHotspot = group;
-                minDist = dist;
-            }
-        }
-
-        if (nearestOffScreenHotspot) {
-            const navText = this.getNavPromptText(nearestOffScreenHotspot);
-            if (navText) {
-                prompt.textContent = navText;
-                if (prompt.style.display === 'none' || getComputedStyle(prompt).display === 'none') {
-                    prompt.style.setProperty('display', 'block', 'important');
-                    setTimeout(() => prompt.style.opacity = '1', 50);
-                }
-            } else {
-                if (prompt.style.opacity !== '0') {
-                    prompt.style.opacity = '0';
-                    setTimeout(() => prompt.style.setProperty('display', 'none', 'important'), 600);
-                }
-            }
-        } else {
-            if (prompt.style.opacity !== '0') {
-                prompt.style.opacity = '0';
-                setTimeout(() => prompt.style.setProperty('display', 'none', 'important'), 600);
-            }
         }
     }
 
@@ -1321,7 +1245,7 @@ class Scene {
                 const audioEndedCheck = requiresEnded ? audio.ended === true : true;
                 if (this.quiz && !window.journeyComplete && !this.quizTriggered && this.isVoFinished === true && audioEndedCheck) {
                     this.quizTriggered = true;
-                    console.warn(`[VO] Quiz triggered via ${path}`);
+                    if (window.DEV_MODE) console.warn(`[VO] Quiz triggered via ${path}`);
                     const hookMethod = this[`onVoFinished_${audioKey}`];
                     if (typeof hookMethod === 'function') {
                         hookMethod.call(this);
@@ -1402,7 +1326,7 @@ class Scene {
                         this.isVoFinished = true;
                         this.clearSubtitles();
                         if (isQuizEligible) {
-                            console.warn('[VO] Quiz triggered via safety-timeout');
+                            if (window.DEV_MODE) console.warn('[VO] Quiz triggered via safety-timeout');
                             triggerQuiz('safety-timeout');
                         }
                         resolve();
@@ -1521,6 +1445,7 @@ class Scene {
         const choicesEl = document.getElementById('quiz-choices');
         const feedbackEl = document.getElementById('quiz-feedback');
         const progressEl = document.getElementById('quiz-progress');
+        const encouragementEl = document.getElementById('quiz-encouragement');
 
         const questions = Array.isArray(quizData) ? quizData : [quizData];
         let currentQuestionIdx = 0;
@@ -1535,6 +1460,7 @@ class Scene {
                     choicesEl.innerHTML = '';
                     feedbackEl.textContent = '';
                     feedbackEl.style.color = '#f4f4f4';
+                    if (encouragementEl) encouragementEl.textContent = '';
                     if (progressEl) progressEl.textContent = '';
                     setTimeout(onPass, 100);
                 }, 800);
@@ -1546,6 +1472,9 @@ class Scene {
             feedbackEl.textContent = '';
             feedbackEl.style.color = '#f4f4f4';
             questionEl.textContent = question.question;
+            // Reassurance reads before the answer, not after — placed above the choices
+            // for that reason. Mini-quizzes render elsewhere and deliberately skip it.
+            if (encouragementEl) encouragementEl.textContent = t('ui.quiz.encouragement');
             if (progressEl && questions.length > 1) {
                 progressEl.textContent = `${qIdx + 1} of ${questions.length}`;
             }
@@ -1597,11 +1526,12 @@ class Scene {
         const overlay = document.getElementById('quiz-overlay');
         const choicesEl = document.getElementById('quiz-choices');
         const feedbackEl = document.getElementById('quiz-feedback');
+        const encouragementEl = document.getElementById('quiz-encouragement');
 
         if (!overlay) return;
 
         if (DEV_MODE && !immediate) {
-            console.log(`[quiz] hideQuiz() called — THIS SHOULD NOT BE CALLED DURING A QUIZ SET`);
+            if (window.DEV_MODE) console.log(`[quiz] hideQuiz() called — THIS SHOULD NOT BE CALLED DURING A QUIZ SET`);
             console.trace();
         }
         const clear = () => {
@@ -1611,6 +1541,7 @@ class Scene {
                 feedbackEl.textContent = '';
                 feedbackEl.style.color = '#f4f4f4';
             }
+            if (encouragementEl) encouragementEl.textContent = '';
         };
         overlay.style.opacity = '0';
         if (immediate) clear(); else setTimeout(clear, 800);
@@ -1842,7 +1773,7 @@ class Scene {
         if (window._preloadedSplats[assetName]) {
             const cachedAsset = window._preloadedSplats[assetName];
             if (cachedAsset.resource && cachedAsset.ready) {
-                console.warn(`[Preload] Using cached splat: ${assetName}`);
+                if (window.DEV_MODE) console.warn(`[Preload] Using cached splat: ${assetName}`);
                 return cachedAsset;
             } else {
                 console.warn(`[Preload] Cached splat invalid (no resource/ready), discarding: ${assetName}`);
@@ -1850,7 +1781,7 @@ class Scene {
             }
         }
 
-        console.warn(`[Preload] Starting splat download: ${assetName} from ${url}`);
+        if (window.DEV_MODE) console.warn(`[Preload] Starting splat download: ${assetName} from ${url}`);
         const splatAsset = new pc.Asset(assetName, 'gsplat', { url });
         app.assets.add(splatAsset);
         app.assets.load(splatAsset);
@@ -1858,7 +1789,7 @@ class Scene {
         return new Promise((resolve) => {
             splatAsset.ready(() => {
                 window._preloadedSplats[assetName] = splatAsset;
-                console.warn(`[Preload] Splat ready (preloaded): ${assetName}`);
+                if (window.DEV_MODE) console.warn(`[Preload] Splat ready (preloaded): ${assetName}`);
                 resolve(splatAsset);
             });
         });
@@ -1876,7 +1807,7 @@ class Scene {
         }
         if (!this.quiz || window.journeyComplete || this.quizTriggered) return;
         this.quizTriggered = true;
-        console.warn(`[VO] Quiz triggered directly (segment ${audioKey} skipped)`);
+        if (window.DEV_MODE) console.warn(`[VO] Quiz triggered directly (segment ${audioKey} skipped)`);
         const hookMethod = this[`onVoFinished_${audioKey}`];
         if (typeof hookMethod === 'function') {
             hookMethod.call(this);
@@ -1918,21 +1849,21 @@ class Scene {
                 // runs, so a skipped quiz sting still opens its quiz.
                 const missingNonEn = window.VoMissingNonEn || new Set();
                 if (missingNonEn.has(segment.id) && (window.currentLanguage || 'en') !== 'en') {
-                    console.warn(`[VO] Skipping ${segment.id} — no ${window.currentLanguage} recording`);
+                    if (window.DEV_MODE) console.warn(`[VO] Skipping ${segment.id} — no ${window.currentLanguage} recording`);
                     this.isVoFinished = true;
                     if (isQuizSegment) this.triggerQuizDirect(segment.id);
                 } else {
-                    console.log(`[VO] Playing segment ${this.voSequenceIndex + 1}/${segments.length}: ${segment.id}`);
+                    if (window.DEV_MODE) console.log(`[VO] Playing segment ${this.voSequenceIndex + 1}/${segments.length}: ${segment.id}`);
                     await this.playVoWithSubtitles(segment.id, isQuizSegment);
                 }
 
                 if (gateType === 'marker') {
-                    console.log(`[VO] Paused at marker gate`);
+                    if (window.DEV_MODE) console.log(`[VO] Paused at marker gate`);
                     this.voGateType = gateType;
                     this.spawnGateMarker(segment.gate);
                     break;
                 } else if (gateType === 'miniquiz') {
-                    console.log(`[VO] Paused at miniquiz gate`);
+                    if (window.DEV_MODE) console.log(`[VO] Paused at miniquiz gate`);
                     this.voGateType = gateType;
                     const quizData = this.getMiniQuizData?.(segment.gate.ref);
                     if (quizData) {
@@ -1940,7 +1871,7 @@ class Scene {
                     }
                     break;
                 } else if (gateType === 'quiz') {
-                    console.log(`[VO] Reached quiz gate (terminal)`);
+                    if (window.DEV_MODE) console.log(`[VO] Reached quiz gate (terminal)`);
                     break;
                 } else {
                     this.voSequenceIndex++;
@@ -1978,7 +1909,7 @@ class Scene {
         if (this.quizPassed) {
             while (this.voSequenceIndex < segments.length && segments[this.voSequenceIndex].gate?.type === 'postquiz') {
                 const segment = segments[this.voSequenceIndex];
-                console.log(`[VO] Playing postquiz segment: ${segment.id}`);
+                if (window.DEV_MODE) console.log(`[VO] Playing postquiz segment: ${segment.id}`);
                 await this.playVoWithSubtitles(segment.id, false);
                 this.voSequenceIndex++;
             }
@@ -2243,7 +2174,7 @@ class Scene {
     // Dev VO shortcuts (only registered if DEV_MODE)
     handleVoSkip(e) {
         if (e.shiftKey && e.key === 'a') {
-            console.log('[VO] Shift+A skip triggered');
+            if (window.DEV_MODE) console.log('[VO] Shift+A skip triggered');
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
@@ -2277,7 +2208,7 @@ class Scene {
 
     handleVoReplay(e) {
         if (e.shiftKey && e.key === 's') {
-            console.log('[VO] Shift+S replay triggered');
+            if (window.DEV_MODE) console.log('[VO] Shift+S replay triggered');
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
@@ -2296,7 +2227,7 @@ class Scene {
 
     handleVoResume(e) {
         if (e.shiftKey && e.key === 'd') {
-            console.log('[VO] Shift+D resume triggered');
+            if (window.DEV_MODE) console.log('[VO] Shift+D resume triggered');
             e.preventDefault();
             if (!this.voSceneKey) return; // No active sequence
 
@@ -2780,7 +2711,7 @@ const DevJump = {
 
         try {
             await sceneManager.switchTo(sceneName, finalPos);
-            console.log(`[DEV] Jumped to ${sceneName} at ${finalPos}`);
+            if (window.DEV_MODE) console.log(`[DEV] Jumped to ${sceneName} at ${finalPos}`);
         } catch (e) {
             console.error(`[DEV] Failed to switch to ${sceneName}:`, e);
         }
@@ -2819,14 +2750,14 @@ const DevJump = {
             try {
                 await sceneManager.switchTo('street-view', 'toFarm1');
                 await streetScene.transitionToPosition(key);
-                console.log(`[DEV] Jumped to position ${key}`);
+                if (window.DEV_MODE) console.log(`[DEV] Jumped to position ${key}`);
             } catch (e) {
                 console.error(`[DEV] Failed to jump to position ${key}:`, e);
             }
         } else {
             try {
                 await streetScene.transitionToPosition(key);
-                console.log(`[DEV] Jumped to position ${key}`);
+                if (window.DEV_MODE) console.log(`[DEV] Jumped to position ${key}`);
             } catch (e) {
                 console.error(`[DEV] Failed to transition to ${key}:`, e);
             }
@@ -2885,7 +2816,7 @@ const debugInfo = document.getElementById('debug-info');
 function debugLog(message) {
     if (!DEV_MODE) return;
     if (config.debugMode) {
-        console.log(message);
+        if (window.DEV_MODE) console.log(message);
         updateDebugUI();
     }
 }
@@ -2905,7 +2836,7 @@ function toggleDebugMode() {
     if (!DEV_MODE) return;
     config.debugMode = !config.debugMode;
     debugInfo.classList.toggle('active', config.debugMode);
-    console.log('Debug mode:', config.debugMode);
+    if (window.DEV_MODE) console.log('Debug mode:', config.debugMode);
 }
 
 window.addEventListener('keydown', (e) => {
