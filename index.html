@@ -794,6 +794,10 @@
             </div>
 
             <button id="context-begin-btn" style="display:block; width:100%; margin-top:40px; padding:14px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; border-radius:6px; cursor:pointer; transition:all 0.3s ease;">Begin the Journey</button>
+            <style>
+                /* Dimmed while the context narration is still playing. */
+                #context-begin-btn:disabled { opacity: 0.35; cursor: not-allowed !important; }
+            </style>
         </div>
     </div>
 
@@ -824,16 +828,16 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=28"></script>
-    <script src="./scenes/voData.js?v=28"></script>
-    <script src="./main.js?v=28"></script>
-    <script src="./scenes/quizData.js?v=28"></script>
-    <script src="./scenes/videoScene.js?v=28"></script>
-    <script src="./scenes/cafeInterior.js?v=28"></script>
-    <script src="./scenes/cafeExterior.js?v=28"></script>
-    <script src="./scenes/roastery.js?v=28"></script>
-    <script src="./scenes/nursery.js?v=28"></script>
-    <script src="./scenes/streetView.js?v=28"></script>
+    <script src="./scenes/strings.js?v=29"></script>
+    <script src="./scenes/voData.js?v=29"></script>
+    <script src="./main.js?v=29"></script>
+    <script src="./scenes/quizData.js?v=29"></script>
+    <script src="./scenes/videoScene.js?v=29"></script>
+    <script src="./scenes/cafeInterior.js?v=29"></script>
+    <script src="./scenes/cafeExterior.js?v=29"></script>
+    <script src="./scenes/roastery.js?v=29"></script>
+    <script src="./scenes/nursery.js?v=29"></script>
+    <script src="./scenes/streetView.js?v=29"></script>
 
     <script>
         const cursorCup = document.querySelector('.cursor-cup');
@@ -940,9 +944,15 @@
             });
         };
 
+        // Context narration. Held here rather than at module scope so the element is
+        // only created once the player has actually clicked in.
+        let contextVoStarted = false;
+        let contextVo = null;
+
         document.getElementById('enter-btn').addEventListener('click', () => {
             const wrapper = document.getElementById('landing-wrapper');
             const contextScreen = document.getElementById('context-screen');
+            const beginBtn = document.getElementById('context-begin-btn');
 
             contextScreen.style.display = 'flex';
             setTimeout(() => { contextScreen.style.opacity = '1'; }, 10);
@@ -950,9 +960,42 @@
             // Preload café interior splat while context screen is shown (async, no await)
             const R2_BASE = 'https://assets.granjaalegre.com';
             fetch(`${R2_BASE}/thesisCafeInterior_v2.sog`, { mode: 'cors' }).catch(() => {});
+
+            // Guarded: a second click on Enter must not restart the narration.
+            if (contextVoStarted) return;
+            contextVoStarted = true;
+
+            // Begin stays disabled until the narration finishes. Every failure path
+            // re-enables it, so a blocked, broken or stalled download never strands
+            // anyone on this screen.
+            if (beginBtn) beginBtn.disabled = true;
+            let released = false;
+            const releaseBegin = () => {
+                if (released) return;
+                released = true;
+                if (beginBtn) beginBtn.disabled = false;
+            };
+
+            contextVo = new Audio(`${R2_BASE}/VO/contextIntro.mp3`);
+            contextVo.preload = 'auto';
+            contextVo.addEventListener('ended', releaseBegin);
+            contextVo.addEventListener('error', releaseBegin);
+            // play() is called synchronously inside this click handler: moving it behind
+            // a timeout or a gsap callback would spend the transient activation and let
+            // Safari refuse it outright.
+            contextVo.play().catch(releaseBegin);
+            // Hard cap, independent of everything above.
+            setTimeout(releaseBegin, 25000);
         });
 
         document.getElementById('context-begin-btn').addEventListener('click', () => {
+            // Stop the narration so it cannot bleed over the language screen, and drop
+            // the source so a still-running download is abandoned.
+            if (contextVo) {
+                try { contextVo.pause(); contextVo.removeAttribute('src'); contextVo.load(); } catch (e) {}
+                contextVo = null;
+            }
+
             const contextScreen = document.getElementById('context-screen');
             const languageSelect = document.getElementById('language-select');
             const wrapper = document.getElementById('landing-wrapper');
