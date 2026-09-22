@@ -711,15 +711,15 @@
         <video style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.15;" autoplay muted loop playsinline>
             <source src="https://assets.granjaalegre.com/heroLoop.mp4" type="video/mp4">
         </video>
-        <div style="position:relative; z-index:1; max-width:900px; width:90%; max-height:85vh; overflow-y:auto; background:rgba(10,10,10,0.85); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:48px; font-family:'Inter',sans-serif; color:#f4f4f4;">
-            <h2 style="font-family:'Oswald',sans-serif; font-size:2.2rem; margin:0 0 32px 0; font-weight:400; letter-spacing:1px;">How to Explore</h2>
+        <div style="position:relative; z-index:1; max-width:900px; width:90%; max-height:85vh; overflow-y:auto; background:rgba(10,10,10,0.85); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:28px 28px 0 28px; font-family:'Inter',sans-serif; color:#f4f4f4;">
+            <h2 style="font-family:'Oswald',sans-serif; font-size:1.8rem; margin:0 0 20px 0; font-weight:400; letter-spacing:1px;">How to Explore</h2>
 
-            <div style="display:flex; flex-direction:column; gap:40px; align-items:center;">
+            <div style="display:flex; flex-direction:column; gap:24px; align-items:center;">
                 <!-- Top row: Move and Look (two-up, large) -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px; width:100%;">
                     <!-- Move -->
                     <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
-                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block; margin-bottom:16px;">
+                        <svg width="56" height="56" viewBox="0 0 80 80" style="display:block; margin-bottom:16px;">
                             <!-- W key -->
                             <rect x="26" y="4" width="14" height="14" rx="2" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
                             <text x="33" y="16" font-family="Inter" font-size="10" font-weight="500" text-anchor="middle" fill="#f4f4f4">W</text>
@@ -740,7 +740,7 @@
 
                     <!-- Look -->
                     <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
-                        <svg width="80" height="80" viewBox="0 0 80 80" style="display:block; margin-bottom:16px;">
+                        <svg width="56" height="56" viewBox="0 0 80 80" style="display:block; margin-bottom:16px;">
                             <!-- Mouse outline -->
                             <path d="M 25 15 L 25 55 Q 25 65 35 65 L 45 65 Q 55 65 55 55 L 55 25 Q 55 15 45 15 L 35 15 Q 25 15 25 25 Z" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
                             <!-- Mouse wheel -->
@@ -754,46 +754,56 @@
                 </div>
 
                 <!-- Bottom row: Markers, Gold markers, Discs (three-up, small) -->
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px; width:100%; border-top:1px solid rgba(255,255,255,0.1); padding-top:24px;">
-                    <!-- Markers -->
-                    <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
-                        <svg width="60" height="60" viewBox="0 0 80 80" style="display:block; margin-bottom:12px;">
-                            <!-- Blue marker circle -->
-                            <circle cx="40" cy="35" r="14" fill="none" stroke="#6eb5ff" stroke-width="2"/>
-                            <circle cx="40" cy="35" r="6" fill="none" stroke="#6eb5ff" stroke-width="2"/>
-                            <!-- Pulsing effect lines -->
-                            <circle cx="40" cy="35" r="20" fill="none" stroke="#6eb5ff" stroke-width="1" opacity="0.5"/>
-                        </svg>
-                        <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Markers</h3>
-                        <p style="margin:0; font-size:0.9rem; line-height:1.5; color:#d0d0d0;">Blue markers reveal something about where you're standing. Click to learn more.</p>
+                <div style="width:100%; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
+                    <div style="font-size:0.78rem; letter-spacing:1.4px; text-transform:uppercase; color:#8f8f8f; margin-bottom:14px;">What you'll see</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px 22px; width:100%;">
+                    <div style="display:flex; align-items:flex-start; gap:10px; text-align:left;">
+                        <div style="flex:0 0 34px; height:34px; display:flex; align-items:center; justify-content:center;"><svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="14" fill="rgba(12,12,12,0.72)" stroke="rgba(79,195,247,0.85)"/><g stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" fill="none"><circle cx="15" cy="15" r="9"/><line x1="15" y1="14" x2="15" y2="19.5"/></g><circle cx="15" cy="10.6" r="1" fill="#4fc3f7"/></svg></div>
+                        <div>
+                            <h3 style="margin:0 0 2px 0; font-size:0.92rem; font-weight:600;">Learn</h3>
+                            <p style="margin:0; font-size:0.82rem; line-height:1.45; color:#d0d0d0;">Blue markers tell you about what you're looking at.</p>
+                        </div>
                     </div>
-
-                    <!-- Gold markers -->
-                    <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
-                        <svg width="60" height="60" viewBox="0 0 60 60" style="display:block; margin-bottom:12px;">
-                            <!-- Gold marker circle -->
-                            <circle cx="30" cy="25" r="10" fill="none" stroke="#f4d03f" stroke-width="1.5"/>
-                            <circle cx="30" cy="25" r="4" fill="none" stroke="#f4d03f" stroke-width="1.5"/>
-                        </svg>
-                        <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Gold markers</h3>
-                        <p style="margin:0; font-size:0.9rem; line-height:1.5; color:#d0d0d0;">Take you somewhere new. They appear once you've finished exploring a place.</p>
+                    <div style="display:flex; align-items:flex-start; gap:10px; text-align:left;">
+                        <div style="flex:0 0 34px; height:34px; display:flex; align-items:center; justify-content:center;"><svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="14" fill="rgba(12,12,12,0.72)" stroke="rgba(244,208,63,0.85)"/><path d="M11 9.5v11l9-5.5z" fill="#f4d03f"/></svg></div>
+                        <div>
+                            <h3 style="margin:0 0 2px 0; font-size:0.92rem; font-weight:600;">Watch</h3>
+                            <p style="margin:0; font-size:0.82rem; line-height:1.45; color:#d0d0d0;">Gold play markers start a video.</p>
+                        </div>
                     </div>
-
-                    <!-- Discs -->
-                    <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
-                        <svg width="60" height="60" viewBox="0 0 60 60" style="display:block; margin-bottom:12px;">
-                            <!-- Green disc -->
-                            <circle cx="20" cy="30" r="8" fill="none" stroke="#5ec962" stroke-width="1.5"/>
-                            <!-- White disc -->
-                            <circle cx="40" cy="30" r="8" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
-                        </svg>
-                        <h3 style="margin:0 0 4px 0; font-size:1rem; font-weight:500;">Discs</h3>
-                        <p style="margin:0; font-size:0.9rem; line-height:1.5; color:#d0d0d0;">Click the green disc ahead to move forward, the white disc behind to step back.</p>
+                    <div style="display:flex; align-items:flex-start; gap:10px; text-align:left;">
+                        <div style="flex:0 0 34px; height:34px; display:flex; align-items:center; justify-content:center;"><svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="14" fill="rgba(12,12,12,0.72)" stroke="rgba(244,208,63,0.85)"/><g stroke="#f4d03f" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M16 8h-5v14h5"/><path d="M15.5 15h6"/><path d="M19 12l3 3-3 3"/></g></svg></div>
+                        <div>
+                            <h3 style="margin:0 0 2px 0; font-size:0.92rem; font-weight:600;">Next place</h3>
+                            <p style="margin:0; font-size:0.82rem; line-height:1.45; color:#d0d0d0;">The exit marker takes you on. It appears once you've finished exploring.</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:flex-start; gap:10px; text-align:left;">
+                        <div style="flex:0 0 34px; height:34px; display:flex; align-items:center; justify-content:center;"><svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="14" fill="rgba(20,16,4,0.72)" stroke="rgba(244,208,63,0.85)"/><g stroke="#f4d03f" stroke-width="2.1" stroke-linecap="round" fill="none"><circle cx="13.5" cy="13.5" r="5.5"/><line x1="17.6" y1="17.6" x2="22" y2="22"/></g></svg></div>
+                        <div>
+                            <h3 style="margin:0 0 2px 0; font-size:0.92rem; font-weight:600;">Close-up</h3>
+                            <p style="margin:0; font-size:0.82rem; line-height:1.45; color:#d0d0d0;">At the farm, a golden magnifier opens a close-up photo.</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:flex-start; gap:10px; text-align:left;">
+                        <div style="flex:0 0 34px; height:34px; display:flex; align-items:center; justify-content:center;"><svg width="34" height="26" viewBox="0 0 34 26" fill="none"><ellipse cx="11" cy="9" rx="10" ry="5" fill="#1fc93a"/><path d="M7.5 10.5L11 6.5l3.5 4" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/><ellipse cx="23" cy="19" rx="10" ry="5" fill="#d8d8d8"/><path d="M19.5 17.5L23 21.5l3.5-4" stroke="#2a2a2a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+                        <div>
+                            <h3 style="margin:0 0 2px 0; font-size:0.92rem; font-weight:600;">Walk</h3>
+                            <p style="margin:0; font-size:0.82rem; line-height:1.45; color:#d0d0d0;">Discs on the ground move you. The arrow points the way you'll go; the disc behind you goes back.</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:flex-start; gap:10px; text-align:left;">
+                        <div style="flex:0 0 34px; height:34px; display:flex; align-items:center; justify-content:center;"><svg width="34" height="24" viewBox="0 0 34 24" fill="none"><ellipse cx="17" cy="12" rx="16" ry="8" fill="#f4cc1a"/><text x="17" y="14.6" text-anchor="middle" font-family="Inter,sans-serif" font-size="6.4" font-weight="700" fill="#2a2400">To Harvest</text></svg></div>
+                        <div>
+                            <h3 style="margin:0 0 2px 0; font-size:0.92rem; font-weight:600;">To Harvest</h3>
+                            <p style="margin:0; font-size:0.82rem; line-height:1.45; color:#d0d0d0;">The yellow disc leaves the farm for the harvest.</p>
+                        </div>
+                    </div>
                     </div>
                 </div>
             </div>
 
-            <button id="context-begin-btn" style="display:block; width:100%; margin-top:40px; padding:14px; background:rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; border-radius:6px; cursor:pointer; transition:all 0.3s ease;">Begin the Journey</button>
+            <button id="context-begin-btn" style="display:block; width:100%; margin:24px 0 0 0; padding:14px; position:sticky; bottom:0; z-index:2; box-shadow:0 -14px 18px rgba(10,10,10,0.95); background:linear-gradient(rgba(10,10,10,0.97),rgba(10,10,10,0.97)),rgba(244,208,63,0.15); border:1px solid rgba(244,208,63,0.4); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; border-radius:6px; cursor:pointer; transition:all 0.3s ease;">Begin the Journey</button>
             <style>
                 /* Dimmed while the context narration is still playing. */
                 #context-begin-btn:disabled { opacity: 0.35; cursor: not-allowed !important; }
@@ -883,16 +893,16 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=30"></script>
-    <script src="./scenes/voData.js?v=30"></script>
-    <script src="./main.js?v=30"></script>
-    <script src="./scenes/quizData.js?v=30"></script>
-    <script src="./scenes/videoScene.js?v=30"></script>
-    <script src="./scenes/cafeInterior.js?v=30"></script>
-    <script src="./scenes/cafeExterior.js?v=30"></script>
-    <script src="./scenes/roastery.js?v=30"></script>
-    <script src="./scenes/nursery.js?v=30"></script>
-    <script src="./scenes/streetView.js?v=30"></script>
+    <script src="./scenes/strings.js?v=31"></script>
+    <script src="./scenes/voData.js?v=31"></script>
+    <script src="./main.js?v=31"></script>
+    <script src="./scenes/quizData.js?v=31"></script>
+    <script src="./scenes/videoScene.js?v=31"></script>
+    <script src="./scenes/cafeInterior.js?v=31"></script>
+    <script src="./scenes/cafeExterior.js?v=31"></script>
+    <script src="./scenes/roastery.js?v=31"></script>
+    <script src="./scenes/nursery.js?v=31"></script>
+    <script src="./scenes/streetView.js?v=31"></script>
 
     <script>
         const cursorCup = document.querySelector('.cursor-cup');
