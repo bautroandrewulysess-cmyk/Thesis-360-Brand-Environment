@@ -1139,7 +1139,7 @@ class NurseryScene extends Scene {
             window.addEventListener('click', fallbackAudioStart);
 
             if (!window.journeyComplete) {
-                this.preloadSplat(`${R2_BASE}/thesisRoastery_optimized.sog`, 'roastery-splat');
+                this.preloadSplat(`${R2_BASE}/thesisRoastery_v2.sog`, 'roastery-splat');
             }
 
             const startVoOnInteraction = () => {

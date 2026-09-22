@@ -824,16 +824,16 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=26"></script>
-    <script src="./scenes/voData.js?v=26"></script>
-    <script src="./main.js?v=26"></script>
-    <script src="./scenes/quizData.js?v=26"></script>
-    <script src="./scenes/videoScene.js?v=26"></script>
-    <script src="./scenes/cafeInterior.js?v=26"></script>
-    <script src="./scenes/cafeExterior.js?v=26"></script>
-    <script src="./scenes/roastery.js?v=26"></script>
-    <script src="./scenes/nursery.js?v=26"></script>
-    <script src="./scenes/streetView.js?v=26"></script>
+    <script src="./scenes/strings.js?v=27"></script>
+    <script src="./scenes/voData.js?v=27"></script>
+    <script src="./main.js?v=27"></script>
+    <script src="./scenes/quizData.js?v=27"></script>
+    <script src="./scenes/videoScene.js?v=27"></script>
+    <script src="./scenes/cafeInterior.js?v=27"></script>
+    <script src="./scenes/cafeExterior.js?v=27"></script>
+    <script src="./scenes/roastery.js?v=27"></script>
+    <script src="./scenes/nursery.js?v=27"></script>
+    <script src="./scenes/streetView.js?v=27"></script>
 
     <script>
         const cursorCup = document.querySelector('.cursor-cup');
@@ -905,7 +905,7 @@
             if (!onMobile) {
                 setTimeout(() => {
                     const R2_BASE = 'https://assets.granjaalegre.com';
-                    fetch(`${R2_BASE}/thesisCafeInterior_optimized.sog`, { mode: 'cors' })
+                    fetch(`${R2_BASE}/thesisCafeInterior_v2.sog`, { mode: 'cors' })
                         .then(() => {
                             statusEl.classList.add('ready');
                             statusEl.textContent = 'Ready';
@@ -949,7 +949,7 @@
 
             // Preload café interior splat while context screen is shown (async, no await)
             const R2_BASE = 'https://assets.granjaalegre.com';
-            fetch(`${R2_BASE}/thesisCafeInterior_optimized.sog`, { mode: 'cors' }).catch(() => {});
+            fetch(`${R2_BASE}/thesisCafeInterior_v2.sog`, { mode: 'cors' }).catch(() => {});
         });
 
         document.getElementById('context-begin-btn').addEventListener('click', () => {
@@ -992,7 +992,7 @@
 
                     // Start preloading café interior splat (during 40s of narration)
                     const R2_BASE = 'https://assets.granjaalegre.com';
-                    fetch(`${R2_BASE}/thesisCafeInterior_optimized.sog`, { mode: 'cors' }).catch(() => {});
+                    fetch(`${R2_BASE}/thesisCafeInterior_v2.sog`, { mode: 'cors' }).catch(() => {});
 
                     // Trigger brand story playback
                     window.startBrandStorySequence();
@@ -1020,7 +1020,7 @@
 
                     // Start preloading café interior splat (during 40s of narration)
                     const R2_BASE = 'https://assets.granjaalegre.com';
-                    fetch(`${R2_BASE}/thesisCafeInterior_optimized.sog`, { mode: 'cors' }).catch(() => {});
+                    fetch(`${R2_BASE}/thesisCafeInterior_v2.sog`, { mode: 'cors' }).catch(() => {});
 
                     // Trigger brand story playback
                     window.startBrandStorySequence();

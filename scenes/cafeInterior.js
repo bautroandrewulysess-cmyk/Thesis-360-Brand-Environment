@@ -1193,7 +1193,7 @@ class CafeInteriorScene extends Scene {
             } else {
                 // Create and load Gaussian splat asset
                 this.splatAsset = new pc.Asset('cafe-interior-splat', 'gsplat', {
-                    url: `${R2_BASE}/thesisCafeInterior_optimized.sog`
+                    url: `${R2_BASE}/thesisCafeInterior_v2.sog`
                 });
 
                 app.assets.add(this.splatAsset);

@@ -998,7 +998,7 @@ class RoasteryScene extends Scene {
                 if (window.DEV_MODE) console.warn('[Roastery] Using preloaded splat');
             } else {
                 this.splatAsset = new pc.Asset('roastery-splat', 'gsplat', {
-                    url: `${R2_BASE}/thesisRoastery_optimized.sog`
+                    url: `${R2_BASE}/thesisRoastery_v2.sog`
                 });
 
                 app.assets.add(this.splatAsset);
@@ -1051,7 +1051,7 @@ class RoasteryScene extends Scene {
             setTimeout(() => this.playVoSequence('roasting'), delay);
 
             if (!window.journeyComplete) {
-                this.preloadSplat(`${R2_BASE}/thesisCafeInterior_optimized.sog`, 'cafe-interior-splat');
+                this.preloadSplat(`${R2_BASE}/thesisCafeInterior_v2.sog`, 'cafe-interior-splat');
                 if (!window.brewingVideoPreloaded) {
                     window.brewingVideoPreloaded = true;
                     const v = document.createElement('video');
