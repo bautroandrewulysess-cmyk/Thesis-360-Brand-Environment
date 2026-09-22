@@ -1261,7 +1261,7 @@ class CafeInteriorScene extends Scene {
             } else {
                 this.cafeVoSequence = 'cafeInterior';
                 if (!window.journeyComplete) {
-                    this.preloadSplat(`${R2_BASE}/thesisNursery_optimized.sog`, 'nursery-splat');
+                    this.preloadSplat(`${R2_BASE}/thesisNursery_v3.sog`, 'nursery-splat');
                 }
                 if (!window.ownerInterviewPreloaded) {
                     window.ownerInterviewPreloaded = true;

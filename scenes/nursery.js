@@ -1062,7 +1062,7 @@ class NurseryScene extends Scene {
                 if (window.DEV_MODE) console.warn('[Nursery] Using preloaded splat');
             } else {
                 this.splatAsset = new pc.Asset('nursery-splat', 'gsplat', {
-                    url: `${R2_BASE}/thesisNursery_optimized.sog`
+                    url: `${R2_BASE}/thesisNursery_v3.sog`
                 });
 
                 app.assets.add(this.splatAsset);
