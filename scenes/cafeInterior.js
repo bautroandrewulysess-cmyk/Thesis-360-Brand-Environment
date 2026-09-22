@@ -89,6 +89,7 @@ class CafeInteriorScene extends Scene {
         this.tutorialEl = null;
         this.tutorialStep = 0;
         this.onTutorialGateClick = null;
+        this.tutorialCheckUntil = 0;
         this.quizPassed = false;
         // Strings resolve lazily via t(): scenes are constructed before the
         // language is chosen, so eager lookup would freeze them to English.
@@ -1425,17 +1426,28 @@ class CafeInteriorScene extends Scene {
     startTutorial() {
         if (!this.shouldShowTutorial() || this.tutorialEl) return;
 
+        // Markup only; all styling and animation live in the stylesheet in index.html.
+        // bottom:18vh sits above #subtitle-bar (bottom:8vh) with clear air between them,
+        // and the clue bar cannot collide because it only appears after the cafe quiz,
+        // which is downstream of the gate that ends this tutorial.
         const el = document.createElement('div');
         el.id = 'tutorial-prompt';
-        // top:12vh keeps it clear of the subtitle bar (bottom:8vh), the clue bar
-        // (bottom:24px) and the gate-marker button (top:50%).
-        el.style.cssText = 'position:fixed; top:12vh; left:50%; transform:translateX(-50%); '
-            + 'padding:12px 24px; background:rgba(0,0,0,0.78); color:#f4f4f4; '
-            + "font-family:'Inter',sans-serif; font-size:1rem; letter-spacing:0.4px; "
-            + 'border:1px solid rgba(244,208,63,0.45); border-radius:30px; z-index:9998; '
-            + 'pointer-events:none; display:none; max-width:70vw; text-align:center;';
+        el.innerHTML =
+            '<div class="tut-card">'
+          +   '<div class="tut-stage">'
+          +     '<svg class="tut-ring" viewBox="0 0 64 64" width="64" height="64">'
+          +       '<circle class="tut-ring-bg" cx="32" cy="32" r="29"/>'
+          +       '<circle class="tut-ring-fg" cx="32" cy="32" r="29"/>'
+          +     '</svg>'
+          +     '<div class="tut-art"></div>'
+          +   '</div>'
+          +   '<div class="tut-label"></div>'
+          + '</div>';
         document.body.appendChild(el);
         this.tutorialEl = el;
+        this.tutorialArt = el.querySelector('.tut-art');
+        this.tutorialLabel = el.querySelector('.tut-label');
+        this.tutorialRing = el.querySelector('.tut-ring-fg');
 
         this.tutorialStep = 1;
         this.tutorialStartPos = cameraEntity.getLocalPosition().clone();
@@ -1452,13 +1464,79 @@ class CafeInteriorScene extends Scene {
             }
         };
         document.addEventListener('click', this.onTutorialGateClick, true);
-        this.updateTutorialText();
+        this.renderTutorialStep();
     }
 
-    updateTutorialText() {
+    // Graphics are inline SVG so nothing new has to be fetched. The blue marker and
+    // the gold button are drawn from the same shapes the world uses, so the tutorial
+    // shows the thing the player is actually looking for.
+    tutorialArtSvg(step) {
+        if (step === 1) {
+            return '<svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="#f4f4f4" stroke-width="2" stroke-linecap="round">'
+                 + '<path d="M9 13c4-5 22-5 26 0" stroke="rgba(244,208,63,0.9)"/>'
+                 + '<path d="M9 13l-1-4M9 13l4-1" stroke="rgba(244,208,63,0.9)"/>'
+                 + '<path d="M35 13l1-4M35 13l-4-1" stroke="rgba(244,208,63,0.9)"/>'
+                 + '<g class="tut-mouse"><rect x="16" y="19" width="12" height="18" rx="6"/>'
+                 + '<line x1="22" y1="24" x2="22" y2="28"/></g></svg>';
+        }
+        if (step === 2) {
+            const cap = (cls, x, y, ch) =>
+                `<g class="kc ${cls}"><rect x="${x}" y="${y}" width="11" height="11" rx="2" stroke-width="1.2"/>`
+              + `<text x="${x + 5.5}" y="${y + 7.8}" text-anchor="middle">${ch}</text></g>`;
+            return '<svg width="46" height="34" viewBox="0 0 46 26">'
+                 + cap('k-w idle-w', 17.5, 0, 'W')
+                 + cap('k-a idle-a', 5, 13, 'A')
+                 + cap('k-s idle-s', 17.5, 13, 'S')
+                 + cap('k-d idle-d', 30, 13, 'D')
+                 + '</svg>';
+        }
+        // The blue info badge exactly as the orbs carry it, plus a tapping cursor.
+        if (step === 3) {
+            return '<svg width="46" height="46" viewBox="0 0 46 46" fill="none">'
+                 + '<circle cx="20" cy="20" r="13" fill="rgba(12,12,12,0.72)" stroke="rgba(79,195,247,0.85)"/>'
+                 + '<g stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round">'
+                 + '<circle cx="20" cy="20" r="8"/><line x1="20" y1="19" x2="20" y2="24"/></g>'
+                 + '<circle cx="20" cy="15.5" r="1" fill="#4fc3f7"/>'
+                 + '<g class="tut-cursor"><path d="M26 26l4 12 2.4-4.6L37 31z" fill="#f4f4f4" stroke="#050505" stroke-width="1.2"/></g>'
+                 + '</svg>';
+        }
+        // The gate button: same #f4d03f fill the real one uses.
+        return '<svg width="52" height="40" viewBox="0 0 52 40" fill="none">'
+             + '<rect x="4" y="9" width="34" height="14" rx="7" fill="#f4d03f"/>'
+             + '<g class="tut-cursor"><path d="M26 22l4 12 2.4-4.6L37 27z" fill="#f4f4f4" stroke="#050505" stroke-width="1.2"/></g>'
+             + '</svg>';
+    }
+
+    renderTutorialStep() {
         if (!this.tutorialEl) return;
         const key = ['', 'ui.tutorial.look', 'ui.tutorial.walk', 'ui.tutorial.orb', 'ui.tutorial.gate'][this.tutorialStep];
-        if (key) this.tutorialEl.textContent = this.t(key);
+        if (!key) return;
+        this.tutorialArt.innerHTML = this.tutorialArtSvg(this.tutorialStep);
+        this.tutorialLabel.textContent = this.t(key);
+        this.setTutorialProgress(0);
+        // Restart the slide-in by reflowing the class off and on.
+        this.tutorialEl.classList.remove('tut-enter');
+        void this.tutorialEl.offsetWidth;
+        this.tutorialEl.classList.add('tut-enter');
+    }
+
+    setTutorialProgress(p) {
+        if (!this.tutorialRing) return;
+        const C = 182.2;                       // 2 * pi * r, r = 29
+        const clamped = Math.max(0, Math.min(1, p || 0));
+        this.tutorialRing.style.strokeDashoffset = String(C * (1 - clamped));
+    }
+
+    // Brief green tick, then the next step slides in. Purely presentational: the step
+    // has already advanced by the time this runs.
+    advanceTutorialStep(next) {
+        this.tutorialStep = next;
+        if (!this.tutorialEl) return;
+        this.setTutorialProgress(1);
+        this.tutorialArt.innerHTML =
+            '<svg class="tut-check" width="40" height="40" viewBox="0 0 40 40">'
+          + '<path d="M11 21l6 6 12-14"/></svg>';
+        this.tutorialCheckUntil = performance.now() + 520;
     }
 
     endTutorial() {
@@ -1466,6 +1544,7 @@ class CafeInteriorScene extends Scene {
         if (this.onTutorialGateClick) {
             document.removeEventListener('click', this.onTutorialGateClick, true);
             this.onTutorialGateClick = null;
+        this.tutorialCheckUntil = 0;
         }
         if (this.tutorialEl) {
             this.tutorialEl.remove();
@@ -1482,29 +1561,42 @@ class CafeInteriorScene extends Scene {
                     || document.body.classList.contains('ui-overlay-active');
         if (hidden) { this.tutorialEl.style.display = 'none'; return; }
 
+        // Hold on the green tick before drawing the next step.
+        if (this.tutorialCheckUntil) {
+            if (performance.now() < this.tutorialCheckUntil) { this.tutorialEl.style.display = 'flex'; return; }
+            this.tutorialCheckUntil = 0;
+            this.renderTutorialStep();
+        }
+
         if (this.tutorialStep === 1) {
             // Either a deliberate drag or a real change of heading; a twitch is neither.
             const turned = Math.abs(this.eulerAngles.yaw - this.tutorialYaw) * 180 / Math.PI;
+            // The ring renders the same two quantities the condition below tests, so it
+            // can never disagree with when the step actually completes.
+            this.setTutorialProgress(Math.max(this.mouseDragDistance / 80, turned / 15));
             if (this.mouseDragDistance >= 80 || turned >= 15) {
-                this.tutorialStep = 2;
                 this.tutorialStartPos = cameraEntity.getLocalPosition().clone();
-                this.updateTutorialText();
+                this.advanceTutorialStep(2);
             }
         } else if (this.tutorialStep === 2) {
             const held = this.keys.w || this.keys.a || this.keys.s || this.keys.d;
             if (held) this.tutorialMoveHeld += deltaTime;
             const moved = cameraEntity.getLocalPosition().distance(this.tutorialStartPos);
+            // Light whichever key is actually down, so the prompt mirrors the player.
+            for (const k of ['w', 'a', 's', 'd']) {
+                const cap = this.tutorialEl.querySelector('.k-' + k);
+                if (cap) cap.classList.toggle('lit', !!this.keys[k]);
+            }
             // Distance proves walking, but a player boxed in by collision would never
             // reach it, so held time is an equal alternative rather than a fallback.
+            this.setTutorialProgress(Math.max(moved / 0.30, this.tutorialMoveHeld / 2));
             if (moved >= 0.30 || this.tutorialMoveHeld >= 2) {
-                this.tutorialStep = 3;
-                this.updateTutorialText();
+                this.advanceTutorialStep(3);
             }
         } else if (this.tutorialStep === 3) {
             const popup = document.getElementById('hotspot-popup');
             if (popup && popup.classList.contains('active')) {
-                this.tutorialStep = 4;
-                this.updateTutorialText();
+                this.advanceTutorialStep(4);
             }
         }
 
@@ -1514,7 +1606,7 @@ class CafeInteriorScene extends Scene {
             this.tutorialEl.style.display = 'none';
             return;
         }
-        this.tutorialEl.style.display = 'block';
+        this.tutorialEl.style.display = 'flex';
     }
 
     update(deltaTime) {
