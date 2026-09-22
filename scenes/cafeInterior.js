@@ -86,6 +86,9 @@ class CafeInteriorScene extends Scene {
         this.audioLoaded = false;
 
         this.isReturnVisit = false;
+        this.tutorialEl = null;
+        this.tutorialStep = 0;
+        this.onTutorialGateClick = null;
         this.quizPassed = false;
         // Strings resolve lazily via t(): scenes are constructed before the
         // language is chosen, so eager lookup would freeze them to English.
@@ -1297,6 +1300,9 @@ class CafeInteriorScene extends Scene {
             // Attach event listeners for this scene
             this.attachEventListeners();
 
+            // First-entry tutorial. Runs alongside the narration, never gates it.
+            this.startTutorial();
+
             // Reset camera position and rotation
             // Start inside the voxel grid — Z must be > 0.2 in voxel space = > 0.2 in world space
             cameraEntity.setLocalPosition(0, 1.6, 0.9);
@@ -1313,6 +1319,9 @@ class CafeInteriorScene extends Scene {
     }
 
     async onUnload() {
+        // Leaving mid-tutorial must take the prompt and its listener with it.
+        if (this.tutorialEl || this.onTutorialGateClick) this.endTutorial();
+
         try {
             document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
 
@@ -1397,8 +1406,121 @@ class CafeInteriorScene extends Scene {
         }
     }
 
+    // ------------------------------------------------------------------
+    // First-entry tutorial. Four steps, each advancing only on real input:
+    // drag, walk, click a blue marker, then the owner-interview gate button.
+    //
+    // It runs alongside the narration and never gates it. Detection is purely
+    // observational -- it watches the drag distance the scene already tracks, the
+    // camera's own position, the hotspot popup's active class, and clicks on the
+    // gate button in the capture phase -- so no input handler and no VO gate
+    // sequencing is modified.
+    // ------------------------------------------------------------------
+    shouldShowTutorial() {
+        // isReturnVisit alone is not enough: the dev jump menu resets it to false,
+        // which would replay the tutorial. The module-level flag is the real one-shot.
+        return !this.isReturnVisit && !window.journeyComplete && !window.__tutorialSeen;
+    }
+
+    startTutorial() {
+        if (!this.shouldShowTutorial() || this.tutorialEl) return;
+
+        const el = document.createElement('div');
+        el.id = 'tutorial-prompt';
+        // top:12vh keeps it clear of the subtitle bar (bottom:8vh), the clue bar
+        // (bottom:24px) and the gate-marker button (top:50%).
+        el.style.cssText = 'position:fixed; top:12vh; left:50%; transform:translateX(-50%); '
+            + 'padding:12px 24px; background:rgba(0,0,0,0.78); color:#f4f4f4; '
+            + "font-family:'Inter',sans-serif; font-size:1rem; letter-spacing:0.4px; "
+            + 'border:1px solid rgba(244,208,63,0.45); border-radius:30px; z-index:9998; '
+            + 'pointer-events:none; display:none; max-width:70vw; text-align:center;';
+        document.body.appendChild(el);
+        this.tutorialEl = el;
+
+        this.tutorialStep = 1;
+        this.tutorialStartPos = cameraEntity.getLocalPosition().clone();
+        this.tutorialYaw = this.eulerAngles.yaw;
+        this.tutorialMoveHeld = 0;
+
+        // Capture-phase so it sees the click regardless of what else handles it, and
+        // so it cannot swallow or reorder the button's own handler.
+        this.onTutorialGateClick = (e) => {
+            if (e.target && e.target.closest && e.target.closest('.gate-marker-button')) {
+                // Ends the tutorial from any step -- never leave a stale prompt up
+                // once the interview has been triggered.
+                this.endTutorial();
+            }
+        };
+        document.addEventListener('click', this.onTutorialGateClick, true);
+        this.updateTutorialText();
+    }
+
+    updateTutorialText() {
+        if (!this.tutorialEl) return;
+        const key = ['', 'ui.tutorial.look', 'ui.tutorial.walk', 'ui.tutorial.orb', 'ui.tutorial.gate'][this.tutorialStep];
+        if (key) this.tutorialEl.textContent = this.t(key);
+    }
+
+    endTutorial() {
+        window.__tutorialSeen = true;
+        if (this.onTutorialGateClick) {
+            document.removeEventListener('click', this.onTutorialGateClick, true);
+            this.onTutorialGateClick = null;
+        }
+        if (this.tutorialEl) {
+            this.tutorialEl.remove();
+            this.tutorialEl = null;
+        }
+        this.tutorialStep = 0;
+    }
+
+    updateTutorial(deltaTime) {
+        if (!this.tutorialEl) return;
+
+        // Same suppression the clue bar uses.
+        const hidden = document.body.classList.contains('video-open')
+                    || document.body.classList.contains('ui-overlay-active');
+        if (hidden) { this.tutorialEl.style.display = 'none'; return; }
+
+        if (this.tutorialStep === 1) {
+            // Either a deliberate drag or a real change of heading; a twitch is neither.
+            const turned = Math.abs(this.eulerAngles.yaw - this.tutorialYaw) * 180 / Math.PI;
+            if (this.mouseDragDistance >= 80 || turned >= 15) {
+                this.tutorialStep = 2;
+                this.tutorialStartPos = cameraEntity.getLocalPosition().clone();
+                this.updateTutorialText();
+            }
+        } else if (this.tutorialStep === 2) {
+            const held = this.keys.w || this.keys.a || this.keys.s || this.keys.d;
+            if (held) this.tutorialMoveHeld += deltaTime;
+            const moved = cameraEntity.getLocalPosition().distance(this.tutorialStartPos);
+            // Distance proves walking, but a player boxed in by collision would never
+            // reach it, so held time is an equal alternative rather than a fallback.
+            if (moved >= 0.30 || this.tutorialMoveHeld >= 2) {
+                this.tutorialStep = 3;
+                this.updateTutorialText();
+            }
+        } else if (this.tutorialStep === 3) {
+            const popup = document.getElementById('hotspot-popup');
+            if (popup && popup.classList.contains('active')) {
+                this.tutorialStep = 4;
+                this.updateTutorialText();
+            }
+        }
+
+        // Step 4 only shows once the gate button actually exists, so it can never
+        // point at something that is not on screen yet.
+        if (this.tutorialStep === 4 && !document.querySelector('.gate-marker-button')) {
+            this.tutorialEl.style.display = 'none';
+            return;
+        }
+        this.tutorialEl.style.display = 'block';
+    }
+
     update(deltaTime) {
         if (!this.isLoaded) return;
+
+        this.updateTutorial(deltaTime);
 
         // Icon badges track their orbs on screen (icon = action).
         this.updateHotspotBadges();
