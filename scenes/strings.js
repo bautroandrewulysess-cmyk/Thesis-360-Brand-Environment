@@ -97,7 +97,6 @@ window.Strings = {
     'ui.nursery.toFarm': { en: 'To Farm', bis: 'Padulong sa Umahan' },
     'ui.video.continue': { en: 'Continue', bis: 'Padayon' },
     'ui.video.roasteryPrompt': { en: 'Select Continue to visit the roastery', bis: 'I-klik ang Padayon aron moadto sa sanlaganan' },
-    // DRAFT Bisaya — awaiting correction from the user before release.
     'ui.tutorial.look': { en: 'Drag to look around', bis: 'I-drag aron molingi-lingi' },
     'ui.tutorial.walk': { en: 'Use W A S D to walk', bis: 'Gamita ang W A S D aron molakaw' },
     'ui.tutorial.orb':  { en: 'Click a blue marker to learn more', bis: 'I-klik ang asul nga marka aron makahibalo pa' },
