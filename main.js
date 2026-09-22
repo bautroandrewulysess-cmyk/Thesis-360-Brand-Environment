@@ -1780,8 +1780,7 @@ class Scene {
             await cleanupVideo();
             this.resumeAmbient();
             this.videoPending = false;
-            this.hideVideoPopup();
-            if (onFinish) onFinish();
+            this.hideVideoPopup(onFinish);
         };
 
         const onVideoError = async () => {
@@ -1805,8 +1804,7 @@ class Scene {
             await cleanupVideo();
             this.resumeAmbient();
             this.videoPending = false;
-            this.hideVideoPopup();
-            if (onFinish) onFinish();
+            this.hideVideoPopup(onFinish);
         };
 
         if (narrationId && this.voAudio) {
@@ -1825,8 +1823,7 @@ class Scene {
                 await cleanupVideo();
                 this.resumeAmbient();
                 this.videoPending = false;
-                this.hideVideoPopup();
-                if (onFinish) onFinish();
+                this.hideVideoPopup(onFinish);
             }
         }, 30000);
 
@@ -1843,8 +1840,7 @@ class Scene {
             await cleanupVideo();
             this.resumeAmbient();
             this.videoPending = false;
-            this.hideVideoPopup();
-            if (onFinish) onFinish();
+            this.hideVideoPopup(onFinish);
         }, { once: true });
 
         popup.style.display = 'flex';
@@ -1852,15 +1848,21 @@ class Scene {
         setTimeout(() => popup.style.opacity = '1', 50);
     }
 
-    hideVideoPopup() {
+    // onHidden runs when the popup has actually gone, not when the fade starts.
+    // Calling it early let the next VO begin roughly half a second before the video
+    // disappeared, so the incoming narration overlapped the tail of the outgoing one.
+    hideVideoPopup(onHidden) {
         const popup = document.getElementById('video-popup');
         document.body.classList.remove('video-open');
-        if (popup) {
-            popup.style.opacity = '0';
-            setTimeout(() => {
-                popup.style.display = 'none';
-            }, 800);
+        if (!popup) {
+            if (onHidden) onHidden();
+            return;
         }
+        popup.style.opacity = '0';
+        setTimeout(() => {
+            popup.style.display = 'none';
+            if (onHidden) onHidden();
+        }, 800);
     }
 
     async preloadSplat(url, assetName) {
