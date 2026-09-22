@@ -2208,6 +2208,15 @@ class Scene {
         question.style.cssText = `font-size:1.1rem; margin-bottom:25px; line-height:1.5; text-align:center;`;
         card.appendChild(question);
 
+        // Same reassurance the scene quizzes carry. Deliberately its own element on the
+        // card, never inside optionsContainer: the options are built solely from
+        // questionData.a / .b and the answer is matched with option === correctAnswer,
+        // so nothing added here can enter that comparison.
+        const encouragement = document.createElement('div');
+        encouragement.textContent = t('ui.quiz.encouragement');
+        encouragement.style.cssText = `font-size:0.85rem; line-height:1.4; color:rgba(244,244,244,0.6); text-align:center; margin-bottom:20px;`;
+        card.appendChild(encouragement);
+
         // Answer options
         const optionsContainer = document.createElement('div');
         optionsContainer.style.cssText = `display:flex; flex-direction:column; gap:12px; align-items:center;`;
