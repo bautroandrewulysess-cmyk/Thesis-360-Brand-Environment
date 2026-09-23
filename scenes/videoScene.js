@@ -22,6 +22,18 @@ const VIDEO_SCENE_FALLBACK_UNKNOWN_MS = 90000;
 // so the scene is never left silent with its quiz unreachable.
 const VIDEO_SCENE_VO_START_FALLBACK_MS = 5000;
 
+// Where the harvesting narration actually stops, per language. English comes from the
+// last cue of harvesting_en_01.vtt; Bisaya is burned into the picture, so it was read
+// off the frames -- the last narration line "Sa inyong tasa." is gone by 92.0s, replaced
+// by a burned-in "click Continue" prompt. The quiz opens here rather than at the end of
+// the video, so the player is not left watching a silent tail.
+const HARVEST_NARRATION_END = { en: 64.45, bis: 92.0 };
+
+// While the quiz is up the picture keeps moving so the scene never goes black, but it is
+// muted and looped over a stretch that carries no narration and no burned-in text in
+// either language -- comfortably before Bisaya's 92s prompt.
+const HARVEST_LOOP = { start: 30, end: 60 };
+
 class VideoScene extends Scene {
     constructor({ name, videoSrc, audioKey, quizKey, nextScene, nextSpawn, suppressSubtitles }) {
         super(name);
@@ -55,12 +67,17 @@ class VideoScene extends Scene {
         this.voStartFallbackHandle = null;
         this.videoPlaybackStarted = false;
         this.detachVideoSubtitles = null;
+        this.harvestQuizArmed = false;
+        this.harvestLooping = false;
+        this.onHarvestTimeUpdate = null;
     }
 
     async onLoad() {
         await super.onLoad();
         this.voStarted = false;
         this.videoPlaybackStarted = false;
+        this.harvestQuizArmed = false;
+        this.harvestLooping = false;
 
         try {
             document.querySelectorAll('.hotspot-label').forEach(el => el.remove());
@@ -245,23 +262,53 @@ class VideoScene extends Scene {
         const video = this.videoElement;
         if (!video) return;
 
-        video.addEventListener('ended', () => {
-            if (window.DEV_MODE) console.log('[VideoScene] Video ended — embedded narration finished, triggering quiz');
+        const narrationEnd = HARVEST_NARRATION_END[(window.currentLanguage || 'en')]
+                          ?? HARVEST_NARRATION_END.en;
+
+        const openQuizAtNarrationEnd = () => {
+            if (this.harvestQuizArmed) return;
+            this.harvestQuizArmed = true;
+            if (window.DEV_MODE) console.log(`[VideoScene] Narration end reached at ${narrationEnd}s — triggering quiz`);
             this.isVoFinished = true;
+            // Keep the picture alive behind the quiz, silent so the narration cannot
+            // replay over it, looped inside a stretch with nothing to read or hear.
+            video.muted = true;
+            video.loop = true;
+            video.currentTime = HARVEST_LOOP.start;
+            this.harvestLooping = true;
+            video.play().catch(() => {});
             const segments = window.voSegmentsFor ? window.voSegmentsFor(this.audioKey) : null;
             const segmentId = (segments && segments[0]) ? segments[0].id : this.audioKey;
             this.triggerQuizDirect(segmentId);
-        }, { once: true });
+        };
+
+        this.onHarvestTimeUpdate = () => {
+            if (!this.harvestQuizArmed) {
+                if (video.currentTime >= narrationEnd) openQuizAtNarrationEnd();
+                return;
+            }
+            // Hold the loop window while the quiz is open.
+            if (this.harvestLooping && video.currentTime >= HARVEST_LOOP.end) {
+                video.currentTime = HARVEST_LOOP.start;
+            }
+        };
+        video.addEventListener('timeupdate', this.onHarvestTimeUpdate);
+        // Belt and braces: a video that reaches its end without ever crossing the
+        // threshold (a short or truncated cut) still opens the quiz.
+        video.addEventListener('ended', openQuizAtNarrationEnd, { once: true });
 
         // Continue must never appear before the quiz exists. The unknown-duration
         // fallback armed in onLoad is 90s against a 107.6s video, so re-arm against the
         // video's own length exactly as trackVoForFallback does against the mp3's.
         const rearm = () => {
             if (!isFinite(video.duration) || video.duration <= 0) return;
-            const remainingMs = Math.max(0, video.duration - video.currentTime) * 1000;
+            // Measured against the narration's end, not the video's: the quiz now opens
+            // there, so a fallback armed off the full duration would appear long after
+            // the quiz it is meant to rescue.
+            const remainingMs = Math.max(0, narrationEnd - video.currentTime) * 1000;
             this.armForwardFallback(
                 remainingMs + VIDEO_SCENE_FALLBACK_GRACE_MS,
-                `video ${video.duration.toFixed(1)}s + ${VIDEO_SCENE_FALLBACK_GRACE_MS / 1000}s grace`,
+                `narration ends ${narrationEnd}s + ${VIDEO_SCENE_FALLBACK_GRACE_MS / 1000}s grace`,
             );
         };
         video.addEventListener('loadedmetadata', rearm);
@@ -325,6 +372,9 @@ class VideoScene extends Scene {
 
     onQuizPassed() {
         this.quizPassed = true;
+        // Release the holding loop; the picture can run out normally behind Continue.
+        this.harvestLooping = false;
+        if (this.videoElement) this.videoElement.loop = false;
         if (window.DEV_MODE) console.log(`[VideoScene] Quiz passed for ${this.name}`);
         if (this.fallbackTimeoutHandle) {
             clearTimeout(this.fallbackTimeoutHandle);
@@ -408,9 +458,19 @@ class VideoScene extends Scene {
     async onUnload() {
         this.stopVo();
 
+        if (this.videoElement && this.onHarvestTimeUpdate) {
+            this.videoElement.removeEventListener('timeupdate', this.onHarvestTimeUpdate);
+        }
+        this.onHarvestTimeUpdate = null;
+        this.harvestQuizArmed = false;
+        this.harvestLooping = false;
+
         if (this.detachVideoSubtitles) {
             this.detachVideoSubtitles();
             this.detachVideoSubtitles = null;
+        this.harvestQuizArmed = false;
+        this.harvestLooping = false;
+        this.onHarvestTimeUpdate = null;
         }
 
         if (this.fallbackTimeoutHandle) {
