@@ -3,7 +3,7 @@
 // ============================================================================
 
 const R2_BASE = 'https://assets.granjaalegre.com';
-const SUBTITLE_VERSION = 4;
+const SUBTITLE_VERSION = 5;
 window.R2_BASE = R2_BASE;
 
 // Global asset URL helper: encodes path segments while preserving directory structure
