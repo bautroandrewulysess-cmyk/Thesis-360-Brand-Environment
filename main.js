@@ -389,9 +389,23 @@ class SceneManager {
             if (window.DEV_MODE) console.log(`[SceneManager] loadScene result for ${sceneName}: ${success}`);
 
             if (success) {
-                if (spawnPosition) {
+                // spawnPosition is either an [x, y, z] triple (every hotspot and
+                // videoScene passes one) or a *named* position -- the dev jump menu
+                // passes 'spawn' and 'toFarm1'. Indexing a string yields its first
+                // three characters, so 'toFarm1' set the camera to ('t','o','F'):
+                // a NaN transform, a NaN view matrix, and a black scene with every
+                // worldToScreen returning NaN. Only real triples are applied; a name
+                // means "leave the scene on its own default spawn".
+                const isCoordinateTriple = Array.isArray(spawnPosition)
+                    && spawnPosition.length >= 3
+                    && Number.isFinite(spawnPosition[0])
+                    && Number.isFinite(spawnPosition[1])
+                    && Number.isFinite(spawnPosition[2]);
+                if (isCoordinateTriple) {
                     if (window.DEV_MODE) console.log(`[SceneManager] Setting spawn position: ${JSON.stringify(spawnPosition)}`);
                     cameraEntity.setLocalPosition(spawnPosition[0], spawnPosition[1], spawnPosition[2]);
+                } else if (spawnPosition) {
+                    if (window.DEV_MODE) console.log(`[SceneManager] Named spawn "${spawnPosition}" — keeping the scene's default camera`);
                 }
                 appState.nextSceneName = null;
                 // Push scene change to history (skip if this came from a popstate event)
