@@ -1077,8 +1077,8 @@ class CafeInteriorScene extends Scene {
         if (popup) popup.style.transition = 'opacity 0.5s ease-in-out';
     }
 
-    onQuizPassed() {
-        super.onQuizPassed();
+    async onQuizPassed() {
+        await super.onQuizPassed();
         // Re-enable transition and video hotspots now that quiz is passed
         this.hotspotEntities.forEach(group => {
             if ((group.hotspotData?.isVideo || group.hotspotData?.isTransition) && !group.hotspotData?.isGateMarker) {
@@ -1092,6 +1092,10 @@ class CafeInteriorScene extends Scene {
         }
         if (this.isReturnVisit) {
             this.hideNavPrompt();
+            // showQuiz fires its callback once, after the last question of the set, so
+            // this runs when BOTH backToTheCafe and finalChallenge are passed. Awaited
+            // so the cup lands before the completion panel covers the screen.
+            await growCoffeeTree('backToCafe');
             this.showCompletionPanel('Coffee Journey Complete', window.PendingQuizzes.finalChallenge.feedback, 'https://forms.gle/UmT9jCX7bCieUKDW9');
         }
     }
@@ -1118,7 +1122,7 @@ class CafeInteriorScene extends Scene {
         super.spawnGateMarker(gate);
     }
 
-    onHotspotClick(hotspot, entity) {
+    async onHotspotClick(hotspot, entity) {
         this.activeHotspotEntity = entity;
 
         if (hotspot.isTransition) {
@@ -1133,6 +1137,9 @@ class CafeInteriorScene extends Scene {
             if (this.isReturnVisit && !window.journeyComplete) {
                 return;
             }
+            // Every guard above has passed, so the quiz is done and this transition is
+            // really happening. Awaited so the pop-up finishes before switchTo's fade.
+            await growCoffeeTree('cafeInterior');
             sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
             return;
         }

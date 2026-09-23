@@ -1131,7 +1131,7 @@ class RoasteryScene extends Scene {
         super.spawnGateMarker(gate);
     }
 
-    onHotspotClick(hotspot, entity) {
+    async onHotspotClick(hotspot, entity) {
         this.activeHotspotEntity = entity;
 
         if (hotspot.isTransition) {
@@ -1148,6 +1148,7 @@ class RoasteryScene extends Scene {
             if (hotspot.targetScene === 'cafe-interior' && !window.journeyComplete) {
                 sceneManager.scenes['cafe-interior'].isReturnVisit = true;
             }
+            await growCoffeeTree('roastery');
             sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
             return;
         }

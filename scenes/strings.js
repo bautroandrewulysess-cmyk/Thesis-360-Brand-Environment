@@ -121,6 +121,14 @@ window.Strings = {
     'ui.progress.roastery': { en: 'Roastery', bis: 'Sanlagan' },   // DRAFT bis
     'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: 'Balik sa Kapehan' },   // DRAFT bis
 
+    // Coffee tree: one line per quiz pop-up, keyed on the stage that pop-up ends at.
+    'ui.tree.seed': { en: 'It starts with a single seed.', bis: 'Nagsugod kini sa usa ka liso.' },   // DRAFT bis
+    'ui.tree.polybagSeedling': { en: 'Your seed has sprouted into a seedling.', bis: 'Ang imong liso miturok na ug nahimong punoan.' },   // DRAFT bis
+    'ui.tree.flowering': { en: 'Your tree is grown, and in flower.', bis: 'Ang imong punoan dako na ug namulak.' },   // DRAFT bis
+    'ui.tree.ripeCherries': { en: 'The cherries are ripe and ready to pick.', bis: 'Hinog na ang mga cherry ug andam nang panguhaon.' },   // DRAFT bis
+    'ui.tree.roastedBeans': { en: 'Roasted, and ready to brew.', bis: 'Sinanlag na, ug andam nang timplahon.' },   // DRAFT bis
+    'ui.tree.cup': { en: 'From seed to cup \u2014 your journey is complete.', bis: 'Gikan sa liso ngadto sa tasa \u2014 kompleto na ang imong panaw.' },   // DRAFT bis
+
     // Journey bar (the collapsed pill and its expanded panel)
     'ui.journey.title': { en: 'Your Journey', bis: 'Imong Panaw' },   // DRAFT bis
     'ui.journey.expand': { en: 'Show your journey', bis: 'Ipakita ang imong panaw' },   // DRAFT bis

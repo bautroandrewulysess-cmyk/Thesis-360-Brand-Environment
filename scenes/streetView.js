@@ -1050,6 +1050,9 @@ class StreetViewScene extends Scene {
         }
 
         if (arrow.targetScene) {
+            // Below the farm1-4 close-up guard above deliberately: a refused transition
+            // must not grow the tree. Only the harvest disc leaves the farm.
+            if (arrow.isHarvestMarker) await growCoffeeTree('farm');
             await sceneManager.switchTo(arrow.targetScene, arrow.spawnPosition || null);
         } else if (arrow.target) {
             if (window.DEV_MODE) console.log(`[navigation] ${this.currentPosition} → ${arrow.target}`);

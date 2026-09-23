@@ -941,7 +941,7 @@ class NurseryScene extends Scene {
         });
     }
 
-    onHotspotClick(hotspot, entity) {
+    async onHotspotClick(hotspot, entity) {
         this.activeHotspotEntity = entity;
 
         if (hotspot.isTransition) {
@@ -955,9 +955,13 @@ class NurseryScene extends Scene {
             }
             // Intercept nursery→farm transition to play drone video first
             if (hotspot.id === 'back-to-exterior' && hotspot.targetScene === 'street-view') {
+                // Ahead of the drone video, not after it: the tree belongs to the quiz
+                // just passed, and the drone video is the transition itself.
+                await growCoffeeTree('nursery');
                 this.playDroneVideoThenTransition(hotspot.spawnPosition);
                 return;
             }
+            await growCoffeeTree('nursery');
             sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
             return;
         }

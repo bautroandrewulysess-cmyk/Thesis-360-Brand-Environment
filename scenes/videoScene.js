@@ -432,7 +432,7 @@ class VideoScene extends Scene {
             this.forwardButton.style.color = '#050505';
         });
         
-        this.forwardButton.addEventListener('click', () => {
+        this.forwardButton.addEventListener('click', async () => {
             // Last line of defence behind showForwardButton's guard: a scene with an
             // unpassed quiz opens the quiz instead of advancing, so the escape hatch
             // still leads somewhere rather than skipping the question.
@@ -443,6 +443,9 @@ class VideoScene extends Scene {
                 return;
             }
             if (window.DEV_MODE) console.log(`[VideoScene] Continue clicked, transitioning to ${this.nextScene} with spawn ${JSON.stringify(this.nextSpawn)}`);
+            // Below the unpassed-quiz escape hatch above, which opens the quiz instead
+            // of advancing, so reaching here means the quiz is genuinely passed.
+            if (this.name === 'harvesting') await growCoffeeTree('harvesting');
             sceneManager.switchTo(this.nextScene, this.nextSpawn);
         });
 

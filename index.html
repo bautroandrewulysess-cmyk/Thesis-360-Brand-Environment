@@ -492,6 +492,53 @@
             #journey-bar, #journey-panel { display: none !important; }
         }
 
+        /* ---- Coffee tree pop-up. Fires on a scene quiz, over the live scene, and
+           removes itself when done. Above the clue bar (99999) because for its couple
+           of seconds it is the thing being looked at. Non-interactive. ---- */
+        #coffee-tree-popup {
+            position: fixed; inset: 0; z-index: 100000;
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; opacity: 0;
+            transition: opacity 260ms ease;
+            font-family: 'Inter', sans-serif;
+        }
+        #coffee-tree-popup.visible { opacity: 1; transition: opacity 280ms ease; }
+        #coffee-tree-popup .ct-card {
+            display: flex; flex-direction: column; align-items: center; gap: 14px;
+            padding: 26px 34px; max-width: 70vw;
+            background: rgba(0,0,0,0.82); border: 1px solid rgba(244,208,63,0.45);
+            border-radius: 20px;
+            animation: ct-pop-in 280ms cubic-bezier(.2,.9,.3,1.2) both;
+        }
+        @keyframes ct-pop-in {
+            from { opacity: 0; transform: scale(0.86) translateY(14px); }
+            to   { opacity: 1; transform: none; }
+        }
+        #coffee-tree-popup .ct-art { width: 140px; height: 140px; }
+        #coffee-tree-popup .ct-art svg { width: 100%; height: 100%; display: block; }
+        #coffee-tree-popup .ct-line {
+            color: #f4d03f; font-size: 1rem; line-height: 1.4; text-align: center;
+        }
+
+        /* One animation per growth step. Every stage currently shares ct-stage-in;
+           these selectors exist so a single step can be given bespoke motion later
+           without touching the JS -- the stage being grown INTO is on data-to. */
+        @keyframes ct-stage-in {
+            from { opacity: 0; transform: scale(0.88); }
+            to   { opacity: 1; transform: none; }
+        }
+        #coffee-tree-popup .ct-art.ct-grow { animation: ct-stage-in 420ms ease-out both; }
+        #coffee-tree-popup .ct-art[data-to="sprout"].ct-grow          { animation-name: ct-stage-in; }
+        #coffee-tree-popup .ct-art[data-to="polybagSeedling"].ct-grow { animation-name: ct-stage-in; }
+        #coffee-tree-popup .ct-art[data-to="youngTree"].ct-grow       { animation-name: ct-stage-in; }
+        #coffee-tree-popup .ct-art[data-to="flowering"].ct-grow       { animation-name: ct-stage-in; }
+        #coffee-tree-popup .ct-art[data-to="ripeCherries"].ct-grow    { animation-name: ct-stage-in; }
+        #coffee-tree-popup .ct-art[data-to="roastedBeans"].ct-grow    { animation-name: ct-stage-in; }
+        #coffee-tree-popup .ct-art[data-to="cup"].ct-grow             { animation-name: ct-stage-in; }
+
+        /* The plant at rest, in the journey panel's slot. */
+        #journey-plant svg { width: 100%; height: 100%; display: block; }
+
         #fade-overlay {
             position: fixed;
             inset: 0;
@@ -965,16 +1012,16 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=35"></script>
-    <script src="./scenes/voData.js?v=35"></script>
-    <script src="./main.js?v=35"></script>
-    <script src="./scenes/quizData.js?v=35"></script>
-    <script src="./scenes/videoScene.js?v=35"></script>
-    <script src="./scenes/cafeInterior.js?v=35"></script>
-    <script src="./scenes/cafeExterior.js?v=35"></script>
-    <script src="./scenes/roastery.js?v=35"></script>
-    <script src="./scenes/nursery.js?v=35"></script>
-    <script src="./scenes/streetView.js?v=35"></script>
+    <script src="./scenes/strings.js?v=36"></script>
+    <script src="./scenes/voData.js?v=36"></script>
+    <script src="./main.js?v=36"></script>
+    <script src="./scenes/quizData.js?v=36"></script>
+    <script src="./scenes/videoScene.js?v=36"></script>
+    <script src="./scenes/cafeInterior.js?v=36"></script>
+    <script src="./scenes/cafeExterior.js?v=36"></script>
+    <script src="./scenes/roastery.js?v=36"></script>
+    <script src="./scenes/nursery.js?v=36"></script>
+    <script src="./scenes/streetView.js?v=36"></script>
 
     <script>
         const cursorCup = document.querySelector('.cursor-cup');

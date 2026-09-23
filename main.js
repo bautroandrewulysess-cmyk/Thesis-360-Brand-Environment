@@ -694,6 +694,7 @@ function toggleJourneyPanel() {
     if (!panel) return;
     if (panel.classList.contains('visible')) { closeJourneyPanel(); return; }
     paintJourneyPanelTrack();
+    if (window.updateJourneyPlant) updateJourneyPlant();
     panel.classList.add('visible');
     document.body.classList.add('journey-panel-open');
     const toggle = document.getElementById('journey-bar-toggle');
@@ -725,6 +726,127 @@ function updateJourneyBar() {
     bar.classList.add('visible');
 }
 window.updateJourneyBar = updateJourneyBar;
+
+// ============================================================================
+// COFFEE TREE
+// ============================================================================
+// A plant that grows one step per scene quiz, from seed to a finished cup. It pops
+// up over the scene when a quiz-gated transition is taken, and otherwise lives in
+// the journey panel, which is the only place it can be looked at again.
+
+// Narrative order. Two of the six hooks advance twice, which is why stages and hooks
+// are separate lists rather than one enum: the nursery grows seed -> sprout ->
+// polybag seedling in a single pop-up, and the farm young tree -> flowering.
+const COFFEE_TREE_STAGES = [
+    'seed', 'sprout', 'polybagSeedling', 'youngTree',
+    'flowering', 'ripeCherries', 'roastedBeans', 'cup'
+];
+
+// Where each hook leaves the plant. growCoffeeTree walks from wherever it is to here,
+// so pass-through stages need no special casing.
+const COFFEE_TREE_HOOKS = {
+    cafeInterior: 'seed',
+    nursery: 'polybagSeedling',
+    farm: 'flowering',
+    harvesting: 'ripeCherries',
+    roastery: 'roastedBeans',
+    backToCafe: 'cup'
+};
+
+// PLACEHOLDER ART. This map is the only thing the final artwork has to touch: drop a
+// finished inline <svg> string in against each key and nothing else changes. Keep them
+// square and viewBox'd so they scale to both the 96px panel slot and the 140px pop-up.
+const CoffeeTreeArt = {
+    seed:            '<svg viewBox="0 0 64 64"><ellipse cx="32" cy="40" rx="9" ry="12" fill="#8a6234"/><text x="32" y="60" font-size="7" fill="#f4d03f" text-anchor="middle">seed</text></svg>',
+    sprout:          '<svg viewBox="0 0 64 64"><path d="M32 48V30" stroke="#4f9d47" stroke-width="3"/><ellipse cx="25" cy="29" rx="7" ry="4" fill="#4f9d47"/><text x="32" y="60" font-size="7" fill="#f4d03f" text-anchor="middle">sprout</text></svg>',
+    polybagSeedling: '<svg viewBox="0 0 64 64"><rect x="24" y="40" width="16" height="12" fill="#3a3a3a"/><path d="M32 40V24" stroke="#4f9d47" stroke-width="3"/><ellipse cx="24" cy="26" rx="8" ry="4" fill="#4f9d47"/><ellipse cx="40" cy="30" rx="8" ry="4" fill="#4f9d47"/><text x="32" y="60" font-size="6" fill="#f4d03f" text-anchor="middle">seedling</text></svg>',
+    youngTree:       '<svg viewBox="0 0 64 64"><path d="M32 52V18" stroke="#6b4a2a" stroke-width="3"/><ellipse cx="32" cy="22" rx="14" ry="10" fill="#4f9d47"/><text x="32" y="60" font-size="6" fill="#f4d03f" text-anchor="middle">young</text></svg>',
+    flowering:       '<svg viewBox="0 0 64 64"><path d="M32 52V18" stroke="#6b4a2a" stroke-width="3"/><ellipse cx="32" cy="22" rx="15" ry="11" fill="#4f9d47"/><circle cx="24" cy="20" r="3" fill="#fff"/><circle cx="39" cy="25" r="3" fill="#fff"/><text x="32" y="60" font-size="6" fill="#f4d03f" text-anchor="middle">flower</text></svg>',
+    ripeCherries:    '<svg viewBox="0 0 64 64"><path d="M32 52V18" stroke="#6b4a2a" stroke-width="3"/><ellipse cx="32" cy="22" rx="15" ry="11" fill="#3f7f3a"/><circle cx="24" cy="21" r="4" fill="#d22f2f"/><circle cx="40" cy="26" r="4" fill="#d22f2f"/><text x="32" y="60" font-size="6" fill="#f4d03f" text-anchor="middle">cherries</text></svg>',
+    roastedBeans:    '<svg viewBox="0 0 64 64"><ellipse cx="26" cy="36" rx="9" ry="12" fill="#4a2c1a" transform="rotate(-20 26 36)"/><ellipse cx="40" cy="42" rx="9" ry="12" fill="#5a3722" transform="rotate(15 40 42)"/><text x="32" y="60" font-size="7" fill="#f4d03f" text-anchor="middle">beans</text></svg>',
+    cup:             '<svg viewBox="0 0 64 64"><path d="M18 28h28v12a14 14 0 0 1-28 0z" fill="#e8e3da"/><path d="M46 30h6a5 5 0 0 1 0 10h-6" fill="none" stroke="#e8e3da" stroke-width="3"/><ellipse cx="32" cy="28" rx="14" ry="4" fill="#6b4a2a"/><text x="32" y="60" font-size="8" fill="#f4d03f" text-anchor="middle">cup</text></svg>'
+};
+window.CoffeeTreeArt = CoffeeTreeArt;
+
+// Deliberately on window and deliberately not persisted: it resets on reload, which is
+// what a replay should do, and scene instances survive unload so per-scene fields would
+// not reset with it. Namespaced so a later score system can sit alongside rather than
+// share quizPassed, which already means "this scene's transition is unlocked".
+window.CoffeeTree = { stageIndex: -1, fired: {} };
+
+const COFFEE_TREE_TIMING = { popIn: 280, hold: 1800, cross: 420, popOut: 260 };
+
+function ensureCoffeeTreePopup() {
+    let el = document.getElementById('coffee-tree-popup');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'coffee-tree-popup';
+        el.innerHTML = '<div class="ct-card"><div class="ct-art"></div><div class="ct-line"></div></div>';
+        document.body.appendChild(el);
+    }
+    return el;
+}
+
+function removeCoffeeTreePopup() {
+    const el = document.getElementById('coffee-tree-popup');
+    if (el) el.remove();
+}
+window.removeCoffeeTreePopup = removeCoffeeTreePopup;
+
+// The plant's resting place: the journey panel's slot. Repainted whenever it grows and
+// whenever the panel opens, so it always shows the stage actually reached.
+function updateJourneyPlant() {
+    const slot = document.getElementById('journey-plant');
+    if (!slot) return;
+    const stage = COFFEE_TREE_STAGES[window.CoffeeTree.stageIndex];
+    slot.innerHTML = stage ? CoffeeTreeArt[stage] : '';
+}
+window.updateJourneyPlant = updateJourneyPlant;
+
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Grow to wherever this hook leaves the plant, showing every stage passed through.
+// Awaited by each hook so the pop-up finishes before the transition it precedes.
+// Idempotent per hook: a replayed scene or a double-fired handler does nothing.
+async function growCoffeeTree(hookKey) {
+    const target = COFFEE_TREE_HOOKS[hookKey];
+    if (!target) {
+        console.warn(`[CoffeeTree] Unknown hook: ${hookKey}`);
+        return;
+    }
+    if (window.CoffeeTree.fired[hookKey]) return;
+    const targetIdx = COFFEE_TREE_STAGES.indexOf(target);
+    if (targetIdx <= window.CoffeeTree.stageIndex) return;
+    window.CoffeeTree.fired[hookKey] = true;
+
+    const el = ensureCoffeeTreePopup();
+    const art = el.querySelector('.ct-art');
+    const line = el.querySelector('.ct-line');
+    line.textContent = t(`ui.tree.${target}`);
+
+    const first = window.CoffeeTree.stageIndex + 1;
+    art.innerHTML = CoffeeTreeArt[COFFEE_TREE_STAGES[first]] || '';
+    art.setAttribute('data-to', COFFEE_TREE_STAGES[first]);
+    el.classList.add('visible');
+    await wait(COFFEE_TREE_TIMING.popIn + COFFEE_TREE_TIMING.hold);
+
+    for (let i = first + 1; i <= targetIdx; i++) {
+        art.classList.remove('ct-grow');
+        void art.offsetWidth;                 // restart the animation
+        art.innerHTML = CoffeeTreeArt[COFFEE_TREE_STAGES[i]] || '';
+        art.setAttribute('data-to', COFFEE_TREE_STAGES[i]);
+        art.classList.add('ct-grow');
+        await wait(COFFEE_TREE_TIMING.cross + COFFEE_TREE_TIMING.hold);
+    }
+
+    el.classList.remove('visible');
+    await wait(COFFEE_TREE_TIMING.popOut);
+    removeCoffeeTreePopup();
+
+    window.CoffeeTree.stageIndex = targetIdx;
+    updateJourneyPlant();
+}
+window.growCoffeeTree = growCoffeeTree;
 
 function showLoadingTrivia(targetScene) {
     updateJourneyProgress(targetScene);
@@ -932,6 +1054,10 @@ class Scene {
         this.hideMiniQuiz();
         this.hideQuiz(true);
         this.setClue(null);
+        // Defensive only: the pop-up normally removes itself at the end of its own
+        // animation, and every hook awaits it before transitioning. This catches the
+        // case where a scene is torn down mid-animation, e.g. via browser history.
+        if (window.removeCoffeeTreePopup) window.removeCoffeeTreePopup();
 
         // Cancel this scene's VO sequence state. Leaving mid-segment means playVoSequence
         // never reaches its finally, so voSequenceRunning would stay true forever and the
