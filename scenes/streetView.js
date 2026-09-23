@@ -1302,6 +1302,9 @@ class StreetViewScene extends Scene {
     setFarmHint(text, variant = 'default') {
         if (!this.farmHintElement) {
             this.farmHintElement = document.createElement('div');
+            // Class is the handle the journey panel uses to suppress this while it is
+            // open; the element is otherwise styled entirely inline.
+            this.farmHintElement.className = 'farm-hint';
             this.farmHintElement.style.cssText = 'position:fixed; bottom:24vh; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#f4d03f; padding:14px 24px; border-radius:6px; font-family:Inter,sans-serif; font-size:0.95rem; z-index:100; font-weight:500; border:1px solid transparent; max-width:70vw; text-align:center;';
             document.body.appendChild(this.farmHintElement);
         }

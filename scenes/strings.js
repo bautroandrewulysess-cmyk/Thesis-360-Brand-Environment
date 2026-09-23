@@ -110,13 +110,21 @@ window.Strings = {
     'ui.clue.behind': { en: 'Turn around — it\'s behind you', bis: 'Lingi — naa sa imong likod' },
 
     // Loading-screen journey progress labels, in narrative order.
-    'ui.progress.cafeInterior': { en: 'Cafe', bis: '' },
-    'ui.progress.nursery': { en: 'Nursery', bis: '' },
-    'ui.progress.journeyToFarm': { en: 'To the Farm', bis: '' },
-    'ui.progress.farm': { en: 'Farm', bis: '' },
-    'ui.progress.harvesting': { en: 'Harvest', bis: '' },
-    'ui.progress.roastery': { en: 'Roastery', bis: '' },
-    'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: '' },
+    // These were blank in bis, which t() silently falls back to English for. That was
+    // invisible while they only appeared on the loading screen; the journey bar puts
+    // them on screen for the whole journey, so they are filled in now.
+    'ui.progress.cafeInterior': { en: 'Cafe', bis: 'Kapehan' },   // DRAFT bis
+    'ui.progress.nursery': { en: 'Nursery', bis: 'Tanuman' },   // DRAFT bis
+    'ui.progress.journeyToFarm': { en: 'To the Farm', bis: 'Padulong sa Uma' },   // DRAFT bis
+    'ui.progress.farm': { en: 'Farm', bis: 'Uma' },   // DRAFT bis
+    'ui.progress.harvesting': { en: 'Harvest', bis: 'Pangani' },   // DRAFT bis
+    'ui.progress.roastery': { en: 'Roastery', bis: 'Sanlagan' },   // DRAFT bis
+    'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: 'Balik sa Kapehan' },   // DRAFT bis
+
+    // Journey bar (the collapsed pill and its expanded panel)
+    'ui.journey.title': { en: 'Your Journey', bis: 'Imong Panaw' },   // DRAFT bis
+    'ui.journey.expand': { en: 'Show your journey', bis: 'Ipakita ang imong panaw' },   // DRAFT bis
+    'ui.journey.collapse': { en: 'Hide your journey', bis: 'Itago ang imong panaw' },   // DRAFT bis
 
     // Farm close-up hunt hints. Shown while the golden disc at farm1-4 is unfound;
     // keyed by the player's current position. Display text, unrelated to arrow labels.

@@ -620,6 +620,7 @@ function updateJourneyProgress(targetScene) {
     if (window.journeyComplete) {           // free roam: no journey to show
         el.classList.remove('visible');
         el.innerHTML = '';
+        updateJourneyBar();
         return;
     }
 
@@ -630,6 +631,17 @@ function updateJourneyProgress(targetScene) {
         return;
     }
 
+    paintJourneyTrack(el);
+    el.classList.add('visible');
+    paintJourneyPanelTrack();
+    updateJourneyBarLabel();
+}
+window.updateJourneyProgress = updateJourneyProgress;
+
+// The o---o---o track itself. Extracted so the loading screen and the persistent
+// journey panel can render the same markup from the same journeyProgressStep; both
+// reuse the .jp-* styles unchanged.
+function paintJourneyTrack(el) {
     el.innerHTML = '';
     JOURNEY_STEPS.forEach((step, i) => {
         if (i > 0) {
@@ -648,9 +660,71 @@ function updateJourneyProgress(targetScene) {
         wrap.appendChild(label);
         el.appendChild(wrap);
     });
-    el.classList.add('visible');
 }
-window.updateJourneyProgress = updateJourneyProgress;
+
+function paintJourneyPanelTrack() {
+    const track = document.getElementById('journey-panel-track');
+    if (track && journeyProgressStep >= 0) paintJourneyTrack(track);
+}
+
+// Current location, shown on the collapsed pill.
+function updateJourneyBarLabel() {
+    const label = document.getElementById('journey-bar-label');
+    if (!label) return;
+    const step = JOURNEY_STEPS[journeyProgressStep];
+    label.textContent = step ? t(`ui.progress.${step.key}`) : '';
+}
+
+function closeJourneyPanel() {
+    const panel = document.getElementById('journey-panel');
+    if (panel) panel.classList.remove('visible');
+    // Drives the CSS that suppresses the tutorial card and the farm hint while the
+    // panel is open; removing it puts both back exactly as they were, because the
+    // suppression is a !important display rule and never touches their own styles.
+    document.body.classList.remove('journey-panel-open');
+    const toggle = document.getElementById('journey-bar-toggle');
+    if (toggle) {
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', t('ui.journey.expand'));
+    }
+}
+
+function toggleJourneyPanel() {
+    const panel = document.getElementById('journey-panel');
+    if (!panel) return;
+    if (panel.classList.contains('visible')) { closeJourneyPanel(); return; }
+    paintJourneyPanelTrack();
+    panel.classList.add('visible');
+    document.body.classList.add('journey-panel-open');
+    const toggle = document.getElementById('journey-bar-toggle');
+    if (toggle) {
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.setAttribute('aria-label', t('ui.journey.collapse'));
+    }
+}
+window.toggleJourneyPanel = toggleJourneyPanel;
+
+// Visibility follows the clue bar's rules (main.js updateClue): gone while a video or
+// any overlay is up. Driven from the global app update rather than a scene's, because
+// street-view and videoScene never call updateClue.
+function updateJourneyBar() {
+    const bar = document.getElementById('journey-bar');
+    if (!bar) return;
+    const loading = document.getElementById('loading-screen');
+    const blocked = window.journeyComplete
+        || journeyProgressStep < 0
+        || document.body.classList.contains('video-open')
+        || document.body.classList.contains('ui-overlay-active')
+        || (loading && !loading.classList.contains('hidden'))
+        || window.innerWidth < 900;
+    if (blocked) {
+        bar.classList.remove('visible');
+        closeJourneyPanel();
+        return;
+    }
+    bar.classList.add('visible');
+}
+window.updateJourneyBar = updateJourneyBar;
 
 function showLoadingTrivia(targetScene) {
     updateJourneyProgress(targetScene);
@@ -718,7 +792,9 @@ class RaycastSystem {
         if ((quizOverlay && quizOverlay.style.display !== 'none') || (completionPanel && completionPanel.style.display !== 'none')) {
             return;
         }
-        if (event.target.closest('#quiz-overlay, #completion-panel, #color-menu')) {
+        // The journey bar sits over the canvas and is clickable, so without this a
+        // click on the pill would also cast a ray into the scene behind it.
+        if (event.target.closest('#quiz-overlay, #completion-panel, #color-menu, #journey-bar, #journey-panel')) {
             return;
         }
 
@@ -2397,6 +2473,7 @@ app.on('update', function(deltaTime) {
     if (activeScene && activeScene.update) {
         activeScene.update(deltaTime);
     }
+    updateJourneyBar();
 });
 
 // ============================================================================
