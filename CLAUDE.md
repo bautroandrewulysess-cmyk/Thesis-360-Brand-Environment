@@ -5,6 +5,12 @@ PlayCanvas + Gaussian splats, deployed at **https://granjaalegre.com**. Bilingua
 `https://assets.granjaalegre.com` (~870 MB). No build step: `index.html` loads plain
 `<script>` files.
 
+**This file auto-loads as project instructions at the start of every session, so it
+is not an ordinary doc — anything written here is read as a standing instruction.
+If it goes missing from the working tree, restore it (`git checkout -- CLAUDE.md`)
+before doing anything else, because a session started without it silently loses
+every rule below.**
+
 ## Layout
 
 | Path | What |
@@ -29,7 +35,7 @@ unload/reload.
 2. **Always read `git diff` before committing.**
 3. **Cache busting.** JS or HTML changed → bump `?v=` on **all 10** script tags in
    `index.html`. VTT *content* changed → bump `SUBTITLE_VERSION` in `main.js`. Both →
-   both. `?v=` is currently **33**, `SUBTITLE_VERSION` is **4**.
+   both. `?v=` is currently **34**, `SUBTITLE_VERSION` is **5**.
 4. **Splats and videos carry `immutable` cache headers.** Never overwrite in place —
    returning visitors would stay on the old file for a month. Upload under a **new
    filename** (`_v2`, `_v3`) and keep the old one as a rollback path.
