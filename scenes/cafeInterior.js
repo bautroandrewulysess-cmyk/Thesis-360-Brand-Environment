@@ -1048,6 +1048,32 @@ class CafeInteriorScene extends Scene {
         if (window.DEV_MODE) console.warn(`[cafeInterior] createHotspots complete: ${hotspotCountAfter} hotspots, ${labelCountAfter} labels created`);
     }
 
+    // The testimony follows the brewing video with no input in between. It is opened
+    // from brewing's onFinish, which since the popup-fade fix runs only once the first
+    // popup has actually been hidden -- so the two never overlap, at the cost of about
+    // a second of cafe showing between them.
+    //
+    // The VO sequence is parked at this point: backToCafe_en_02 has not started, and it
+    // is what opens the final quiz. Resuming from here rather than from brewing simply
+    // delays it, and interrupts nothing.
+    playTestimonyThenResume() {
+        this.resumeAmbient();
+        // Burned-in audio and subtitles: no subtitleSrc, and clear any cue still on
+        // screen from backToCafe_en_01 so it cannot sit under the burned-in text.
+        this.clearSubtitles();
+        this.showVideoPopup(assetUrl('Videos/testimony.mp4'), {
+            required: true,
+            volume: 1.0,
+            duckAmbient: 0.5,
+            onFinish: () => {
+                this.resumeAmbient();
+                this.resumeVoSequence();
+            }
+        });
+        const popup = document.getElementById('video-popup');
+        if (popup) popup.style.transition = 'opacity 0.5s ease-in-out';
+    }
+
     onQuizPassed() {
         super.onQuizPassed();
         // Re-enable transition and video hotspots now that quiz is passed
@@ -1138,10 +1164,7 @@ class CafeInteriorScene extends Scene {
                     // the VO sequence is parked here and cannot drive the subtitle bar.
                     subtitleSrc: videoSubtitleUrl(hotspot.subtitleRef),
                     duckAmbient: 0.5,
-                    onFinish: () => {
-                        this.resumeAmbient();
-                        this.resumeVoSequence();
-                    }
+                    onFinish: () => this.playTestimonyThenResume()
                 });
 
                 const popup = document.getElementById('video-popup');
