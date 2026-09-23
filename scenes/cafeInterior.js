@@ -1048,16 +1048,19 @@ class CafeInteriorScene extends Scene {
         if (window.DEV_MODE) console.warn(`[cafeInterior] createHotspots complete: ${hotspotCountAfter} hotspots, ${labelCountAfter} labels created`);
     }
 
-    // The testimony follows the brewing video with no input in between. It is opened
-    // from brewing's onFinish, which since the popup-fade fix runs only once the first
-    // popup has actually been hidden -- so the two never overlap, at the cost of about
-    // a second of cafe showing between them.
+    // The testimony follows the brewing video with no input in between. Brewing is
+    // opened with keepPopupForNext, so its onFinish runs while the popup is still up at
+    // full opacity and this simply swaps the source underneath it -- a straight cut,
+    // with no fade-out/fade-in cycle and therefore no glimpse of the cafe between them.
+    //
+    // Ambient is deliberately NOT resumed here: the popup never closed, so the duck
+    // applied for the brewing video must carry through to the testimony. Resuming it
+    // would un-duck for the length of the cut and then duck again.
     //
     // The VO sequence is parked at this point: backToCafe_en_02 has not started, and it
     // is what opens the final quiz. Resuming from here rather than from brewing simply
     // delays it, and interrupts nothing.
     playTestimonyThenResume() {
-        this.resumeAmbient();
         // Burned-in audio and subtitles: no subtitleSrc, and clear any cue still on
         // screen from backToCafe_en_01 so it cannot sit under the burned-in text.
         this.clearSubtitles();
@@ -1164,6 +1167,9 @@ class CafeInteriorScene extends Scene {
                     // the VO sequence is parked here and cannot drive the subtitle bar.
                     subtitleSrc: videoSubtitleUrl(hotspot.subtitleRef),
                     duckAmbient: 0.5,
+                    // Hand straight to the testimony in the same popup -- see
+                    // playTestimonyThenResume.
+                    keepPopupForNext: true,
                     onFinish: () => this.playTestimonyThenResume()
                 });
 

@@ -1703,7 +1703,7 @@ class Scene {
         }
     }
 
-    showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null, volume = 1, subtitleSrc = null, duckAmbient = false } = {}) {
+    showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null, volume = 1, subtitleSrc = null, duckAmbient = false, keepPopupForNext = false } = {}) {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
         // Improve video hardware acceleration hints to reduce lag when overlaying the canvas
@@ -1791,6 +1791,25 @@ class Scene {
             videoEnded = true;
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
             video.removeEventListener('error', onVideoError);
+
+            // Chained hand-off: the next video takes over this same popup, so cut
+            // straight to it. The normal path cannot be reused here -- cleanupVideo()
+            // ends with removeAttribute('src') + load(), and hideVideoPopup() fades the
+            // overlay out over 800ms before the next one fades back in. Together they
+            // showed about a second of the scene behind between the two videos.
+            // The popup stays up at full opacity, so the only thing on screen between
+            // the last frame of one video and the first frame of the next is the
+            // popup's own backdrop. Ambient stays ducked and videoPending stays true,
+            // because the player is still held.
+            if (keepPopupForNext) {
+                if (detachSubtitles) {
+                    detachSubtitles();
+                    detachSubtitles = null;
+                }
+                if (onFinish) onFinish();
+                return;
+            }
+
             await cleanupVideo();
             this.resumeAmbient();
             this.videoPending = false;
