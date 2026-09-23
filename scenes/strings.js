@@ -121,9 +121,12 @@ window.Strings = {
     'ui.progress.roastery': { en: 'Roastery', bis: 'Sanlagan' },   // DRAFT bis
     'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: 'Balik sa Kapehan' },   // DRAFT bis
 
-    // Coffee tree: one line per quiz pop-up, keyed on the stage that pop-up ends at.
+    // Coffee tree: one line per stage, including the intermediate stages the nursery
+    // and farm pop-ups pass through on their way to the stage the hook ends at.
     'ui.tree.seed': { en: 'It starts with a single seed.', bis: 'Nagsugod kini sa usa ka liso.' },   // DRAFT bis
+    'ui.tree.sprout': { en: 'A shoot breaks through the soil.', bis: 'Miturok na ang liso.' },   // DRAFT bis
     'ui.tree.polybagSeedling': { en: 'Your seed has sprouted into a seedling.', bis: 'Ang imong liso miturok na ug nahimong punoan.' },   // DRAFT bis
+    'ui.tree.youngTree': { en: 'Planted out, your tree takes root.', bis: 'Natanom na, ug nagagamot ang imong punoan.' },   // DRAFT bis
     'ui.tree.flowering': { en: 'Your tree is grown, and in flower.', bis: 'Ang imong punoan dako na ug namulak.' },   // DRAFT bis
     'ui.tree.ripeCherries': { en: 'The cherries are ripe and ready to pick.', bis: 'Hinog na ang mga cherry ug andam nang panguhaon.' },   // DRAFT bis
     'ui.tree.roastedBeans': { en: 'Roasted, and ready to brew.', bis: 'Sinanlag na, ug andam nang timplahon.' },   // DRAFT bis

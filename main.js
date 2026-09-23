@@ -826,19 +826,26 @@ async function growCoffeeTree(hookKey) {
     const el = ensureCoffeeTreePopup();
     const art = el.querySelector('.ct-art');
     const line = el.querySelector('.ct-line');
-    line.textContent = t(`ui.tree.${target}`);
+
+    // Art, motion and caption move together. Every stage gets its own line, including
+    // the intermediate ones the nursery and farm walk through -- captioning those with
+    // the target's line described a plant the viewer could not yet see.
+    const showStage = (idx) => {
+        const stage = COFFEE_TREE_STAGES[idx];
+        art.innerHTML = CoffeeTreeArt[stage] || '';
+        art.setAttribute('data-to', stage);
+        line.textContent = t(`ui.tree.${stage}`);
+    };
 
     const first = window.CoffeeTree.stageIndex + 1;
-    art.innerHTML = CoffeeTreeArt[COFFEE_TREE_STAGES[first]] || '';
-    art.setAttribute('data-to', COFFEE_TREE_STAGES[first]);
+    showStage(first);
     el.classList.add('visible');
     await wait(COFFEE_TREE_TIMING.popIn + COFFEE_TREE_TIMING.hold);
 
     for (let i = first + 1; i <= targetIdx; i++) {
         art.classList.remove('ct-grow');
         void art.offsetWidth;                 // restart the animation
-        art.innerHTML = CoffeeTreeArt[COFFEE_TREE_STAGES[i]] || '';
-        art.setAttribute('data-to', COFFEE_TREE_STAGES[i]);
+        showStage(i);
         art.classList.add('ct-grow');
         await wait(COFFEE_TREE_TIMING.cross + COFFEE_TREE_TIMING.hold);
     }
