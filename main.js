@@ -753,20 +753,22 @@ const COFFEE_TREE_HOOKS = {
     backToCafe: 'cup'
 };
 
-// PLACEHOLDER ART. This map is the only thing the final artwork has to touch: drop a
-// finished inline <svg> string in against each key and nothing else changes. Keep them
-// square and viewBox'd so they scale to both the 96px panel slot and the 140px pop-up.
-const CoffeeTreeArt = {
-    seed:            '<svg viewBox="0 0 64 64"><ellipse cx="32" cy="40" rx="9" ry="12" fill="#8a6234"/><text x="32" y="60" font-size="7" fill="#f4d03f" text-anchor="middle">seed</text></svg>',
-    sprout:          '<svg viewBox="0 0 64 64"><path d="M32 48V30" stroke="#4f9d47" stroke-width="3"/><ellipse cx="25" cy="29" rx="7" ry="4" fill="#4f9d47"/><text x="32" y="60" font-size="7" fill="#f4d03f" text-anchor="middle">sprout</text></svg>',
-    polybagSeedling: '<svg viewBox="0 0 64 64"><rect x="24" y="40" width="16" height="12" fill="#3a3a3a"/><path d="M32 40V24" stroke="#4f9d47" stroke-width="3"/><ellipse cx="24" cy="26" rx="8" ry="4" fill="#4f9d47"/><ellipse cx="40" cy="30" rx="8" ry="4" fill="#4f9d47"/><text x="32" y="60" font-size="6" fill="#f4d03f" text-anchor="middle">seedling</text></svg>',
-    youngTree:       '<svg viewBox="0 0 64 64"><path d="M32 52V18" stroke="#6b4a2a" stroke-width="3"/><ellipse cx="32" cy="22" rx="14" ry="10" fill="#4f9d47"/><text x="32" y="60" font-size="6" fill="#f4d03f" text-anchor="middle">young</text></svg>',
-    flowering:       '<svg viewBox="0 0 64 64"><path d="M32 52V18" stroke="#6b4a2a" stroke-width="3"/><ellipse cx="32" cy="22" rx="15" ry="11" fill="#4f9d47"/><circle cx="24" cy="20" r="3" fill="#fff"/><circle cx="39" cy="25" r="3" fill="#fff"/><text x="32" y="60" font-size="6" fill="#f4d03f" text-anchor="middle">flower</text></svg>',
-    ripeCherries:    '<svg viewBox="0 0 64 64"><path d="M32 52V18" stroke="#6b4a2a" stroke-width="3"/><ellipse cx="32" cy="22" rx="15" ry="11" fill="#3f7f3a"/><circle cx="24" cy="21" r="4" fill="#d22f2f"/><circle cx="40" cy="26" r="4" fill="#d22f2f"/><text x="32" y="60" font-size="6" fill="#f4d03f" text-anchor="middle">cherries</text></svg>',
-    roastedBeans:    '<svg viewBox="0 0 64 64"><ellipse cx="26" cy="36" rx="9" ry="12" fill="#4a2c1a" transform="rotate(-20 26 36)"/><ellipse cx="40" cy="42" rx="9" ry="12" fill="#5a3722" transform="rotate(15 40 42)"/><text x="32" y="60" font-size="7" fill="#f4d03f" text-anchor="middle">beans</text></svg>',
-    cup:             '<svg viewBox="0 0 64 64"><path d="M18 28h28v12a14 14 0 0 1-28 0z" fill="#e8e3da"/><path d="M46 30h6a5 5 0 0 1 0 10h-6" fill="none" stroke="#e8e3da" stroke-width="3"/><ellipse cx="32" cy="28" rx="14" ry="4" fill="#6b4a2a"/><text x="32" y="60" font-size="8" fill="#f4d03f" text-anchor="middle">cup</text></svg>'
-};
-window.CoffeeTreeArt = CoffeeTreeArt;
+// The artwork lives in scenes/coffeeTreeArt.js, loaded before this file. Eight stages,
+// each an inline <svg> on a 200x200 viewBox standing on a ground line at y=178 so the
+// plant does not jump when one stage cross-fades into the next. Its motion is selected
+// by the data-to attribute set on .ct-art below, which names the stage being grown INTO.
+const CoffeeTreeArt = window.CoffeeTreeArt || {};
+
+// The art ships its keyframes as a string rather than in index.html so the SVG classes
+// and the rules that drive them stay in one file. Injected here, not on first pop-up,
+// because the journey panel's slot paints the same art and can open first.
+(function injectCoffeeTreeArtCSS() {
+    if (!window.CoffeeTreeArtCSS || document.getElementById('coffee-tree-art-css')) return;
+    const style = document.createElement('style');
+    style.id = 'coffee-tree-art-css';
+    style.textContent = window.CoffeeTreeArtCSS;
+    document.head.appendChild(style);
+})();
 
 // Deliberately on window and deliberately not persisted: it resets on reload, which is
 // what a replay should do, and scene instances survive unload so per-scene fields would
@@ -800,6 +802,8 @@ function updateJourneyPlant() {
     if (!slot) return;
     const stage = COFFEE_TREE_STAGES[window.CoffeeTree.stageIndex];
     slot.innerHTML = stage ? CoffeeTreeArt[stage] : '';
+    if (stage) slot.setAttribute('data-to', stage);
+    else slot.removeAttribute('data-to');
 }
 window.updateJourneyPlant = updateJourneyPlant;
 

@@ -520,21 +520,15 @@
             color: #f4d03f; font-size: 1rem; line-height: 1.4; text-align: center;
         }
 
-        /* One animation per growth step. Every stage currently shares ct-stage-in;
-           these selectors exist so a single step can be given bespoke motion later
-           without touching the JS -- the stage being grown INTO is on data-to. */
+        /* The cross-fade between two stages of one pop-up: the outgoing SVG is replaced
+           and the incoming one scales up over 420ms, matching COFFEE_TREE_TIMING.cross.
+           The per-stage motion inside the plant is NOT here -- it lives with the artwork
+           in scenes/coffeeTreeArt.js, keyed off the same data-to attribute. */
         @keyframes ct-stage-in {
             from { opacity: 0; transform: scale(0.88); }
             to   { opacity: 1; transform: none; }
         }
         #coffee-tree-popup .ct-art.ct-grow { animation: ct-stage-in 420ms ease-out both; }
-        #coffee-tree-popup .ct-art[data-to="sprout"].ct-grow          { animation-name: ct-stage-in; }
-        #coffee-tree-popup .ct-art[data-to="polybagSeedling"].ct-grow { animation-name: ct-stage-in; }
-        #coffee-tree-popup .ct-art[data-to="youngTree"].ct-grow       { animation-name: ct-stage-in; }
-        #coffee-tree-popup .ct-art[data-to="flowering"].ct-grow       { animation-name: ct-stage-in; }
-        #coffee-tree-popup .ct-art[data-to="ripeCherries"].ct-grow    { animation-name: ct-stage-in; }
-        #coffee-tree-popup .ct-art[data-to="roastedBeans"].ct-grow    { animation-name: ct-stage-in; }
-        #coffee-tree-popup .ct-art[data-to="cup"].ct-grow             { animation-name: ct-stage-in; }
 
         /* The plant at rest, in the journey panel's slot. */
         #journey-plant svg { width: 100%; height: 100%; display: block; }
@@ -1012,16 +1006,17 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=36"></script>
-    <script src="./scenes/voData.js?v=36"></script>
-    <script src="./main.js?v=36"></script>
-    <script src="./scenes/quizData.js?v=36"></script>
-    <script src="./scenes/videoScene.js?v=36"></script>
-    <script src="./scenes/cafeInterior.js?v=36"></script>
-    <script src="./scenes/cafeExterior.js?v=36"></script>
-    <script src="./scenes/roastery.js?v=36"></script>
-    <script src="./scenes/nursery.js?v=36"></script>
-    <script src="./scenes/streetView.js?v=36"></script>
+    <script src="./scenes/strings.js?v=37"></script>
+    <script src="./scenes/voData.js?v=37"></script>
+    <script src="./scenes/coffeeTreeArt.js?v=37"></script>
+    <script src="./main.js?v=37"></script>
+    <script src="./scenes/quizData.js?v=37"></script>
+    <script src="./scenes/videoScene.js?v=37"></script>
+    <script src="./scenes/cafeInterior.js?v=37"></script>
+    <script src="./scenes/cafeExterior.js?v=37"></script>
+    <script src="./scenes/roastery.js?v=37"></script>
+    <script src="./scenes/nursery.js?v=37"></script>
+    <script src="./scenes/streetView.js?v=37"></script>
 
     <script>
         const cursorCup = document.querySelector('.cursor-cup');

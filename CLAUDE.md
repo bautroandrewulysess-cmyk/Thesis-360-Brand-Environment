@@ -33,9 +33,9 @@ unload/reload.
 1. **Never patch `R2_BASE`**, not even temporarily. A debug patch shipped once and took
    the live site down.
 2. **Always read `git diff` before committing.**
-3. **Cache busting.** JS or HTML changed → bump `?v=` on **all 10** script tags in
+3. **Cache busting.** JS or HTML changed → bump `?v=` on **all 11** script tags in
    `index.html`. VTT *content* changed → bump `SUBTITLE_VERSION` in `main.js`. Both →
-   both. `?v=` is currently **34**, `SUBTITLE_VERSION` is **5**.
+   both. `?v=` is currently **37**, `SUBTITLE_VERSION` is **5**.
 4. **Splats and videos carry `immutable` cache headers.** Never overwrite in place —
    returning visitors would stay on the old file for a month. Upload under a **new
    filename** (`_v2`, `_v3`) and keep the old one as a rollback path.
