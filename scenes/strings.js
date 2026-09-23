@@ -123,10 +123,15 @@ window.Strings = {
     'ui.farm.hint.farm1-1': { en: 'Keep heading forward.', bis: 'Padayon lang sa pag-adto sa unahan.' },
     'ui.farm.hint.farm1-2': { en: 'Explore the area ahead.', bis: 'Suroya ang dapit sa unahan.' },
     'ui.farm.hint.farm1-3': { en: 'So close. Moving forward should help.', bis: 'Duol na kaayo. Padayon lang sa unahan.' },
-    'ui.farm.hint.farm1-4': { en: 'You\'re really close — try looking down.', bis: 'Duol na kaayo ka — sulayi og tan-aw sa ubos.' },
+    // The close-up orb now sits beside the forward disc at eye level, not below the
+    // player, so the old "look down" wording no longer describes where it is.
+    'ui.farm.hint.farm1-4': { en: 'You\'re really close — the golden button is just left of the disc.', bis: 'Duol na kaayo ka — ang bulawanon nga button naa sa wala sa disc.' },   // DRAFT bis
     'ui.farm.hint.farm1-5': { en: 'You\'ve gone a bit far. Move back a little.', bis: 'Nalapas na ka og gamay. Balik og diyutay.' },
     'ui.farm.hint.default': { en: 'Look around for the golden button.', bis: 'Pangitaa ang bulawanon nga button sa imong palibot.' },
-    'ui.farm.closeupFirst': { en: 'Look down and click the golden button first.', bis: 'Tan-awa sa ubos ug i-klik ang bulawanon nga button una.' },
+    // Fires when the player tries to leave farm1-4 before opening the close-up, so it
+    // must point the same way as ui.farm.hint.farm1-4 above — not down, where the orb
+    // used to sit.
+    'ui.farm.closeupFirst': { en: 'Click the golden button left of the disc first.', bis: 'I-klik una ang bulawanon nga button sa wala sa disc.' },   // DRAFT bis
 
     // Gate-marker buttons (keyed by gate.ref in voData.js)
     'ui.gate.default': { en: 'Watch', bis: 'Tan-awa' },

@@ -859,9 +859,15 @@ class StreetViewScene extends Scene {
         const orbEntity = new pc.Entity('farm-closeup-orb');
         orbEntity.addComponent('render', { type: 'sphere' });
 
-        // Position to the lower-left side, clear of forward arrow line of sight
-        orbEntity.setLocalPosition(-1.5, -1.5, 1.5);
-        orbEntity.setLocalScale(0.5, 0.5, 0.5);
+        // Beside the forward disc from the player's view: same pitch, 16 degrees off
+        // its bearing, at 5 units rather than the disc's 12. Closer means the orb only
+        // needs ~1.9x to keep the angular click target and apparent size it has today
+        // (7.63deg vs 7.67deg, 5.43deg vs 5.50deg) instead of the 4.6x a 12-unit
+        // placement would demand. The 16 degree offset is what keeps the two spheres
+        // apart on screen -- on the disc's exact bearing they would be colinear, and
+        // the nearer orb would take every click meant for the disc.
+        orbEntity.setLocalPosition(-2.387, -1.437, -4.152);
+        orbEntity.setLocalScale(0.95, 0.95, 0.95);
 
         const layer = app.scene.layers.getLayerByName('Immediate') || app.scene.layers.getLayerByName('UI');
         if (layer) {
@@ -887,8 +893,8 @@ class StreetViewScene extends Scene {
         // it cannot absorb or shift a single click.
         const beam = new pc.Entity('farm-closeup-beam');
         beam.addComponent('render', { type: 'cylinder' });
-        beam.setLocalPosition(0, 6, 0);        // rises from the orb, orb is 0.5 across
-        beam.setLocalScale(0.28, 12, 0.28);
+        beam.setLocalPosition(0, 6, 0);        // rises from the orb, orb is 0.95 across
+        beam.setLocalScale(0.147, 6.3, 0.147);   // compensates the 1.9x parent scale
         if (layer) beam.render.meshInstances[0].layer = layer.id;
 
         const beamMat = new pc.StandardMaterial();
@@ -905,14 +911,17 @@ class StreetViewScene extends Scene {
 
         this.container.addChild(orbEntity);
         this.farmCloseupOrb = orbEntity;
-        this.farmCloseupBaseScale = 0.5;
+        // Must track the scale above: the pulse in update() rewrites scale from this
+        // every frame, so setting setLocalScale alone would be silently undone.
+        this.farmCloseupBaseScale = 0.95;
         this.farmCloseupPulseTime = 0;
 
-        // Register for clicking with small raycast radius to avoid blocking forward arrow.
-        // 0.35 deliberately: the beam and the badge above do not change it.
+        // Register for clicking with a radius that tracks the orb's 0.95 scale, still
+        // small enough not to blanket the forward disc 16 degrees away.
+        // 0.67 deliberately: the beam and the badge above do not change it.
         this.registerInteractiveObject(orbEntity, () => {
             this.onFarmCloseupOrbClick();
-        }, 0.35);
+        }, 0.67);
 
         // Magnifier badge. street-view has no hotspot-label system, and a texture on a
         // sphere would distort and only read from one angle, so this is a DOM element
