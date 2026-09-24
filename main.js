@@ -822,6 +822,13 @@ function updateJourneyPlant() {
     slot.innerHTML = stage ? CoffeeTreeArt[stage] : '';
     if (stage) slot.setAttribute('data-to', stage);
     else slot.removeAttribute('data-to');
+    // Hidden outright until the first hook fires. stageIndex starts at -1, and an
+    // empty-but-present slot reserved a visible gap in the journey bar for the whole
+    // of the first scene -- a placeholder for something the player had no way to
+    // know was coming.
+    // 'flex' rather than '' because the rule's own default is flex and this runs on
+    // every journey-panel open, so the slot is always correct as the panel appears.
+    slot.style.display = window.CoffeeTree.stageIndex >= 0 ? 'flex' : 'none';
 }
 window.updateJourneyPlant = updateJourneyPlant;
 
