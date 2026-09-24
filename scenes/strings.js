@@ -121,6 +121,23 @@ window.Strings = {
     'ui.progress.roastery': { en: 'Roastery', bis: 'Sanlagan' },   // DRAFT bis
     'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: 'Balik sa Kapehan' },   // DRAFT bis
 
+    // Scene summaries. Shown at a scene's exit only when the player seeked forward in
+    // it -- a recap of what the narration said, for someone who chose not to hear it.
+    // bis is a placeholder copy of the English pending translation.
+    'ui.summary.title': { en: 'What you skipped', bis: 'What you skipped' },   // DRAFT bis
+    'ui.summary.continue': { en: 'Continue', bis: 'Continue' },   // DRAFT bis
+    'ui.summary.brandStoryIntro': { en: 'Our coffee comes from Pangantucan, Bukidnon, at the foot of Mt. Kalatungan, where volcanic soil and cool mountain air grow exceptional coffee.', bis: 'Our coffee comes from Pangantucan, Bukidnon, at the foot of Mt. Kalatungan, where volcanic soil and cool mountain air grow exceptional coffee.' },   // DRAFT bis
+    'ui.summary.cafeInterior': { en: 'The Garces family opened Alegre Cafe in 2023 as a place to gather, share stories, and enjoy coffee from their own farm. Owner Melissa believes great coffee needs passionate people, not a big farm.', bis: 'The Garces family opened Alegre Cafe in 2023 as a place to gather, share stories, and enjoy coffee from their own farm. Owner Melissa believes great coffee needs passionate people, not a big farm.' },   // DRAFT bis
+    'ui.summary.nursery': { en: 'Seeds sprout in seedbeds, then grow in polybags for 6\u201312 months. Once planted, trees take 3\u20134 years to fruit. White flowers become green cherries that ripen red over 7\u20139 months.', bis: 'Seeds sprout in seedbeds, then grow in polybags for 6\u201312 months. Once planted, trees take 3\u20134 years to fruit. White flowers become green cherries that ripen red over 7\u20139 months.' },   // DRAFT bis
+    'ui.summary.journeyToFarm': { en: 'The farm is about a kilometre from the cafe, and half the way is on foot.', bis: 'The farm is about a kilometre from the cafe, and half the way is on foot.' },   // DRAFT bis
+    'ui.summary.farm': { en: 'Each planting hole gets organic fertilizer, and seedlings go in during the wet season. Trees are monitored to catch pests and disease early. Farmer Lin shares the hard work behind every harvest.', bis: 'Each planting hole gets organic fertilizer, and seedlings go in during the wet season. Trees are monitored to catch pests and disease early. Farmer Lin shares the hard work behind every harvest.' },   // DRAFT bis
+    'ui.summary.harvesting': { en: 'Only ripe red cherries are hand-picked. They\u2019re washed, sorted, and floated \u2014 the heavy ones that sink are kept \u2014 then dried to 10\u201312% moisture.', bis: 'Only ripe red cherries are hand-picked. They\u2019re washed, sorted, and floated \u2014 the heavy ones that sink are kept \u2014 then dried to 10\u201312% moisture.' },   // DRAFT bis
+    'ui.summary.roasting': { en: 'Beans roast under controlled heat, airflow, and time. The \u201cfirst crack\u201d means flavour is developing. Roasted beans rest 24 hours before packing.', bis: 'Beans roast under controlled heat, airflow, and time. The \u201cfirst crack\u201d means flavour is developing. Roasted beans rest 24 hours before packing.' },   // DRAFT bis
+    'ui.summary.backToCafe': { en: 'Grind 15g medium-coarse, rinse the filter, bloom with 45ml for 45 seconds, then pour to 225ml. Every cup carries the care of the people behind it.', bis: 'Grind 15g medium-coarse, rinse the filter, bloom with 45ml for 45 seconds, then pour to 225ml. Every cup carries the care of the people behind it.' },   // DRAFT bis
+
+    // Tutorial: a standing hint, not a step -- it never blocks and never needs a press.
+    'ui.tutorial.seekHint': { en: 'Press \u2192 to skip ahead, \u2190 to go back', bis: 'Press \u2192 to skip ahead, \u2190 to go back' },   // DRAFT bis
+
     // Coffee tree: one line per stage, including the intermediate stages the nursery
     // and farm pop-ups pass through on their way to the stage the hook ends at.
     'ui.tree.seed': { en: 'It starts with a single seed.', bis: 'Nagsugod kini sa usa ka liso.' },   // DRAFT bis

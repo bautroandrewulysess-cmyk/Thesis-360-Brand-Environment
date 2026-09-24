@@ -857,7 +857,67 @@ async function growCoffeeTree(hookKey) {
     window.CoffeeTree.stageIndex = targetIdx;
     updateJourneyPlant();
 }
-window.growCoffeeTree = growCoffeeTree;
+// The summary runs after the tree pop-up and before the caller's transition, and it
+// runs even when the tree itself no-ops (an already-fired hook), because whether the
+// player seeked is independent of whether the plant still had a stage left to grow.
+// Captured BEFORE the global is reassigned below. A top-level function declaration in
+// a classic script is a property of the global object, and the scene files call the
+// bare identifier -- so without this const the wrapper would resolve to itself and
+// recurse forever.
+const growCoffeeTreeOnly = growCoffeeTree;
+async function growCoffeeTreeThenSummarise(hookKey) {
+    await growCoffeeTreeOnly(hookKey);
+    await showSceneSummary(HOOK_TO_SUMMARY[hookKey]);
+}
+window.growCoffeeTree = growCoffeeTreeThenSummarise;
+
+// Scene summary. Shown at a scene's exit only when the player seeked FORWARD in that
+// scene -- a recap of narration they chose not to hear. Explicit Continue rather than a
+// timer: auto-dismissing would repeat exactly the thing the seek was avoiding.
+function showSceneSummary(voKey) {
+    return new Promise((resolve) => {
+        if (!voKey || !window.SceneSeeked[voKey]) return resolve();
+        const body = (window.Strings && window.Strings[`ui.summary.${voKey}`]) ? t(`ui.summary.${voKey}`) : null;
+        if (!body) return resolve();
+        // Once per sequence: a replayed scene must not show it twice.
+        window.SceneSeeked[voKey] = false;
+
+        const el = document.createElement('div');
+        el.id = 'scene-summary-panel';
+        el.innerHTML =
+            '<div class="ss-card">'
+          +   '<div class="ss-title"></div>'
+          +   '<div class="ss-body"></div>'
+          +   '<button type="button" class="ss-continue"></button>'
+          + '</div>';
+        el.querySelector('.ss-title').textContent = t('ui.summary.title');
+        el.querySelector('.ss-body').textContent = body;
+        const btn = el.querySelector('.ss-continue');
+        btn.textContent = t('ui.summary.continue');
+        document.body.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('visible'));
+
+        const done = () => {
+            el.classList.remove('visible');
+            setTimeout(() => { el.remove(); resolve(); }, 260);
+        };
+        btn.addEventListener('click', done, { once: true });
+        btn.focus();
+    });
+}
+window.showSceneSummary = showSceneSummary;
+
+// Which summary each coffee-tree hook closes out. The hooks fire at exactly the seam
+// the summary belongs in -- after the tree pop-up, before the loading screen -- so the
+// mapping lives here rather than being repeated at all seven call sites.
+const HOOK_TO_SUMMARY = {
+    cafeInterior: 'cafeInterior',
+    nursery: 'nursery',
+    farm: 'farm',
+    harvesting: 'harvesting',
+    roastery: 'roasting',
+    backToCafe: 'backToCafe'
+};
 
 function showLoadingTrivia(targetScene) {
     updateJourneyProgress(targetScene);
@@ -992,8 +1052,13 @@ function seekBy(delta) {
     el.currentTime = to;
 
     if (delta > 0) {
+        // Keyed on the VO sequence, not the scene: street-view carries both the walk to
+        // the farm and the farm itself, and cafe-interior is visited twice. Those are
+        // four different summaries, and scene names cannot tell them apart.
         const scene = (typeof sceneManager !== 'undefined') ? sceneManager.activeScene : null;
-        const key = scene ? scene.name : (window.__brandStoryAudio ? 'brandStory' : null);
+        const key = (el === window.__brandStoryAudio)
+            ? 'brandStoryIntro'
+            : (scene && (scene.voSceneKey || scene.audioKey || scene.name));
         if (key) window.SceneSeeked[key] = true;
     }
     if (window.DEV_MODE) console.log(`[Seek] ${delta > 0 ? '+' : ''}${delta}s  ${from.toFixed(2)} -> ${to.toFixed(2)}  on ${el.id || el.tagName}`);

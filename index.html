@@ -530,6 +530,39 @@
         }
         #coffee-tree-popup .ct-art.ct-grow { animation: ct-stage-in 420ms ease-out both; }
 
+        /* ---- Scene summary. Only ever shown when the player seeked forward in the
+           scene it belongs to. Sits in the same seam as the coffee tree pop-up and
+           just below it in z-order, because it follows rather than overlaps it. ---- */
+        #scene-summary-panel {
+            position: fixed; inset: 0; z-index: 99990;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.72);
+            opacity: 0; transition: opacity 260ms ease;
+            font-family: 'Inter', sans-serif;
+        }
+        #scene-summary-panel.visible { opacity: 1; }
+        #scene-summary-panel .ss-card {
+            display: flex; flex-direction: column; gap: 16px;
+            max-width: 560px; padding: 30px 34px; margin: 0 20px;
+            background: rgba(10,10,10,0.96);
+            border: 1px solid rgba(244,208,63,0.45); border-radius: 16px;
+        }
+        #scene-summary-panel .ss-title {
+            color: #f4d03f; font-size: 0.78rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1.4px;
+        }
+        #scene-summary-panel .ss-body {
+            color: #f4f4f4; font-size: 1.02rem; line-height: 1.6;
+        }
+        #scene-summary-panel .ss-continue {
+            align-self: flex-end; padding: 12px 26px;
+            background: rgba(244,208,63,0.15); border: 1px solid rgba(244,208,63,0.45);
+            color: #f4d03f; border-radius: 6px; cursor: pointer;
+            font-family: inherit; font-size: 0.9rem; font-weight: 500;
+            text-transform: uppercase; letter-spacing: 1px; transition: all 0.25s ease;
+        }
+        #scene-summary-panel .ss-continue:hover { background: rgba(244,208,63,0.28); }
+
         /* The plant at rest, in the journey panel's slot. */
         #journey-plant svg { width: 100%; height: 100%; display: block; }
 
@@ -1006,17 +1039,17 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=40"></script>
-    <script src="./scenes/voData.js?v=40"></script>
-    <script src="./scenes/coffeeTreeArt.js?v=40"></script>
-    <script src="./main.js?v=40"></script>
-    <script src="./scenes/quizData.js?v=40"></script>
-    <script src="./scenes/videoScene.js?v=40"></script>
-    <script src="./scenes/cafeInterior.js?v=40"></script>
-    <script src="./scenes/cafeExterior.js?v=40"></script>
-    <script src="./scenes/roastery.js?v=40"></script>
-    <script src="./scenes/nursery.js?v=40"></script>
-    <script src="./scenes/streetView.js?v=40"></script>
+    <script src="./scenes/strings.js?v=41"></script>
+    <script src="./scenes/voData.js?v=41"></script>
+    <script src="./scenes/coffeeTreeArt.js?v=41"></script>
+    <script src="./main.js?v=41"></script>
+    <script src="./scenes/quizData.js?v=41"></script>
+    <script src="./scenes/videoScene.js?v=41"></script>
+    <script src="./scenes/cafeInterior.js?v=41"></script>
+    <script src="./scenes/cafeExterior.js?v=41"></script>
+    <script src="./scenes/roastery.js?v=41"></script>
+    <script src="./scenes/nursery.js?v=41"></script>
+    <script src="./scenes/streetView.js?v=41"></script>
 
     <script>
         // ------------------------------------------------------------------
