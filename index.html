@@ -562,6 +562,12 @@
         #scene-summary-panel .ss-body {
             color: #f4f4f4; font-size: 1.02rem; line-height: 1.6;
         }
+        #scene-summary-panel .ss-sections {
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        #scene-summary-panel .ss-rule {
+            height: 1px; background: rgba(244,208,63,0.25);
+        }
         #scene-summary-panel .ss-continue {
             align-self: flex-end; padding: 12px 26px;
             background: rgba(244,208,63,0.15); border: 1px solid rgba(244,208,63,0.45);
@@ -1102,17 +1108,17 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=51"></script>
-    <script src="./scenes/voData.js?v=51"></script>
-    <script src="./scenes/coffeeTreeArt.js?v=51"></script>
-    <script src="./main.js?v=51"></script>
-    <script src="./scenes/quizData.js?v=51"></script>
-    <script src="./scenes/videoScene.js?v=51"></script>
-    <script src="./scenes/cafeInterior.js?v=51"></script>
-    <script src="./scenes/cafeExterior.js?v=51"></script>
-    <script src="./scenes/roastery.js?v=51"></script>
-    <script src="./scenes/nursery.js?v=51"></script>
-    <script src="./scenes/streetView.js?v=51"></script>
+    <script src="./scenes/strings.js?v=52"></script>
+    <script src="./scenes/voData.js?v=52"></script>
+    <script src="./scenes/coffeeTreeArt.js?v=52"></script>
+    <script src="./main.js?v=52"></script>
+    <script src="./scenes/quizData.js?v=52"></script>
+    <script src="./scenes/videoScene.js?v=52"></script>
+    <script src="./scenes/cafeInterior.js?v=52"></script>
+    <script src="./scenes/cafeExterior.js?v=52"></script>
+    <script src="./scenes/roastery.js?v=52"></script>
+    <script src="./scenes/nursery.js?v=52"></script>
+    <script src="./scenes/streetView.js?v=52"></script>
 
     <script>
         // ------------------------------------------------------------------
@@ -1395,6 +1401,13 @@
 
             const playBrandStorySegment = async (index) => {
                 if (index >= segments.length) {
+                    // The brand story has no coffee-tree hook, so it never reaches the
+                    // seam where every other sequence's recap runs. Its summary is shown
+                    // here instead -- after the last gate, before the café starts
+                    // loading -- and still only if the player actually seeked.
+                    if (window.showSceneSummary) {
+                        await window.showSceneSummary('brandStoryIntro');
+                    }
                     // All segments done, transition to café interior
                     gsap.to(screen, {
                         opacity: 0,

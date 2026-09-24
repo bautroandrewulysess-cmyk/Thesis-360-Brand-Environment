@@ -954,24 +954,40 @@ window.growCoffeeTree = growCoffeeTreeThenSummarise;
 // Scene summary. Shown at a scene's exit only when the player seeked FORWARD in that
 // scene -- a recap of narration they chose not to hear. Explicit Continue rather than a
 // timer: auto-dismissing would repeat exactly the thing the seek was avoiding.
-function showSceneSummary(voKey) {
+// Takes one key or several. Several exist because the walk to the farm has no exit of
+// its own -- it runs straight into the farm -- so its recap rides along with the farm's
+// at the farm exit, as two sections of one panel rather than a second pause mid-walk.
+// Keys not seeked are dropped, so a player who seeked only one of them sees only that.
+function showSceneSummary(voKeys) {
     return new Promise((resolve) => {
-        if (!voKey || !window.SceneSeeked[voKey]) return resolve();
-        const body = (window.Strings && window.Strings[`ui.summary.${voKey}`]) ? t(`ui.summary.${voKey}`) : null;
-        if (!body) return resolve();
+        const keys = (Array.isArray(voKeys) ? voKeys : [voKeys]).filter(Boolean);
+        const shown = keys.filter(k => window.SceneSeeked[k]
+            && window.Strings && window.Strings[`ui.summary.${k}`]);
+        if (shown.length === 0) return resolve();
         // Once per sequence: a replayed scene must not show it twice.
-        window.SceneSeeked[voKey] = false;
+        shown.forEach(k => { window.SceneSeeked[k] = false; });
 
         const el = document.createElement('div');
         el.id = 'scene-summary-panel';
         el.innerHTML =
             '<div class="ss-card">'
           +   '<div class="ss-title"></div>'
-          +   '<div class="ss-body"></div>'
+          +   '<div class="ss-sections"></div>'
           +   '<button type="button" class="ss-continue"></button>'
           + '</div>';
         el.querySelector('.ss-title').textContent = t('ui.summary.title');
-        el.querySelector('.ss-body').textContent = body;
+        const sections = el.querySelector('.ss-sections');
+        shown.forEach((k, i) => {
+            if (i > 0) {
+                const rule = document.createElement('div');
+                rule.className = 'ss-rule';
+                sections.appendChild(rule);
+            }
+            const body = document.createElement('div');
+            body.className = 'ss-body';
+            body.textContent = t(`ui.summary.${k}`);
+            sections.appendChild(body);
+        });
         const btn = el.querySelector('.ss-continue');
         btn.textContent = t('ui.summary.continue');
         document.body.appendChild(el);
@@ -993,7 +1009,8 @@ window.showSceneSummary = showSceneSummary;
 const HOOK_TO_SUMMARY = {
     cafeInterior: 'cafeInterior',
     nursery: 'nursery',
-    farm: 'farm',
+    // The walk has no exit of its own, so its recap rides along with the farm's.
+    farm: ['journeyToFarm', 'farm'],
     harvesting: 'harvesting',
     roastery: 'roasting',
     backToCafe: 'backToCafe'
