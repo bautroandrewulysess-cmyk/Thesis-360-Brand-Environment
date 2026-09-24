@@ -1202,17 +1202,33 @@ const SEEK_END_EPSILON = 0.15;
 
 // One predicate for "an overlay owns the screen", shared with RaycastSystem.onClick so
 // a future overlay blocks clicks and keys together rather than one but not the other.
+// Every element is tested for being VISIBLE, never merely present. Four of these were
+// tested by presence alone, which was safe only for as long as each was removed on
+// dismissal -- and #mini-quiz-overlay is not: showMiniQuiz reuses one element and
+// hideMiniQuiz only set display:none, so the first answered mini-quiz left it in the
+// DOM forever. uiOverlayActive then returned true for the rest of the session, which
+// killed BOTH input paths it guards: no orb or disc could be clicked and the arrow
+// keys stopped seeking. A player could not leave the nursery.
+//
+// hideMiniQuiz now removes its element too, so presence and visibility agree again --
+// but the predicate no longer depends on that being true of every caller.
 function uiOverlayActive() {
     const shown = (id) => {
         const el = document.getElementById(id);
-        return !!el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none';
+        if (!el) return false;
+        if (el.style.display === 'none') return false;
+        if (getComputedStyle(el).display === 'none') return false;
+        // Laid out at all. Catches an element left inside a hidden parent, or collapsed
+        // to zero size, which display alone reports as visible. Opacity is deliberately
+        // NOT tested: these panels fade in from 0 and must block input while they do.
+        return el.getClientRects().length > 0;
     };
-    if (shown('quiz-overlay') || shown('completion-panel')) return true;
-    if (document.getElementById('mini-quiz-overlay')) return true;
-    if (document.getElementById('coffee-tree-popup')) return true;
-    if (document.getElementById('scene-summary-panel')) return true;
-    if (document.getElementById('score-panel')) return true;
-    return false;
+    return shown('quiz-overlay')
+        || shown('completion-panel')
+        || shown('mini-quiz-overlay')
+        || shown('coffee-tree-popup')
+        || shown('scene-summary-panel')
+        || shown('score-panel');
 }
 window.uiOverlayActive = uiOverlayActive;
 
@@ -2940,13 +2956,19 @@ class Scene {
 
             if (isCorrect) {
                 card.style.backgroundColor = 'rgba(76,175,80,0.2)';
+                // Reassurance has done its job, exactly as in the scene quiz: it must
+                // not sit under a green "Correct!" still offering to forgive a mistake.
+                encouragement.textContent = '';
                 const confirmMsg = document.createElement('div');
                 confirmMsg.textContent = t('ui.quiz.correct');
                 confirmMsg.style.cssText = `color:#4caf50; font-weight:bold; text-align:center; margin-top:20px;`;
                 card.appendChild(confirmMsg);
 
                 setTimeout(() => {
-                    quizContainer.style.display = 'none';
+                    // Via hideMiniQuiz so the element is REMOVED, not just hidden. This
+                    // is the path a correct answer actually takes, and hiding it here
+                    // was what left uiOverlayActive() stuck true.
+                    this.hideMiniQuiz();
                     this.resumeVoSequence();
                 }, 1000);
             } else {
@@ -2984,6 +3006,10 @@ class Scene {
         const quizContainer = document.getElementById('mini-quiz-overlay');
         if (quizContainer) {
             quizContainer.style.display = 'none';
+            // Removed, not just hidden. Left in the DOM it made uiOverlayActive() true
+            // for the rest of the session, which blocked every orb click and the arrow
+            // keys. showMiniQuiz builds a fresh one next time it is needed.
+            quizContainer.remove();
         }
     }
 
@@ -3467,6 +3493,12 @@ function dismissAllOverlays() {
             el.style.pointerEvents = 'none';
         }
     });
+    // Dev-only wrinkle: the line above writes an inline pointer-events:none that
+    // nothing else clears, and showQuiz sets only display and opacity. Without this
+    // every quiz after a jump rendered fully but ignored the mouse. Cleared here so
+    // the jump menu cannot poison the rest of the session.
+    const quizOverlay = document.getElementById('quiz-overlay');
+    if (quizOverlay) quizOverlay.style.pointerEvents = '';
 }
 
 // ============================================================================
