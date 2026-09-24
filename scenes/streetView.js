@@ -219,7 +219,13 @@ class StreetViewScene extends Scene {
             'farm1-closeup': {
                 photo: assetUrl('Photos (360)/Farm1/Close Up/farm1Closeup 1.jpg'),
                 arrows: [
-                    { label: 'Back', yaw: -0.1, pitch: -33.2, target: 'farm1-4' }
+                    // yaw matches the close-up's forced arrival yaw (see targetYaw in
+                    // onFarmCloseupOrbClick). It used to be -0.1, which put the only way
+                    // out 171 degrees behind the player: the disc was never on screen at
+                    // arrival, so no click anywhere in the viewport could reach it —
+                    // hit-testing is ray-vs-sphere, and the sphere was behind the camera.
+                    // Only the number changed; the label and target are untouched.
+                    { label: 'Back', yaw: 171, pitch: -33.2, target: 'farm1-4' }
                 ]
             },
 
