@@ -574,6 +574,7 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
         const handleEnd = () => {
             if (ended) return;
             ended = true;
+            clearInterval(watchdog);
             audio.removeEventListener('ended', handleEnd);
             audio.removeEventListener('error', handleEnd);
             if (subtitleElement) subtitleElement.textContent = '';
@@ -582,6 +583,60 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
             if (onEnded) onEnded();
             resolve();
         };
+
+        // ------------------------------------------------------------------
+        // Watchdog.
+        //
+        // This is the brand story's only VO path, and unlike scene VO it had no
+        // safety net: onEnded is what spawns the gate button, so a segment that
+        // never fires 'ended' leaves the player on the brand story with nothing to
+        // click and no way forward. Measured live -- a starved buffer parks the
+        // element at paused=false, ended=false, readyState=2, mid-file, forever.
+        //
+        // Two independent triggers, both requiring the audio to actually be
+        // playing, so a deliberate pause never trips them:
+        //   - it stops advancing for 5s while unpaused (waiting/stalled), or
+        //   - it outlives the time it had left to play, plus 5s.
+        //
+        // Both call handleEnd, which is already idempotent: a real 'ended' that
+        // arrives afterwards finds ended === true and returns, so the gate is
+        // spawned exactly once either way.
+        //
+        // duration is NaN until loadedmetadata, so the budget is only armed once
+        // it is finite -- until then the stall trigger covers the window. The
+        // budget is recomputed on every seek, so seeking backwards to re-listen
+        // extends it rather than tripping it.
+        // ------------------------------------------------------------------
+        const WATCHDOG_GRACE = 5;
+        let budget = null;
+        let lastTime = -1;
+        let stalledFor = 0;
+        const armWatchdog = () => {
+            budget = (Number.isFinite(audio.duration) && audio.duration > 0)
+                ? (audio.duration - audio.currentTime) + WATCHDOG_GRACE
+                : null;
+            stalledFor = 0;
+            lastTime = -1;
+        };
+        audio.addEventListener('loadedmetadata', armWatchdog);
+        audio.addEventListener('seeking', armWatchdog);
+        const watchdog = setInterval(() => {
+            if (ended) return;
+            if (audio.paused) { lastTime = audio.currentTime; return; }
+            if (budget === null) armWatchdog();
+
+            if (Math.abs(audio.currentTime - lastTime) < 0.05) stalledFor += 1;
+            else stalledFor = 0;
+            lastTime = audio.currentTime;
+            if (budget !== null) budget -= 1;
+
+            const stalled = stalledFor >= WATCHDOG_GRACE;
+            const overran = budget !== null && budget <= 0;
+            if (stalled || overran) {
+                console.warn(`[VO] ${audioKey} never ended (${stalled ? 'stalled' : 'overran its duration'}) — opening the gate anyway`);
+                handleEnd();
+            }
+        }, 1000);
 
         audio.addEventListener('ended', handleEnd);
 
