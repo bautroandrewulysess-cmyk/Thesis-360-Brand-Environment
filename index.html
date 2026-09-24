@@ -1261,9 +1261,11 @@
             contextScreen.style.display = 'flex';
             setTimeout(() => { contextScreen.style.opacity = '1'; }, 10);
 
-            // Warm the café splat while the context screen is up. Shared and memoised,
-            // so this is free if the landing page already started it.
-            window.primeCafeSplat();
+            // The café warm-up deliberately does NOT start here. It runs 23.6 MB
+            // against the narration's own downloads, and starting it this early
+            // starved them: measured, a brand-story segment stalled mid-file and
+            // never fired 'ended'. It now starts with the last brand-story segment
+            // instead -- see startBrandStorySequence.
 
             // Guarded: a second click on Enter must not restart the narration.
             if (contextVoStarted) return;
@@ -1337,10 +1339,8 @@
                     brandStoryScreen.style.display = 'flex';
                     setTimeout(() => { brandStoryScreen.style.opacity = '1'; }, 10);
 
-                    // Same shared warm-up; by now it is almost certainly already running.
-                    window.primeCafeSplat();
-
-                    // Trigger brand story playback
+                    // Trigger brand story playback. The café warm-up starts from
+                    // inside it, with the last segment, rather than here.
                     window.startBrandStorySequence();
                 }
             });
@@ -1364,10 +1364,8 @@
                     brandStoryScreen.style.display = 'flex';
                     setTimeout(() => { brandStoryScreen.style.opacity = '1'; }, 10);
 
-                    // Same shared warm-up; by now it is almost certainly already running.
-                    window.primeCafeSplat();
-
-                    // Trigger brand story playback
+                    // Trigger brand story playback. The café warm-up starts from
+                    // inside it, with the last segment, rather than here.
                     window.startBrandStorySequence();
                 }
             });
@@ -1408,6 +1406,20 @@
 
                 const segmentId = segments[index];
                 const gateData = gates[index];
+
+                // Café warm-up starts here, with the LAST segment, and nowhere
+                // earlier. It is 23.6 MB and it competes with the narration's own
+                // downloads: started on Enter it starved them, and a segment stalled
+                // mid-file without ever firing 'ended', leaving no gate to click.
+                //
+                // By this segment the narration ahead of it is already fetched, and
+                // there is still this segment plus its gate -- tens of seconds -- for
+                // the splat to arrive before the café asks for it. Memoised, so the
+                // call in proceedTo360 later finds it already in flight or done and
+                // never issues a second fetch.
+                if (index === segments.length - 1) {
+                    window.primeCafeSplat();
+                }
 
                 subtitles.innerHTML = ''; // Clear previous subtitles
                 gateContainer.innerHTML = ''; // Clear previous gate button
