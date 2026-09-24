@@ -2200,6 +2200,10 @@ class Scene {
                         btn.style.borderColor = 'rgba(34,197,94,0.8)';
                         feedbackEl.textContent = question.feedback;
                         feedbackEl.style.color = '#22c55e';
+                        // Reassurance has done its job. Left up, it sat under a green
+                        // "Correct!" still telling the player it was okay to get it
+                        // wrong. A wrong answer keeps it: that is when it is wanted.
+                        if (encouragementEl) encouragementEl.textContent = '';
                         const delayMs = qIdx === questions.length - 1 ? 2500 : 1500;
                         setTimeout(() => showQuestion(qIdx + 1), delayMs);
                     } else {
