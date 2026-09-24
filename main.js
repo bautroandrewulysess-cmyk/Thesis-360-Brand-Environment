@@ -900,6 +900,114 @@ function showLoadingTrivia(targetScene) {
 // ============================================================================
 // Unified click detection system for interactive objects.
 
+// ============================================================================
+// ARROW-KEY SEEK
+//
+// Right seeks +10s, Left seeks -10s, inside whatever is currently playing. Forward
+// seeks clamp to duration rather than firing anything themselves, so the media ends
+// NORMALLY and its gate runs exactly as it would unseeked -- a quiz gate opens its
+// quiz, a marker gate spawns its marker and still waits for a real click. That is
+// what keeps quizzes, mini-quizzes and the farm close-up block unskippable without a
+// single special case. Backward seeks clamp to 0, so they stop at the start of the
+// current segment and can never fall into the previous one.
+// ============================================================================
+
+const SEEK_STEP = 10;
+
+// One predicate for "an overlay owns the screen", shared with RaycastSystem.onClick so
+// a future overlay blocks clicks and keys together rather than one but not the other.
+function uiOverlayActive() {
+    const shown = (id) => {
+        const el = document.getElementById(id);
+        return !!el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none';
+    };
+    if (shown('quiz-overlay') || shown('completion-panel')) return true;
+    if (document.getElementById('mini-quiz-overlay')) return true;
+    if (document.getElementById('coffee-tree-popup')) return true;
+    if (document.getElementById('scene-summary-panel')) return true;
+    return false;
+}
+window.uiOverlayActive = uiOverlayActive;
+
+// Seeking is refused outright while an overlay is up, mid-transition, or once the
+// harvesting quiz has parked the video in its muted loop -- there is nothing left to
+// seek there and the quiz must not be reachable past.
+function seekBlocked() {
+    if (uiOverlayActive()) return true;
+    if (typeof appState !== 'undefined' && appState.isTransitioning) return true;
+    const scene = (typeof sceneManager !== 'undefined') ? sceneManager.activeScene : null;
+    if (scene && scene.harvestLooping) return true;
+    return false;
+}
+
+// The element the arrows act on. Order matters and the drone is the reason why: a
+// full-screen video is playing there, but the transition is cut by the VO ending, not
+// by the video, so the VO is what must move. It is reached by the voAudio branch only
+// because the drone video is neither #popup-video nor activeScene.videoElement -- do
+// not "simplify" this into a generic search for a playing video element.
+function currentSeekTarget() {
+    const popup = document.getElementById('video-popup');
+    if (popup && popup.style.display !== 'none') {
+        const v = document.getElementById('popup-video');
+        if (v && v.src) return v;
+    }
+    const scene = (typeof sceneManager !== 'undefined') ? sceneManager.activeScene : null;
+    if (scene && scene.videoElement && scene.videoElement.src) return scene.videoElement;
+    if (scene && scene.voAudio && scene.voAudio.src) return scene.voAudio;
+    if (window.__brandStoryAudio && window.__brandStoryAudio.src) return window.__brandStoryAudio;
+    return null;
+}
+
+// True once the player has seeked FORWARD in this scene -- the signal the summary
+// panel reads. Backward seeks never set it: re-listening is not skipping.
+window.SceneSeeked = {};
+
+let seekInFlight = false;
+
+function seekBy(delta) {
+    if (seekBlocked()) return null;
+    const el = currentSeekTarget();
+    if (!el) return null;
+    // duration is NaN until loadedmetadata, and seeking against it would throw.
+    if (!Number.isFinite(el.duration) || el.duration <= 0) return null;
+    // Ignore presses between seeking and seeked, so a held key cannot queue a dozen
+    // seeks into unbuffered territory and stack the stalls.
+    if (seekInFlight) return null;
+
+    const from = el.currentTime;
+    const to = delta > 0
+        ? Math.min(from + SEEK_STEP, el.duration)
+        : Math.max(from - SEEK_STEP, 0);
+    if (to === from) return null;
+
+    seekInFlight = true;
+    const clear = () => { seekInFlight = false; };
+    el.addEventListener('seeked', clear, { once: true });
+    // A seek that never completes must not wedge the control permanently.
+    setTimeout(clear, 4000);
+
+    el.currentTime = to;
+
+    if (delta > 0) {
+        const scene = (typeof sceneManager !== 'undefined') ? sceneManager.activeScene : null;
+        const key = scene ? scene.name : (window.__brandStoryAudio ? 'brandStory' : null);
+        if (key) window.SceneSeeked[key] = true;
+    }
+    if (window.DEV_MODE) console.log(`[Seek] ${delta > 0 ? '+' : ''}${delta}s  ${from.toFixed(2)} -> ${to.toFixed(2)}  on ${el.id || el.tagName}`);
+    return { from, to, el };
+}
+window.seekBy = seekBy;
+
+window.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+    const target = e.target;
+    // Never steal the arrows from a real text field.
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+    e.preventDefault();
+    seekBy(e.key === 'ArrowRight' ? SEEK_STEP : -SEEK_STEP);
+});
+
 class RaycastSystem {
     constructor(app, camera) {
         this.app = app;
@@ -919,10 +1027,9 @@ class RaycastSystem {
             return;
         }
 
-        // Block raycasts if quiz or completion panel is open, or if clicking on them or color menu
-        const quizOverlay = document.getElementById('quiz-overlay');
-        const completionPanel = document.getElementById('completion-panel');
-        if ((quizOverlay && quizOverlay.style.display !== 'none') || (completionPanel && completionPanel.style.display !== 'none')) {
+        // Block raycasts while an overlay owns the screen. Shared with the arrow-key
+        // seek so both input paths are blocked by the same rule.
+        if (uiOverlayActive()) {
             return;
         }
         // The journey bar sits over the canvas and is clickable, so without this a
