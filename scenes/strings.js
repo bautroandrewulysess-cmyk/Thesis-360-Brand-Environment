@@ -113,61 +113,61 @@ window.Strings = {
     // These were blank in bis, which t() silently falls back to English for. That was
     // invisible while they only appeared on the loading screen; the journey bar puts
     // them on screen for the whole journey, so they are filled in now.
-    'ui.progress.cafeInterior': { en: 'Cafe', bis: 'Kapehan' },   // DRAFT bis
-    'ui.progress.nursery': { en: 'Nursery', bis: 'Tanuman' },   // DRAFT bis
-    'ui.progress.journeyToFarm': { en: 'To the Farm', bis: 'Padulong sa Uma' },   // DRAFT bis
-    'ui.progress.farm': { en: 'Farm', bis: 'Uma' },   // DRAFT bis
-    'ui.progress.harvesting': { en: 'Harvest', bis: 'Pangani' },   // DRAFT bis
-    'ui.progress.roastery': { en: 'Roastery', bis: 'Sanlagan' },   // DRAFT bis
-    'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: 'Balik sa Kapehan' },   // DRAFT bis
+    'ui.progress.cafeInterior': { en: 'Cafe', bis: 'Kapehan' },
+    'ui.progress.nursery': { en: 'Nursery', bis: 'Binhianan' },
+    'ui.progress.journeyToFarm': { en: 'To the Farm', bis: 'Padulong sa Uma' },
+    'ui.progress.farm': { en: 'Farm', bis: 'Uma' },
+    'ui.progress.harvesting': { en: 'Harvest', bis: 'Ting-ani' },
+    'ui.progress.roastery': { en: 'Roastery', bis: 'Sanlagan' },
+    'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: 'Balik sa Kapehan' },
 
     // Score and reward. Points come only from first-try correct answers on the six
     // scene quizzes; mini-quizzes never count. Winning is at most one wrong answer
     // across the whole run, and only on a player's first completed run.
-    'ui.score.winTitle': { en: 'You did it \u2014 a coffee expert!', bis: 'You did it \u2014 a coffee expert!' },   // DRAFT bis
-    'ui.score.winBody': { en: 'You answered almost every question right the first time. That earns you a Granja Alegre keychain \u2014 your choice of design.', bis: 'You answered almost every question right the first time. That earns you a Granja Alegre keychain \u2014 your choice of design.' },   // DRAFT bis
-    'ui.score.loseTitle': { en: 'Journey complete', bis: 'Journey complete' },   // DRAFT bis
-    'ui.score.loseBody': { en: 'You made it from seed to cup. The keychain needs a near-perfect run \u2014 at most one wrong answer \u2014 so have another go sometime.', bis: 'You made it from seed to cup. The keychain needs a near-perfect run \u2014 at most one wrong answer \u2014 so have another go sometime.' },   // DRAFT bis
-    'ui.score.replayTitle': { en: 'Journey complete', bis: 'Journey complete' },   // DRAFT bis
-    'ui.score.replayBody': { en: 'Thanks for coming back. The keychain is for a first run only, so this one is just for the love of coffee.', bis: 'Thanks for coming back. The keychain is for a first run only, so this one is just for the love of coffee.' },   // DRAFT bis
-    'ui.score.tally': { en: 'First-try correct answers', bis: 'First-try correct answers' },   // DRAFT bis
-    'ui.score.claimTitle': { en: 'Your claim code', bis: 'Your claim code' },   // DRAFT bis
-    'ui.score.claimHint': { en: 'Screenshot this and show it at Alegre Cafe to pick your keychain.', bis: 'Screenshot this and show it at Alegre Cafe to pick your keychain.' },   // DRAFT bis
-    'ui.score.formButton': { en: 'Choose your keychain', bis: 'Choose your keychain' },   // DRAFT bis
-    'ui.score.continue': { en: 'Continue', bis: 'Continue' },   // DRAFT bis
+    'ui.score.winTitle': { en: 'You did it \u2014 a coffee expert!', bis: 'Nahimo nimo — usa ka eksperto sa kape!' },
+    'ui.score.winBody': { en: 'You answered almost every question right the first time. That earns you a Granja Alegre keychain \u2014 your choice of design.', bis: 'Hapit tanang pangutana imong natubag og sakto sa unang higayon. Tungod niini, makadawat ka og Granja Alegre keychain — ikaw ang mopili sa disenyo.' },
+    'ui.score.loseTitle': { en: 'Journey complete', bis: 'Nahuman ang panaw' },
+    'ui.score.loseBody': { en: 'You made it from seed to cup. The keychain needs a near-perfect run \u2014 at most one wrong answer \u2014 so have another go sometime.', bis: 'Naabot nimo gikan sa liso ngadto sa tasa. Ang keychain para sa halos hingpit nga dula — usa ra ka sayop nga tubag ang gitugot — busa sulayi pag-usab sa sunod.' },
+    'ui.score.replayTitle': { en: 'Journey complete', bis: 'Nahuman ang panaw' },
+    'ui.score.replayBody': { en: 'Thanks for coming back. The keychain is for a first run only, so this one is just for the love of coffee.', bis: 'Salamat sa imong pagbalik. Ang keychain para lamang sa unang dula, busa kini para na lang sa gugma sa kape.' },
+    'ui.score.tally': { en: 'First-try correct answers', bis: 'Sakto sa unang tubag' },
+    'ui.score.claimTitle': { en: 'Your claim code', bis: 'Imong claim code' },
+    'ui.score.claimHint': { en: 'Screenshot this and show it at Alegre Cafe to pick your keychain.', bis: 'I-screenshot kini ug ipakita sa Alegre Café aron makapili sa imong keychain.' },
+    'ui.score.formButton': { en: 'Choose your keychain', bis: 'Pilia ang imong keychain' },
+    'ui.score.continue': { en: 'Continue', bis: 'Padayon' },
 
     // Scene summaries. Shown at a scene's exit only when the player seeked forward in
     // it -- a recap of what the narration said, for someone who chose not to hear it.
     // bis is a placeholder copy of the English pending translation.
-    'ui.summary.title': { en: 'What you skipped', bis: 'What you skipped' },   // DRAFT bis
-    'ui.summary.continue': { en: 'Continue', bis: 'Continue' },   // DRAFT bis
-    'ui.summary.brandStoryIntro': { en: 'Our coffee comes from Pangantucan, Bukidnon, at the foot of Mt. Kalatungan, where volcanic soil and cool mountain air grow exceptional coffee.', bis: 'Our coffee comes from Pangantucan, Bukidnon, at the foot of Mt. Kalatungan, where volcanic soil and cool mountain air grow exceptional coffee.' },   // DRAFT bis
-    'ui.summary.cafeInterior': { en: 'The Garces family opened Alegre Cafe in 2023 as a place to gather, share stories, and enjoy coffee from their own farm. Owner Melissa believes great coffee needs passionate people, not a big farm.', bis: 'The Garces family opened Alegre Cafe in 2023 as a place to gather, share stories, and enjoy coffee from their own farm. Owner Melissa believes great coffee needs passionate people, not a big farm.' },   // DRAFT bis
-    'ui.summary.nursery': { en: 'Seeds sprout in seedbeds, then grow in polybags for 6\u20137 months. Once planted, trees take 3\u20134 years to fruit. White flowers become green cherries that ripen red over 7\u20139 months.', bis: 'Ang mga liso motubo sa seedbed, dayon magpabilin sulod sa 6\u20137 ka bulan sa dili pa itanom. Human itanom, ang mga punoan magkinahanglan og 3\u20134 ka tuig aron mamunga. Ang puti nga mga bulak mahimong berde nga cherry nga mohinog ug mapula sulod sa 7\u20139 ka bulan.' },   // DRAFT bis
-    'ui.summary.journeyToFarm': { en: 'The farm is about a kilometre from the cafe, and half the way is on foot.', bis: 'The farm is about a kilometre from the cafe, and half the way is on foot.' },   // DRAFT bis
-    'ui.summary.farm': { en: 'Each planting hole gets organic fertilizer, and seedlings go in during the wet season. Trees are monitored to catch pests and disease early. Farmer Lin shares the hard work behind every harvest.', bis: 'Each planting hole gets organic fertilizer, and seedlings go in during the wet season. Trees are monitored to catch pests and disease early. Farmer Lin shares the hard work behind every harvest.' },   // DRAFT bis
-    'ui.summary.harvesting': { en: 'Only ripe red cherries are hand-picked. They\u2019re washed, sorted, and floated \u2014 the heavy ones that sink are kept \u2014 then dried to 10\u201312% moisture.', bis: 'Only ripe red cherries are hand-picked. They\u2019re washed, sorted, and floated \u2014 the heavy ones that sink are kept \u2014 then dried to 10\u201312% moisture.' },   // DRAFT bis
-    'ui.summary.roasting': { en: 'Beans roast under controlled heat, airflow, and time. The \u201cfirst crack\u201d means flavour is developing. Roasted beans rest 24 hours before packing.', bis: 'Beans roast under controlled heat, airflow, and time. The \u201cfirst crack\u201d means flavour is developing. Roasted beans rest 24 hours before packing.' },   // DRAFT bis
-    'ui.summary.backToCafe': { en: 'Grind 15g medium-coarse, rinse the filter, bloom with 45ml for 45 seconds, then pour to 225ml. Every cup carries the care of the people behind it.', bis: 'Grind 15g medium-coarse, rinse the filter, bloom with 45ml for 45 seconds, then pour to 225ml. Every cup carries the care of the people behind it.' },   // DRAFT bis
+    'ui.summary.title': { en: 'What you skipped', bis: 'Ang imong gilaktawan' },
+    'ui.summary.continue': { en: 'Continue', bis: 'Padayon' },
+    'ui.summary.brandStoryIntro': { en: 'Our coffee comes from Pangantucan, Bukidnon, at the foot of Mt. Kalatungan, where volcanic soil and cool mountain air grow exceptional coffee.', bis: 'Ang among kape gikan sa Pangantucan, Bukidnon, sa tiilan sa Bukid Kalatungan, diin ang bulkanikong yuta ug ang bugnaw nga hangin sa bukid nagpatubo og talagsaong kape.' },
+    'ui.summary.cafeInterior': { en: 'The Garces family opened Alegre Cafe in 2023 as a place to gather, share stories, and enjoy coffee from their own farm. Owner Melissa believes great coffee needs passionate people, not a big farm.', bis: 'Giablihan sa pamilyang Garces ang Alegre Café niadtong 2023 isip tigomanan, bayloanan og mga istorya, ug lugar sa pagtagamtam sa kape gikan sa ilang kaugalingong uma. Nagtuo si Melissa, ang tag-iya, nga ang maayong kape nagkinahanglan og madasigong mga tawo, dili dakong uma.' },
+    'ui.summary.nursery': { en: 'Seeds sprout in seedbeds, then grow in polybags for 6\u20137 months. Once planted, trees take 3\u20134 years to fruit. White flowers become green cherries that ripen red over 7\u20139 months.', bis: 'Ang mga liso motubo sa seedbed, dayon magpabilin sulod sa 6\u20137 ka bulan sa dili pa itanom. Human itanom, ang mga punoan magkinahanglan og 3\u20134 ka tuig aron mamunga. Ang puti nga mga bulak mahimong berde nga cherry nga mohinog ug mapula sulod sa 7\u20139 ka bulan.' },
+    'ui.summary.journeyToFarm': { en: 'The farm is about a kilometre from the cafe, and half the way is on foot.', bis: 'Ang uma mga usa ka kilometro gikan sa kapehan, ug ang katunga sa agianan baktason.' },
+    'ui.summary.farm': { en: 'Each planting hole gets organic fertilizer, and seedlings go in during the wet season. Trees are monitored to catch pests and disease early. Farmer Lin shares the hard work behind every harvest.', bis: 'Ang matag lungag nga tamnanan butangan og organikong abono, ug ang mga semilya itanom panahon sa ting-ulan. Gibantayan ang mga punoan aron masayran dayon ang peste ug sakit. Gipaambit ni Farmer Lin ang kakugi luyo sa matag ani.' },
+    'ui.summary.harvesting': { en: 'Only ripe red cherries are hand-picked. They\u2019re washed, sorted, and floated \u2014 the heavy ones that sink are kept \u2014 then dried to 10\u201312% moisture.', bis: 'Ang hinog ug pula nga cherry lamang ang pupoon sa kamot. Hugasan kini, pilion, ug palutawon — ang bug-at nga molunod maoy tipigan — dayon ipauga hangtod 10–12% nga umog.' },
+    'ui.summary.roasting': { en: 'Beans roast under controlled heat, airflow, and time. The \u201cfirst crack\u201d means flavour is developing. Roasted beans rest 24 hours before packing.', bis: 'Ang mga liso sanlagon sa kontrolado nga kainit, hangin, ug oras. Ang “first crack” nagpasabot nga nagsugod na ang lami. Pahulayon ang sinanlag nga liso sulod sa 24 ka oras sa dili pa iputos.' },
+    'ui.summary.backToCafe': { en: 'Grind 15g medium-coarse, rinse the filter, bloom with 45ml for 45 seconds, then pour to 225ml. Every cup carries the care of the people behind it.', bis: 'Galingon ang 15g nga medium-coarse, banlawi ang filter, i-bloom gamit ang 45ml sulod sa 45 segundos, dayon ibubo hangtod 225ml. Ang matag tasa nagdala sa pag-atiman sa mga tawo luyo niini.' },
 
     // Tutorial: a standing hint, not a step -- it never blocks and never needs a press.
-    'ui.tutorial.seekHint': { en: 'Press \u2192 to skip ahead, \u2190 to go back', bis: 'Press \u2192 to skip ahead, \u2190 to go back' },   // DRAFT bis
+    'ui.tutorial.seekHint': { en: 'Press \u2192 to skip ahead, \u2190 to go back', bis: 'Pindota ang → aron molaktaw, ← aron mobalik' },
 
     // Coffee tree: one line per stage, including the intermediate stages the nursery
     // and farm pop-ups pass through on their way to the stage the hook ends at.
-    'ui.tree.seed': { en: 'It starts with a single seed.', bis: 'Nagsugod kini sa usa ka liso.' },   // DRAFT bis
-    'ui.tree.sprout': { en: 'A shoot breaks through the soil.', bis: 'Miturok na ang liso.' },   // DRAFT bis
-    'ui.tree.polybagSeedling': { en: 'Your seed has sprouted into a seedling.', bis: 'Ang imong liso miturok na ug nahimong punoan.' },   // DRAFT bis
-    'ui.tree.youngTree': { en: 'Planted out, your tree takes root.', bis: 'Natanom na, ug nagagamot ang imong punoan.' },   // DRAFT bis
-    'ui.tree.flowering': { en: 'Your tree is grown, and in flower.', bis: 'Ang imong punoan dako na ug namulak.' },   // DRAFT bis
-    'ui.tree.ripeCherries': { en: 'The cherries are ripe and ready to pick.', bis: 'Hinog na ang mga cherry ug andam nang panguhaon.' },   // DRAFT bis
-    'ui.tree.roastedBeans': { en: 'Roasted, and ready to brew.', bis: 'Sinanlag na, ug andam nang timplahon.' },   // DRAFT bis
-    'ui.tree.cup': { en: 'From seed to cup \u2014 your journey is complete.', bis: 'Gikan sa liso ngadto sa tasa \u2014 kompleto na ang imong panaw.' },   // DRAFT bis
+    'ui.tree.seed': { en: 'It starts with a single seed.', bis: 'Nagsugod kini sa usa ka liso.' },
+    'ui.tree.sprout': { en: 'A shoot breaks through the soil.', bis: 'Miturok na ang liso.' },
+    'ui.tree.polybagSeedling': { en: 'Your seed has sprouted into a seedling.', bis: 'Nahimo nang semilya ang imong liso.' },
+    'ui.tree.youngTree': { en: 'Planted out, your tree takes root.', bis: 'Natanom na, ug nagagamot ang imong punoan.' },
+    'ui.tree.flowering': { en: 'Your tree is grown, and in flower.', bis: 'Ang imong punoan dako na ug namulak.' },
+    'ui.tree.ripeCherries': { en: 'The cherries are ripe and ready to pick.', bis: 'Hinog na ang mga cherry ug andam nang panguhaon.' },
+    'ui.tree.roastedBeans': { en: 'Roasted, and ready to brew.', bis: 'Sinanlag na, ug andam nang timplahon.' },
+    'ui.tree.cup': { en: 'From seed to cup \u2014 your journey is complete.', bis: 'Gikan sa liso ngadto sa tasa \u2014 kompleto na ang imong panaw.' },
 
     // Journey bar (the collapsed pill and its expanded panel)
-    'ui.journey.title': { en: 'Your Journey', bis: 'Imong Panaw' },   // DRAFT bis
-    'ui.journey.expand': { en: 'Show your journey', bis: 'Ipakita ang imong panaw' },   // DRAFT bis
-    'ui.journey.collapse': { en: 'Hide your journey', bis: 'Itago ang imong panaw' },   // DRAFT bis
+    'ui.journey.title': { en: 'Your Journey', bis: 'Imong Panaw' },
+    'ui.journey.expand': { en: 'Show your journey', bis: 'Ipakita ang imong panaw' },
+    'ui.journey.collapse': { en: 'Hide your journey', bis: 'Itago ang imong panaw' },
 
     // Farm close-up hunt hints. Shown while the golden disc at farm1-4 is unfound;
     // keyed by the player's current position. Display text, unrelated to arrow labels.
@@ -176,13 +176,13 @@ window.Strings = {
     'ui.farm.hint.farm1-3': { en: 'So close. Moving forward should help.', bis: 'Duol na kaayo. Padayon lang sa unahan.' },
     // The close-up orb now sits beside the forward disc at eye level, not below the
     // player, so the old "look down" wording no longer describes where it is.
-    'ui.farm.hint.farm1-4': { en: 'You\'re really close — the golden button is just left of the disc.', bis: 'Duol na kaayo ka — ang bulawanon nga button naa sa wala sa disc.' },   // DRAFT bis
+    'ui.farm.hint.farm1-4': { en: 'You\'re really close — the golden button is just left of the disc.', bis: 'Duol na kaayo ka — ang bulawanon nga button naa sa wala sa disc.' },
     'ui.farm.hint.farm1-5': { en: 'You\'ve gone a bit far. Move back a little.', bis: 'Nalapas na ka og gamay. Balik og diyutay.' },
     'ui.farm.hint.default': { en: 'Look around for the golden button.', bis: 'Pangitaa ang bulawanon nga button sa imong palibot.' },
     // Fires when the player tries to leave farm1-4 before opening the close-up, so it
     // must point the same way as ui.farm.hint.farm1-4 above — not down, where the orb
     // used to sit.
-    'ui.farm.closeupFirst': { en: 'Click the golden button left of the disc first.', bis: 'I-klik una ang bulawanon nga button sa wala sa disc.' },   // DRAFT bis
+    'ui.farm.closeupFirst': { en: 'Click the golden button left of the disc first.', bis: 'I-klik una ang bulawanon nga button sa wala sa disc.' },
 
     // Gate-marker buttons (keyed by gate.ref in voData.js)
     'ui.gate.default': { en: 'Watch', bis: 'Tan-awa' },
