@@ -38,7 +38,7 @@ unload/reload.
    VTT *content* changed → bump `SUBTITLE_VERSION`. **VO audio content changed → bump
    `VO_VERSION`** (VO mp3s are served with no `cache-control`, only an etag, so a
    replaced recording can otherwise be served stale from cache indefinitely). Several
-   changed → bump each. `?v=` is currently **45**, `SUBTITLE_VERSION` is **6**,
+   changed → bump each. `?v=` is currently **46**, `SUBTITLE_VERSION` is **6**,
    `VO_VERSION` is **1**.
 4. **Splats and videos carry `immutable` cache headers.** Never overwrite in place —
    returning visitors would stay on the old file for a month. Upload under a **new
@@ -106,37 +106,40 @@ installed browser revision 1234).
 
 ## Done this round
 
-Quiz encouragement line (scene + mini-quizzes) · 4 farm-walk photos removed, walk is now
-`toFarm1-2-4-6-7-8-9-11-13-14` · encouragement VO alternates on last-played instead of
-position parity · context narration gating "Begin" · first-entry tutorial (4 animated
-steps, bottom-centre) · "How to Explore" rebuilt with real badge art · orb type badges
-(ⓘ / ▶ / exit) in all four splat scenes · disc direction arrows + "To Harvest" text ·
-farm close-up beam + magnifier badge · splats decimated (cafe-interior / roastery /
-cafe-exterior 2M, nursery 3M) · harvesting narrated by the video in both languages ·
-next VO now starts after the popup fade · testimony video after brewing · harvesting quiz
-at narration end with a muted 30–60 s loop · `harvesting_en_02` removed.
+Phase 4 — progress pill + coffee-tree reward with real stage art · Phase 5 — arrow-key
+±10 s seeking (tutorial teaches the keys; brand story seekable) and per-scene summaries ·
+score tracking of first-try answers + keychain reward for a near-perfect first run ·
+nursery VO recut from the new single-take recordings, with regenerated EN/BIS subtitles ·
+testimony now points at `testimony_v2.mp4` · cafe splat warm-up removed · farm close-up
+orb moved beside the forward disc (scale 0.95, radius 0.67, commit `11b0890`) · brewing
+subtitles retimed in **both** languages — `steps_en_01` and `steps_bis_01` uploaded to R2
+and verified live, ending ~1:16 / ~1:18.
+
+Earlier rounds: quiz encouragement line · farm walk shortened to
+`toFarm1-2-4-6-7-8-9-11-13-14` · context narration gating "Begin" · first-entry tutorial ·
+"How to Explore" with real badge art · orb type badges (ⓘ / ▶ / exit) · disc direction
+arrows + "To Harvest" · farm close-up beam + magnifier badge · splats decimated
+(cafe-interior / roastery / cafe-exterior 2M, nursery 3M) · harvesting narrated by the
+video in both languages · testimony video after brewing · harvesting quiz at narration end.
 
 ## Outstanding
 
-- **Farm close-up reposition — implemented but UNCOMMITTED, awaiting approval.**
-  `scenes/streetView.js` + `scenes/strings.js` are dirty. Orb moved beside the forward
-  disc (5 units, yaw +16°, scale 0.95, radius 0.67); hint reworded. Verified: both
-  spheres clickable, 0.56° edge gap, farm1-4 → farm1-5 block intact.
-- **Brewing subtitles.** EN retimed VTT generated at
-  `scratchpad/steps_en_01.RETIMED.vtt` — **not uploaded**. The text was always correct;
-  only the timings were wrong (authored for the 48 s mp3, video speaks the same script
-  over 77 s). **Bisaya still unfixed** — same problem, no transcript, and Whisper's
-  Cebuano is unreliable.
-- **Phase 4** (progress bar + coffee-tree reward) planned but blocked: of the 6 scene
-  quizzes, 3 do not exit via an orb click — farm exits via a **disc**, harvesting via the
-  **Continue button**, and back-to-café has **no next scene**. Back-to-café is also *two*
-  quizzes in one set. Needs a decision on hooks before the stage mapping.
-- **Skippable videos (#3)** — `showVideoPopup` already owns `#video-popup-skip`; it is
-  hidden while `required: true`.
+- **Bisaya pass on every `// DRAFT` string in `scenes/strings.js`** (42 marked). These
+  ship today as machine-drafted Cebuano and need a native review.
+- **`WINNER_FORM_URL` is empty** (`main.js:17`), so the score screen shows the claim code
+  with no form link. Fill it in when the form exists.
+- **"Back to the Cafe" truncates in the progress pill** — the longest stage label does not
+  fit.
+- **Plant slot is empty before the first quiz** — the coffee-tree reward area renders blank
+  until stage 1 is earned.
+- **Two pre-existing bottom-band overlaps**: clue × subtitle at 800 px height, and
+  nav-prompt × subtitle at 900 px width. Both predate Phase 4/5.
+- **Full six-quiz live playthrough not yet done** — scoring has only been exercised across
+  two quizzes in one run, never all six end to end.
 
 ## Known open issues
 
-- `VO/harvesting_en_02.mp3` and `Subtitles/harvesting_en_02.vtt` are now **orphans on R2**
+- `VO/harvesting_en_02.mp3` and `Subtitles/harvesting_en_02.vtt` are **orphans on R2**
   (both still 200) — safe to delete, nothing references them.
 - `toFarm3/5/10/12.jpg` (~8 MB) are orphans on R2 from the walk shortening.
 - `_optimized` and `_v2` nursery splats remain on R2 as rollback paths.

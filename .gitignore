@@ -8,3 +8,5 @@ extras/
 .playwright-mcp/
 
 test/.asset-cache/
+test/screens/
+test/vtt/
