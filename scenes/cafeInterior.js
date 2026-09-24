@@ -1064,7 +1064,7 @@ class CafeInteriorScene extends Scene {
         // Burned-in audio and subtitles: no subtitleSrc, and clear any cue still on
         // screen from backToCafe_en_01 so it cannot sit under the burned-in text.
         this.clearSubtitles();
-        this.showVideoPopup(assetUrl('Videos/testimony.mp4'), {
+        this.showVideoPopup(assetUrl('Videos/testimony_v2.mp4'), {
             required: true,
             volume: 1.0,
             duckAmbient: 0.5,
