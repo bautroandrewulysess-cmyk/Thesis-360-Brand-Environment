@@ -1055,6 +1055,14 @@ function showLoadingTrivia(targetScene) {
 const SCORE_MAX_WRONG = 1;              // at most this many wrong answers still wins
 const SCORE_STORAGE_KEY = 'granjaAlegre.runCompleted';
 
+// Every question a complete run asks, across the six scene quizzes. Six sets, seven
+// questions -- back-to-café shows backToTheCafe and finalChallenge as one set:
+//   cafe.quiz · nursery.quiz · streetView.quiz · harvesting · roastery.quiz ·
+//   [backToTheCafe + finalChallenge]
+// Winning requires a first-try result recorded for all of them. Without this, a run
+// that reached the end screen having answered nothing scored 0 wrong and "won".
+const SCORE_REQUIRED_ANSWERS = 7;
+
 window.Score = { firstTryCorrect: 0, firstTryWrong: 0, seen: {} };
 
 // A failure to read storage must never cost someone their reward, so every path that
@@ -1073,14 +1081,6 @@ function markRunCompleted() {
         // Private browsing or a full quota. Nothing to do: the run still counted, it
         // just cannot be remembered, and the next run is scored as a first run again.
     }
-}
-
-// Not meant to be cryptographic -- only to be un-guessable at a glance and tied to the
-// run that earned it, so two people cannot show the same code from the same screen.
-function claimCode() {
-    const t = Date.now().toString(36).slice(-5).toUpperCase();
-    const n = (window.Score.firstTryCorrect * 13 + window.Score.firstTryWrong * 7 + 5) % 1296;
-    return `GA-${t}-${n.toString(36).toUpperCase().padStart(2, '0')}`;
 }
 
 document.addEventListener('click', (e) => {
@@ -1108,8 +1108,13 @@ document.addEventListener('click', (e) => {
 function showScoreEndScreen() {
     return new Promise((resolve) => {
         const firstRun = isFirstRun();
-        const won = firstRun && window.Score.firstTryWrong <= SCORE_MAX_WRONG;
-        const total = window.Score.firstTryCorrect + window.Score.firstTryWrong;
+        // Answering nothing is not a near-perfect run. A run that reached this screen
+        // without a single recorded answer used to satisfy "wrong <= 1" and win, so
+        // completing every question is now a condition in its own right. >= rather than
+        // === so an unexpected extra recorded answer can never deny a real win.
+        const answered = window.Score.firstTryCorrect + window.Score.firstTryWrong;
+        const completedAll = answered >= SCORE_REQUIRED_ANSWERS;
+        const won = firstRun && completedAll && window.Score.firstTryWrong <= SCORE_MAX_WRONG;
 
         const el = document.createElement('div');
         el.id = 'score-panel';
@@ -1117,17 +1122,22 @@ function showScoreEndScreen() {
             '<div class="sc-card">'
           +   '<div class="sc-title"></div>'
           +   '<div class="sc-body"></div>'
-          +   '<div class="sc-tally"></div>'
           +   '<div class="sc-reward"></div>'
           +   '<button type="button" class="sc-continue"></button>'
           + '</div>';
         const t_ = (k) => t(`ui.score.${k}`);
         el.querySelector('.sc-title').textContent = firstRun ? (won ? t_('winTitle') : t_('loseTitle')) : t_('replayTitle');
         el.querySelector('.sc-body').textContent  = firstRun ? (won ? t_('winBody')  : t_('loseBody'))  : t_('replayBody');
-        el.querySelector('.sc-tally').textContent = `${t_('tally')}: ${window.Score.firstTryCorrect}/${total}`;
 
         const reward = el.querySelector('.sc-reward');
         if (won) {
+            const contact = document.createElement('div');
+            contact.className = 'sc-claim';
+            contact.textContent = t_('claimContact');
+            const proof = document.createElement('div');
+            proof.className = 'sc-hint';
+            proof.textContent = t_('claimProof');
+            reward.append(contact, proof);
             if (WINNER_FORM_URL) {
                 const a = document.createElement('a');
                 a.className = 'sc-form';
@@ -1136,17 +1146,6 @@ function showScoreEndScreen() {
                 a.rel = 'noopener';
                 a.textContent = t_('formButton');
                 reward.appendChild(a);
-            } else {
-                const label = document.createElement('div');
-                label.className = 'sc-claim-label';
-                label.textContent = t_('claimTitle');
-                const code = document.createElement('div');
-                code.className = 'sc-code';
-                code.textContent = claimCode();
-                const hint = document.createElement('div');
-                hint.className = 'sc-hint';
-                hint.textContent = t_('claimHint');
-                reward.append(label, code, hint);
             }
         }
 
