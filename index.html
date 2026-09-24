@@ -1111,6 +1111,43 @@
     <script src="./scenes/streetView.js?v=46"></script>
 
     <script>
+        // ------------------------------------------------------------------
+        // One shared warm-up for the cafe interior splat.
+        //
+        // This file was pulled down three times on a first visit -- 70.8 MB for a 23.60 MB
+        // asset -- because four call sites (landing, Enter, and each language button) each
+        // issued their own fetch. Memoising them into one request takes it to two,
+        // measured.
+        //
+        // The remaining duplicate is NOT fixed, and is not fixable from here: the warm-up
+        // does not produce a cache entry PlayCanvas's loader will reuse. Measured with
+        // identical URLs and request headers, against a response carrying
+        // `cache-control: public, max-age=2678400, immutable` -- Chrome still re-downloads
+        // all 23.6 MB, reporting neither servedFromCache nor fromDiskCache. The leading
+        // suspect is Chrome's per-entry disk-cache size limit, which a 23.6 MB response
+        // plausibly exceeds; that is a hypothesis, not a measurement.
+        //
+        // So this warm-up buys the landing page's "Ready" indicator and a warm CDN edge,
+        // and nothing else. If that is not worth 23.6 MB of someone's bandwidth, the right
+        // change is to delete it rather than to await it -- awaiting only serialises two
+        // full transfers. The body is drained rather than buffered so the request at least
+        // completes without retaining the whole file. Resolves to a boolean, never rejects.
+        // ------------------------------------------------------------------
+        window.primeCafeSplat = function () {
+            if (window.__cafeSplatPrime) return window.__cafeSplatPrime;
+            const R2_BASE = 'https://assets.granjaalegre.com';
+            window.__cafeSplatPrime = fetch(`${R2_BASE}/thesisCafeInterior_v2.sog`, { mode: 'cors' })
+                .then((res) => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    if (!res.body) return res.arrayBuffer().then(() => true);
+                    const reader = res.body.getReader();
+                    const drain = () => reader.read().then(({ done }) => done ? true : drain());
+                    return drain();
+                })
+                .catch(() => false);
+            return window.__cafeSplatPrime;
+        };
+
         const cursorCup = document.querySelector('.cursor-cup');
         const cursorOutline = document.querySelector('.cursor-outline');
         const hoverTargets = document.querySelectorAll('.hover-target, button');
@@ -1169,6 +1206,24 @@
         const proceedTo360 = async () => {
             const wrapper = document.getElementById('landing-wrapper');
             const loadingScreen = document.getElementById('loading-screen');
+            const statusEl = document.getElementById('btn-status');
+
+            // Check if on mobile
+            const isPhoneOrTablet = window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(pointer: fine)').matches;
+            const tooNarrow = window.innerWidth < 900;
+            const onMobile = isPhoneOrTablet || tooNarrow;
+
+            // Start preload if not on mobile
+            if (!onMobile) {
+                setTimeout(() => {
+                    window.primeCafeSplat().then((ok) => {
+                        if (!ok) { statusEl.textContent = ''; return; }
+                        statusEl.classList.add('ready');
+                        statusEl.textContent = 'Ready';
+                    });
+                }, 2000);
+            }
+
             // Fade out all overlays and wrapper
             await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -1205,6 +1260,10 @@
 
             contextScreen.style.display = 'flex';
             setTimeout(() => { contextScreen.style.opacity = '1'; }, 10);
+
+            // Warm the café splat while the context screen is up. Shared and memoised,
+            // so this is free if the landing page already started it.
+            window.primeCafeSplat();
 
             // Guarded: a second click on Enter must not restart the narration.
             if (contextVoStarted) return;
@@ -1278,6 +1337,9 @@
                     brandStoryScreen.style.display = 'flex';
                     setTimeout(() => { brandStoryScreen.style.opacity = '1'; }, 10);
 
+                    // Same shared warm-up; by now it is almost certainly already running.
+                    window.primeCafeSplat();
+
                     // Trigger brand story playback
                     window.startBrandStorySequence();
                 }
@@ -1301,6 +1363,9 @@
                     // Show Brand Story screen and start playback
                     brandStoryScreen.style.display = 'flex';
                     setTimeout(() => { brandStoryScreen.style.opacity = '1'; }, 10);
+
+                    // Same shared warm-up; by now it is almost certainly already running.
+                    window.primeCafeSplat();
 
                     // Trigger brand story playback
                     window.startBrandStorySequence();
