@@ -1238,6 +1238,47 @@ window.addEventListener('keydown', (e) => {
     seekBy(e.key === 'ArrowRight' ? SEEK_STEP : -SEEK_STEP);
 });
 
+// ============================================================================
+// HOTSPOT POPUP ANCHORING
+//
+// The info popup is placed beside its orb, at the orb's screen position plus a
+// fixed offset. Near a viewport edge that offset used to push the card outside:
+// measured live at 1440x900, an orb at x=1266 put the card's right edge at 1586
+// and its close button at 1551 -- entirely off screen. Neither Escape nor a
+// click outside dismissed it, so the only way out was to click a different orb
+// and let the popup re-anchor somewhere reachable.
+//
+// Clamping keeps the whole card, and therefore its close button, on screen on
+// every edge. The offset is still applied first, so a popup that already fits
+// lands exactly where it always did and nothing moves for the common case.
+// ============================================================================
+const HOTSPOT_POPUP_MARGIN = 12;
+function anchorHotspotPopup(popup, screen) {
+    // Laid out and visible by the time this runs, so these are the real size.
+    const w = popup.offsetWidth;
+    const h = popup.offsetHeight;
+    // Math.max guards a card larger than the viewport: it pins to the top-left
+    // margin rather than being clamped to a negative coordinate.
+    const maxLeft = Math.max(HOTSPOT_POPUP_MARGIN, window.innerWidth - w - HOTSPOT_POPUP_MARGIN);
+    const maxTop = Math.max(HOTSPOT_POPUP_MARGIN, window.innerHeight - h - HOTSPOT_POPUP_MARGIN);
+    popup.style.left = `${Math.min(Math.max(screen.x + 20, HOTSPOT_POPUP_MARGIN), maxLeft)}px`;
+    popup.style.top = `${Math.min(Math.max(screen.y - 60, HOTSPOT_POPUP_MARGIN), maxTop)}px`;
+    popup.style.transform = 'none';
+}
+window.anchorHotspotPopup = anchorHotspotPopup;
+
+// Escape closes the info popup. Deliberately narrow: it acts only when that
+// popup is open, so it cannot swallow Escape from a quiz, a video or any other
+// overlay that may want it later. The scenes' own update loops notice the lost
+// 'active' class and clear activeHotspotEntity, exactly as for a ✕ click.
+window.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const popup = document.getElementById('hotspot-popup');
+    if (popup && popup.classList.contains('active')) {
+        popup.classList.remove('active');
+    }
+});
+
 class RaycastSystem {
     constructor(app, camera) {
         this.app = app;

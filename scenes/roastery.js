@@ -1449,7 +1449,7 @@ class RoasteryScene extends Scene {
                 const worldPos = this.activeHotspotEntity.getPosition();
                 const screen = this.worldToScreen(worldPos);
                 const isOffScreen = screen.x < -50 || screen.x > window.innerWidth + 50 || screen.y < -50 || screen.y > window.innerHeight + 50;
-                if (isOffScreen) { popup.classList.remove('active'); } else { popup.style.left = `${screen.x + 20}px`; popup.style.top = `${screen.y - 60}px`; popup.style.transform = 'none'; }
+                if (isOffScreen) { popup.classList.remove('active'); } else { anchorHotspotPopup(popup, screen); }
             } else {
                 this.activeHotspotEntity = null;
             }
