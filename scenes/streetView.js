@@ -1126,6 +1126,12 @@ class StreetViewScene extends Scene {
         try {
             await fadeOut();
             this.currentPosition = positionKey;
+            // street-view carries two journey steps, and only the first has a scene of
+            // its own to key off. Stepping the pill here is what moves it off "To the
+            // Farm" once the player is actually at the farm.
+            if (positionKey.startsWith('farm1') && window.advanceJourneyStepTo) {
+                window.advanceJourneyStepTo('farm');
+            }
             this.updateAmbientVolumeForPosition(positionKey);
             await this.loadPosition(positionKey);
             this.createArrows();

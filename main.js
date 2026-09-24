@@ -711,6 +711,24 @@ function updateJourneyProgress(targetScene) {
 }
 window.updateJourneyProgress = updateJourneyProgress;
 
+// Advance the track by STEP KEY rather than by scene. JOURNEY_STEPS.farm carries
+// scene: null on purpose -- it shares street-view with the walk and has no load screen
+// of its own -- so updateJourneyProgress can never select it and the pill sat on
+// "To the Farm" for the whole farm. Only ever moves forward, like the scene path.
+function advanceJourneyStepTo(key) {
+    const idx = JOURNEY_STEPS.findIndex(s => s.key === key);
+    if (idx === -1 || idx <= journeyProgressStep) return;
+    journeyProgressStep = idx;
+    const el = document.getElementById('journey-progress');
+    if (el && !window.journeyComplete) {
+        paintJourneyTrack(el);
+        el.classList.add('visible');
+    }
+    paintJourneyPanelTrack();
+    updateJourneyBarLabel();
+}
+window.advanceJourneyStepTo = advanceJourneyStepTo;
+
 // The o---o---o track itself. Extracted so the loading screen and the persistent
 // journey panel can render the same markup from the same journeyProgressStep; both
 // reuse the .jp-* styles unchanged.
@@ -1265,6 +1283,22 @@ function currentSeekTarget() {
 // panel reads. Backward seeks never set it: re-listening is not skipping.
 window.SceneSeeked = {};
 
+// Last-resort key for a sequence that never sets voSceneKey. The walk to the farm is
+// the only one: street-view plays journeyToFarm_en_* through playVoWithSubtitles
+// rather than a sequence, leaving voSceneKey null, so seeks there recorded the scene
+// name 'street-view' -- which is not a summary key, so ui.summary.journeyToFarm could
+// never show however the farm exit was mapped.
+//
+// Deliberately LAST, after voSceneKey and audioKey. The id stem is not always the
+// summary key -- cafe-interior opens on brandStory_en_04, which would derive
+// 'brandStory' -- but every sequence with that mismatch sets voSceneKey, so this only
+// ever runs for the walk.
+function voKeyFromSrc(el) {
+    const file = (el && el.currentSrc || '').split('/').pop() || '';
+    const m = file.match(/^([A-Za-z]+)_(?:en|bis)_\d+\.mp3/);
+    return m ? m[1] : null;
+}
+
 // Where the last press asked to land. Presses accumulate from here rather than from
 // currentTime, so two quick presses go +20s even though the first seek has not landed
 // yet. Refusing a press while a seek is in flight was tried instead and was wrong: a
@@ -1311,7 +1345,7 @@ function seekBy(delta) {
         const scene = (typeof sceneManager !== 'undefined') ? sceneManager.activeScene : null;
         const key = (el === window.__brandStoryAudio)
             ? 'brandStoryIntro'
-            : (scene && (scene.voSceneKey || scene.audioKey || scene.name));
+            : (scene && (scene.voSceneKey || scene.audioKey || voKeyFromSrc(el) || scene.name));
         if (key) window.SceneSeeked[key] = true;
     }
     if (window.DEV_MODE) console.log(`[Seek] ${delta > 0 ? '+' : ''}${delta}s  ${from.toFixed(2)} -> ${to.toFixed(2)}  on ${el.id || el.tagName}`);
