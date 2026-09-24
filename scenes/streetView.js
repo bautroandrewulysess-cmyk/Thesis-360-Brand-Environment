@@ -1178,19 +1178,7 @@ class StreetViewScene extends Scene {
             const farmIndex = isFarmRange ? parseInt(positionKey.split('-')[1]) : null;
             const inFarmRange = isFarmRange && farmIndex >= 1 && farmIndex <= 5;
 
-            if (inFarmRange && this.farm_en_01_Finished && !this.farmCloseupViewed && positionKey !== 'farm1-closeup') {
-                const hintKeys = {
-                    'farm1-4': 'ui.farm.hint.farm1-4',
-                    'farm1-3': 'ui.farm.hint.farm1-3',
-                    'farm1-5': 'ui.farm.hint.farm1-5',
-                    'farm1-2': 'ui.farm.hint.farm1-2',
-                    'farm1-1': 'ui.farm.hint.farm1-1'
-                };
-                const hintText = t(hintKeys[positionKey] || 'ui.farm.hint.default');
-                this.setFarmHint(hintText, positionKey === 'farm1-5' ? 'overshoot' : 'default');
-            } else {
-                this.clearFarmHint();
-            }
+            this.refreshFarmHint();
 
             this.updateCoordinateDisplay();
             this.preloadArrowTargets();
@@ -1308,6 +1296,30 @@ class StreetViewScene extends Scene {
     // bottom:24vh clears the whole crowded bottom band — #nav-prompt (3vh), #clue-bar
     // (24px) and #subtitle-bar (8vh, two lines deep in Bisaya) — rather than stacking
     // above the subtitle, which would only invert which of the two hides the other.
+    // Hint for wherever the player is standing, or none if it does not apply. Called on
+    // a position change AND when farm_en_01 ends, because either can be what makes the
+    // hint applicable.
+    refreshFarmHint() {
+        const positionKey = this.currentPosition;
+        const isFarmRange = positionKey.startsWith('farm1-');
+        const farmIndex = isFarmRange ? parseInt(positionKey.split('-')[1]) : null;
+        const inFarmRange = isFarmRange && farmIndex >= 1 && farmIndex <= 5;
+
+        if (inFarmRange && this.farm_en_01_Finished && !this.farmCloseupViewed && positionKey !== 'farm1-closeup') {
+            const hintKeys = {
+                'farm1-4': 'ui.farm.hint.farm1-4',
+                'farm1-3': 'ui.farm.hint.farm1-3',
+                'farm1-5': 'ui.farm.hint.farm1-5',
+                'farm1-2': 'ui.farm.hint.farm1-2',
+                'farm1-1': 'ui.farm.hint.farm1-1'
+            };
+            const hintText = t(hintKeys[positionKey] || 'ui.farm.hint.default');
+            this.setFarmHint(hintText, positionKey === 'farm1-5' ? 'overshoot' : 'default');
+        } else {
+            this.clearFarmHint();
+        }
+    }
+
     setFarmHint(text, variant = 'default') {
         if (!this.farmHintElement) {
             this.farmHintElement = document.createElement('div');
@@ -1759,6 +1771,12 @@ class StreetViewScene extends Scene {
         if (gate.ref === 'treePhoto' && this.voSceneKey === 'farm') {
             if (window.DEV_MODE) console.log('[Farm] farm_en_01 finished, treePhoto gate spawned');
             this.farm_en_01_Finished = true;
+            // The hint is otherwise only set on a position CHANGE, and its guard needs
+            // farm_en_01_Finished -- which is false when the player arrives at farm1-1,
+            // because the narration is still playing. So it was cleared on arrival and
+            // never set again: the narration ended and nothing at all told the player to
+            // keep walking to the close-up. Setting it here closes that window.
+            this.refreshFarmHint();
             // For treePhoto gate, don't show the 2D button — the 3D orb at farm1-4 is the only trigger
             this.despawnGateMarker();
             // Recreate arrows when pausing at a gate — restores suppressed forward arrows at farm1-1
