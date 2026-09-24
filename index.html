@@ -485,6 +485,14 @@
            restore themselves on close because this only overrides display -- their
            own inline styles are never touched. */
         body.journey-panel-open #tutorial-prompt { display: none !important; }
+        /* The seek hint under the tutorial card. Quieter than the step label so it
+           reads as a standing note rather than the thing being asked for, and it
+           never affects the card's own layout. */
+        #tutorial-prompt .tut-seek-hint {
+            margin-top: 10px; text-align: center;
+            color: rgba(244,244,244,0.62); font-size: 0.78rem; letter-spacing: 0.3px;
+            font-family: 'Inter', sans-serif; pointer-events: none;
+        }
         body.journey-panel-open .farm-hint { display: none !important; }
 
         /* Below the desktop gate's own 900px floor there is no room for either. */
@@ -1039,17 +1047,17 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=41"></script>
-    <script src="./scenes/voData.js?v=41"></script>
-    <script src="./scenes/coffeeTreeArt.js?v=41"></script>
-    <script src="./main.js?v=41"></script>
-    <script src="./scenes/quizData.js?v=41"></script>
-    <script src="./scenes/videoScene.js?v=41"></script>
-    <script src="./scenes/cafeInterior.js?v=41"></script>
-    <script src="./scenes/cafeExterior.js?v=41"></script>
-    <script src="./scenes/roastery.js?v=41"></script>
-    <script src="./scenes/nursery.js?v=41"></script>
-    <script src="./scenes/streetView.js?v=41"></script>
+    <script src="./scenes/strings.js?v=42"></script>
+    <script src="./scenes/voData.js?v=42"></script>
+    <script src="./scenes/coffeeTreeArt.js?v=42"></script>
+    <script src="./main.js?v=42"></script>
+    <script src="./scenes/quizData.js?v=42"></script>
+    <script src="./scenes/videoScene.js?v=42"></script>
+    <script src="./scenes/cafeInterior.js?v=42"></script>
+    <script src="./scenes/cafeExterior.js?v=42"></script>
+    <script src="./scenes/roastery.js?v=42"></script>
+    <script src="./scenes/nursery.js?v=42"></script>
+    <script src="./scenes/streetView.js?v=42"></script>
 
     <script>
         // ------------------------------------------------------------------

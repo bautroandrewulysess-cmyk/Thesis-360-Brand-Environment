@@ -1485,12 +1485,19 @@ class CafeInteriorScene extends Scene {
           +     '<div class="tut-art"></div>'
           +   '</div>'
           +   '<div class="tut-label"></div>'
-          + '</div>';
+          + '</div>'
+          // A standing hint, deliberately OUTSIDE tut-card and outside the step
+          // machinery: it is not step 5, it never advances, it never waits for a
+          // press, and reaching it is not required to finish the tutorial. It rides
+          // with the card at bottom:18vh, well clear of #subtitle-bar at bottom:8vh.
+          + '<div class="tut-seek-hint"></div>';
         document.body.appendChild(el);
         this.tutorialEl = el;
         this.tutorialArt = el.querySelector('.tut-art');
         this.tutorialLabel = el.querySelector('.tut-label');
         this.tutorialRing = el.querySelector('.tut-ring-fg');
+        const seekHint = el.querySelector('.tut-seek-hint');
+        if (seekHint) seekHint.textContent = t('ui.tutorial.seekHint');
 
         this.tutorialStep = 1;
         this.tutorialStartPos = cameraEntity.getLocalPosition().clone();

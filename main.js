@@ -528,6 +528,10 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
         audio.appendChild(track);
 
         document.body.appendChild(audio);
+        // The arrow keys need something to seek. This is the brand story's only VO
+        // path, and the element was previously held in this closure alone, reachable
+        // from nowhere. Cleared in handleEnd so a finished segment is never seeked.
+        window.__brandStoryAudio = audio;
 
         const textTrack = audio.textTracks[0];
         if (textTrack) {
@@ -560,6 +564,7 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
             audio.removeEventListener('ended', handleEnd);
             audio.removeEventListener('error', handleEnd);
             if (subtitleElement) subtitleElement.textContent = '';
+            if (window.__brandStoryAudio === audio) window.__brandStoryAudio = null;
             audio.remove();
             if (onEnded) onEnded();
             resolve();
