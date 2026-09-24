@@ -1231,13 +1231,6 @@ class CafeInteriorScene extends Scene {
                 this.splatAsset = window._preloadedSplats['cafe-interior-splat'];
                 if (window.DEV_MODE) console.warn('[CafeInterior] Using preloaded splat');
             } else {
-                // Deliberately NOT awaiting window.__cafeSplatPrime here. Measured: the
-                // warm-up fetch does not populate a cache entry this loader can reuse --
-                // the response is `public, immutable`, the URLs and headers are identical,
-                // and Chrome still re-downloads all 23.6 MB. Awaiting it therefore only
-                // serialised two full transfers instead of overlapping them. See the
-                // note on primeCafeSplat in index.html.
-
                 // Create and load Gaussian splat asset
                 this.splatAsset = new pc.Asset('cafe-interior-splat', 'gsplat', {
                     url: `${R2_BASE}/thesisCafeInterior_v2.sog`
