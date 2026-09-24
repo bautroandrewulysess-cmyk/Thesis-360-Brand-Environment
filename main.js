@@ -962,7 +962,13 @@ function currentSeekTarget() {
 // panel reads. Backward seeks never set it: re-listening is not skipping.
 window.SceneSeeked = {};
 
-let seekInFlight = false;
+// Where the last press asked to land. Presses accumulate from here rather than from
+// currentTime, so two quick presses go +20s even though the first seek has not landed
+// yet. Refusing a press while a seek is in flight was tried instead and was wrong: a
+// paused or buffering element can take seconds to emit 'seeked', and every deliberate
+// press in that window was silently swallowed. Held keys are handled where they
+// actually originate -- the keydown handler drops auto-repeat.
+let seekPending = null;
 
 function seekBy(delta) {
     if (seekBlocked()) return null;
@@ -970,20 +976,17 @@ function seekBy(delta) {
     if (!el) return null;
     // duration is NaN until loadedmetadata, and seeking against it would throw.
     if (!Number.isFinite(el.duration) || el.duration <= 0) return null;
-    // Ignore presses between seeking and seeked, so a held key cannot queue a dozen
-    // seeks into unbuffered territory and stack the stalls.
-    if (seekInFlight) return null;
 
+    const basis = (seekPending && seekPending.el === el) ? seekPending.to : el.currentTime;
     const from = el.currentTime;
     const to = delta > 0
-        ? Math.min(from + SEEK_STEP, el.duration)
-        : Math.max(from - SEEK_STEP, 0);
-    if (to === from) return null;
+        ? Math.min(basis + SEEK_STEP, el.duration)
+        : Math.max(basis - SEEK_STEP, 0);
+    if (to === basis && to === from) return null;
 
-    seekInFlight = true;
-    const clear = () => { seekInFlight = false; };
+    seekPending = { el, to };
+    const clear = () => { if (seekPending && seekPending.el === el) seekPending = null; };
     el.addEventListener('seeked', clear, { once: true });
-    // A seek that never completes must not wedge the control permanently.
     setTimeout(clear, 4000);
 
     el.currentTime = to;
@@ -1001,6 +1004,9 @@ window.seekBy = seekBy;
 window.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+    // Auto-repeat from a held key, not a new intention. This is where held keys are
+    // debounced, so that a genuine second press is never mistaken for one.
+    if (e.repeat) return;
     const target = e.target;
     // Never steal the arrows from a real text field.
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
