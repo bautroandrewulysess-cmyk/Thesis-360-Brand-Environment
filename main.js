@@ -10,6 +10,11 @@ const SUBTITLE_VERSION = 6;
 // forces a fresh copy without renaming segment ids, exactly as SUBTITLE_VERSION does
 // for the VTTs. Bump it whenever a VO file's CONTENT changes.
 const VO_VERSION = 1;
+
+// Where a winner goes to choose their keychain. Leave it empty and winners get a
+// claim code to show at the cafe instead; set it to a form URL and they get a button.
+// Either way the reward is the same -- this only decides how it is redeemed.
+const WINNER_FORM_URL = '';
 window.R2_BASE = R2_BASE;
 
 // Global asset URL helper: encodes path segments while preserving directory structure
@@ -974,6 +979,134 @@ function showLoadingTrivia(targetScene) {
 // Unified click detection system for interactive objects.
 
 // ============================================================================
+// SCORE AND REWARD
+//
+// Points come only from first-try correct answers on the six SCENE quizzes. A wrong
+// answer is never fatal -- the quiz still makes you retry until you get it right, and
+// none of that logic is touched here. Counting is pure observation: a capture-phase
+// listener watches clicks land in #quiz-choices and then reads back the colour the
+// existing handler painted the button, so nothing about passing or failing a quiz
+// changes. Mini-quizzes live in #mini-quiz-overlay and are therefore invisible to it,
+// which is exactly the required behaviour rather than a special case.
+// ============================================================================
+
+const SCORE_MAX_WRONG = 1;              // at most this many wrong answers still wins
+const SCORE_STORAGE_KEY = 'granjaAlegre.runCompleted';
+
+window.Score = { firstTryCorrect: 0, firstTryWrong: 0, seen: {} };
+
+// A failure to read storage must never cost someone their reward, so every path that
+// cannot prove this is a repeat run treats it as a first run.
+function isFirstRun() {
+    try {
+        return window.localStorage.getItem(SCORE_STORAGE_KEY) === null;
+    } catch (e) {
+        return true;
+    }
+}
+function markRunCompleted() {
+    try {
+        window.localStorage.setItem(SCORE_STORAGE_KEY, String(Date.now()));
+    } catch (e) {
+        // Private browsing or a full quota. Nothing to do: the run still counted, it
+        // just cannot be remembered, and the next run is scored as a first run again.
+    }
+}
+
+// Not meant to be cryptographic -- only to be un-guessable at a glance and tied to the
+// run that earned it, so two people cannot show the same code from the same screen.
+function claimCode() {
+    const t = Date.now().toString(36).slice(-5).toUpperCase();
+    const n = (window.Score.firstTryCorrect * 13 + window.Score.firstTryWrong * 7 + 5) % 1296;
+    return `GA-${t}-${n.toString(36).toUpperCase().padStart(2, '0')}`;
+}
+
+document.addEventListener('click', (e) => {
+    const btn = e.target instanceof Element ? e.target.closest('#quiz-choices button') : null;
+    if (!btn) return;
+    const qEl = document.getElementById('quiz-question');
+    const scene = (typeof sceneManager !== 'undefined' && sceneManager.activeScene) ? sceneManager.activeScene.name : '?';
+    const key = `${scene}|${qEl ? qEl.textContent.trim() : '?'}`;
+    if (window.Score.seen[key]) return;          // only the FIRST answer to a question counts
+    window.Score.seen[key] = true;
+    // Read back after the app's own handler has painted the result. Green background =
+    // correct, red = wrong; both are set synchronously in that handler.
+    setTimeout(() => {
+        // Whitespace stripped: the browser serialises the colour back as
+        // "rgba(34, 197, 94, 0.3)", so matching the unspaced form silently never hits.
+        const bg = (btn.style.background || '').replace(/\s+/g, '');
+        if (bg.includes('34,197,94')) window.Score.firstTryCorrect++;
+        else if (bg.includes('239,68,68')) window.Score.firstTryWrong++;
+        else window.Score.seen[key] = false;      // could not tell; let the next click decide
+        if (window.DEV_MODE) console.log(`[Score] ${key} -> correct=${window.Score.firstTryCorrect} wrong=${window.Score.firstTryWrong}`);
+    }, 0);
+}, true);
+
+// Text-only end screen. Sits between the summary panel and the completion panel.
+function showScoreEndScreen() {
+    return new Promise((resolve) => {
+        const firstRun = isFirstRun();
+        const won = firstRun && window.Score.firstTryWrong <= SCORE_MAX_WRONG;
+        const total = window.Score.firstTryCorrect + window.Score.firstTryWrong;
+
+        const el = document.createElement('div');
+        el.id = 'score-panel';
+        el.innerHTML =
+            '<div class="sc-card">'
+          +   '<div class="sc-title"></div>'
+          +   '<div class="sc-body"></div>'
+          +   '<div class="sc-tally"></div>'
+          +   '<div class="sc-reward"></div>'
+          +   '<button type="button" class="sc-continue"></button>'
+          + '</div>';
+        const t_ = (k) => t(`ui.score.${k}`);
+        el.querySelector('.sc-title').textContent = firstRun ? (won ? t_('winTitle') : t_('loseTitle')) : t_('replayTitle');
+        el.querySelector('.sc-body').textContent  = firstRun ? (won ? t_('winBody')  : t_('loseBody'))  : t_('replayBody');
+        el.querySelector('.sc-tally').textContent = `${t_('tally')}: ${window.Score.firstTryCorrect}/${total}`;
+
+        const reward = el.querySelector('.sc-reward');
+        if (won) {
+            if (WINNER_FORM_URL) {
+                const a = document.createElement('a');
+                a.className = 'sc-form';
+                a.href = WINNER_FORM_URL;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.textContent = t_('formButton');
+                reward.appendChild(a);
+            } else {
+                const label = document.createElement('div');
+                label.className = 'sc-claim-label';
+                label.textContent = t_('claimTitle');
+                const code = document.createElement('div');
+                code.className = 'sc-code';
+                code.textContent = claimCode();
+                const hint = document.createElement('div');
+                hint.className = 'sc-hint';
+                hint.textContent = t_('claimHint');
+                reward.append(label, code, hint);
+            }
+        }
+
+        const btn = el.querySelector('.sc-continue');
+        btn.textContent = t_('continue');
+        document.body.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('visible'));
+
+        // Recorded once the result has actually been shown, so a run that never reached
+        // this screen is not burned.
+        if (firstRun) markRunCompleted();
+
+        btn.addEventListener('click', () => {
+            el.classList.remove('visible');
+            setTimeout(() => { el.remove(); resolve(); }, 260);
+        }, { once: true });
+        btn.focus();
+    });
+}
+window.showScoreEndScreen = showScoreEndScreen;
+
+// ============================================================================
 // ARROW-KEY SEEK
 //
 // Right seeks +10s, Left seeks -10s, inside whatever is currently playing. Forward
@@ -1000,6 +1133,7 @@ function uiOverlayActive() {
     if (document.getElementById('mini-quiz-overlay')) return true;
     if (document.getElementById('coffee-tree-popup')) return true;
     if (document.getElementById('scene-summary-panel')) return true;
+    if (document.getElementById('score-panel')) return true;
     return false;
 }
 window.uiOverlayActive = uiOverlayActive;
@@ -2119,6 +2253,7 @@ class Scene {
         }
     }
 
+    // Wrapped below so the score screen always precedes it -- see the note there.
     showVideoPopup(src, { required = false, caption = null, onFinish = null, narrationId = null, volume = 1, subtitleSrc = null, duckAmbient = false, keepPopupForNext = false } = {}) {
         const popup = document.getElementById('video-popup');
         const video = document.getElementById('popup-video');
@@ -2798,6 +2933,18 @@ class Scene {
         // Base scene update (subclasses override this)
     }
 }
+
+// The completion panel is the last thing a run shows, and cafeInterior already awaits
+// growCoffeeTree (the cup, then the summary) immediately before calling it. Wrapping
+// the method rather than that one call site keeps the whole end-of-run order in one
+// place: cup -> summary -> score -> completion panel.
+(function wrapCompletionPanelWithScore() {
+    const original = Scene.prototype.showCompletionPanel;
+    Scene.prototype.showCompletionPanel = async function (...args) {
+        await showScoreEndScreen();
+        return original.apply(this, args);
+    };
+})();
 
 // ============================================================================
 // INITIALIZE DEFAULT SCENE

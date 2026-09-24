@@ -121,6 +121,21 @@ window.Strings = {
     'ui.progress.roastery': { en: 'Roastery', bis: 'Sanlagan' },   // DRAFT bis
     'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: 'Balik sa Kapehan' },   // DRAFT bis
 
+    // Score and reward. Points come only from first-try correct answers on the six
+    // scene quizzes; mini-quizzes never count. Winning is at most one wrong answer
+    // across the whole run, and only on a player's first completed run.
+    'ui.score.winTitle': { en: 'You did it \u2014 a coffee expert!', bis: 'You did it \u2014 a coffee expert!' },   // DRAFT bis
+    'ui.score.winBody': { en: 'You answered almost every question right the first time. That earns you a Granja Alegre keychain \u2014 your choice of design.', bis: 'You answered almost every question right the first time. That earns you a Granja Alegre keychain \u2014 your choice of design.' },   // DRAFT bis
+    'ui.score.loseTitle': { en: 'Journey complete', bis: 'Journey complete' },   // DRAFT bis
+    'ui.score.loseBody': { en: 'You made it from seed to cup. The keychain needs a near-perfect run \u2014 at most one wrong answer \u2014 so have another go sometime.', bis: 'You made it from seed to cup. The keychain needs a near-perfect run \u2014 at most one wrong answer \u2014 so have another go sometime.' },   // DRAFT bis
+    'ui.score.replayTitle': { en: 'Journey complete', bis: 'Journey complete' },   // DRAFT bis
+    'ui.score.replayBody': { en: 'Thanks for coming back. The keychain is for a first run only, so this one is just for the love of coffee.', bis: 'Thanks for coming back. The keychain is for a first run only, so this one is just for the love of coffee.' },   // DRAFT bis
+    'ui.score.tally': { en: 'First-try correct answers', bis: 'First-try correct answers' },   // DRAFT bis
+    'ui.score.claimTitle': { en: 'Your claim code', bis: 'Your claim code' },   // DRAFT bis
+    'ui.score.claimHint': { en: 'Screenshot this and show it at Alegre Cafe to pick your keychain.', bis: 'Screenshot this and show it at Alegre Cafe to pick your keychain.' },   // DRAFT bis
+    'ui.score.formButton': { en: 'Choose your keychain', bis: 'Choose your keychain' },   // DRAFT bis
+    'ui.score.continue': { en: 'Continue', bis: 'Continue' },   // DRAFT bis
+
     // Scene summaries. Shown at a scene's exit only when the player seeked forward in
     // it -- a recap of what the narration said, for someone who chose not to hear it.
     // bis is a placeholder copy of the English pending translation.
