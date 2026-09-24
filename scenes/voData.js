@@ -31,9 +31,9 @@ window.VoSegments = {
     },
     nursery: {
         en: [
-            { id: 'nursery_en_01', gate: { type: 'marker', ref: 'polybag' }, dur: 19.92 },
-            { id: 'nursery_en_02', gate: { type: 'miniquiz', ref: 'flowers' }, dur: 37.47 },
-            { id: 'nursery_en_03', gate: { type: 'quiz' }, dur: 20.29 },
+            { id: 'nursery_en_01', gate: { type: 'marker', ref: 'polybag' }, dur: 17.37 },
+            { id: 'nursery_en_02', gate: { type: 'miniquiz', ref: 'flowers' }, dur: 27.44 },
+            { id: 'nursery_en_03', gate: { type: 'quiz' }, dur: 18.65 },
         ],
     },
     journeyToFarm: {

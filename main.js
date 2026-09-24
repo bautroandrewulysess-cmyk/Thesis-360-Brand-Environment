@@ -3,7 +3,13 @@
 // ============================================================================
 
 const R2_BASE = 'https://assets.granjaalegre.com';
-const SUBTITLE_VERSION = 5;
+const SUBTITLE_VERSION = 6;
+// VO audio is the one asset class R2 serves with no cache-control at all -- only an
+// etag and last-modified -- so a replaced recording is cached heuristically and a
+// returning visitor can keep the old one without ever revalidating. Bumping this
+// forces a fresh copy without renaming segment ids, exactly as SUBTITLE_VERSION does
+// for the VTTs. Bump it whenever a VO file's CONTENT changes.
+const VO_VERSION = 1;
 window.R2_BASE = R2_BASE;
 
 // Global asset URL helper: encodes path segments while preserving directory structure
@@ -47,8 +53,10 @@ window.voSegmentsFor = voSegmentsFor;
 // Language-aware VO audio path helper
 const voUrl = (audioKey) => {
     const lang = window.currentLanguage || 'en';
-    if (lang === 'en') return assetUrl(`VO/${audioKey}.mp3`);
-    return assetUrl(`VO/${lang}/${audioKey.replace('_en_', `_${lang}_`)}.mp3`);
+    const path = lang === 'en'
+        ? `VO/${audioKey}.mp3`
+        : `VO/${lang}/${audioKey.replace('_en_', `_${lang}_`)}.mp3`;
+    return `${assetUrl(path)}?v=${VO_VERSION}`;
 };
 window.voUrl = voUrl;
 
@@ -978,6 +986,8 @@ function showLoadingTrivia(targetScene) {
 // ============================================================================
 
 const SEEK_STEP = 10;
+// Never seek onto duration itself -- see the note in seekBy.
+const SEEK_END_EPSILON = 0.15;
 
 // One predicate for "an overlay owns the screen", shared with RaycastSystem.onClick so
 // a future overlay blocks clicks and keys together rather than one but not the other.
@@ -1044,9 +1054,19 @@ function seekBy(delta) {
 
     const basis = (seekPending && seekPending.el === el) ? seekPending.to : el.currentTime;
     const from = el.currentTime;
+    // Stop just short of the end rather than landing on duration exactly. An mp3's
+    // declared duration can sit a fraction past its last frame -- measured on the
+    // freshly encoded nursery segments, where currentTime = duration snapped the
+    // element back to 0 with readyState dropping to 1 instead of firing 'ended'.
+    // Leaving a sliver to play out is also truer to the design: the segment ends by
+    // reaching its end, never by being forced there, so the gate runs off a genuine
+    // 'ended' event every time.
+    const forwardLimit = Math.max(0, el.duration - SEEK_END_EPSILON);
     const to = delta > 0
-        ? Math.min(basis + SEEK_STEP, el.duration)
+        ? Math.min(basis + SEEK_STEP, forwardLimit)
         : Math.max(basis - SEEK_STEP, 0);
+    // Already inside the sliver: let it finish on its own.
+    if (to <= from + 0.01 && delta > 0) return null;
     if (to === basis && to === from) return null;
 
     seekPending = { el, to };
