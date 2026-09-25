@@ -84,6 +84,47 @@ const subtitleUrl = (name) => {
 };
 window.subtitleUrl = subtitleUrl;
 
+// Warm the NEXT VO segment while the current one is playing.
+//
+// Every segment used to start its download only once the previous one had ended and
+// the player had clicked through the gate, so the wait for the mp3 was dead air the
+// listener sat through -- a pilot tester heard it as a hang after "food basket of
+// Mindanao". Measured headed at a CDP-throttled 5 Mbps, time from src to 'playing'
+// across the three brand-story segments: 0.18 / 0.22 / 0.29 s before, 0.18 / 0.02 /
+// 0.01 s after (Bisaya 0.19 / 0.20 / 0.27 -> 0.19 / 0.01 / 0.02).
+//
+// Note what this cannot help: the FIRST segment of a sequence has nothing playing
+// ahead of it, so nursery_en_01 is unchanged at 0.30 s. Only segments 2..n benefit.
+//
+// The URLs come from voUrl()/subtitleUrl(), the same builders the <audio> and <track>
+// use, so the version stamps (?v=VO_VERSION, ?v=SUBTITLE_VERSION) match and the warm
+// entry is the one actually requested later rather than a near-miss that downloads
+// twice. R2 serves VO mp3s with an etag and no cache-control, so Chrome's heuristic
+// freshness is what makes the second request a cache hit; the VTTs carry
+// max-age=2678400 and are cached outright.
+//
+// Fire-and-forget by design: a failed prefetch must never affect playback, which does
+// its own fetching and its own error handling regardless.
+const voPrefetched = new Set();
+function prefetchVoSegment(audioKey) {
+    if (!audioKey) return;
+    const lang = window.currentLanguage || 'en';
+    const mark = `${lang}:${audioKey}`;
+    if (voPrefetched.has(mark)) return;
+    voPrefetched.add(mark);
+    [voUrl(audioKey), subtitleUrl(`${audioKey}.vtt`)].forEach((url) => {
+        // The body MUST be drained. A fetch whose body is never read leaves the
+        // response unconsumed and nothing reaches the HTTP cache, so the real request
+        // downloads the file a second time -- measured: two network hits per segment
+        // and no improvement at all until .blob() was added here.
+        fetch(url, { mode: 'cors', credentials: 'omit' })
+            .then((res) => (res.ok ? res.blob() : null))
+            .catch(() => {});
+    });
+    if (window.DEV_MODE) console.log(`[VO] Prefetching next segment: ${audioKey} (${lang})`);
+}
+window.prefetchVoSegment = prefetchVoSegment;
+
 // Subtitles for the videos that carry their own narration in their audio track.
 // playVoWithSubtitles never runs for these, so without this nothing would fill the
 // subtitle bar while they play. Keyed by gate ref, resolved per language.
@@ -518,7 +559,7 @@ function fadeIn() {
 }
 
 // Shared VO playback: plays audio with subtitles (used by both Scene class and brand story overlay)
-function playVoSegment(audioKey, subtitleElement, onEnded) {
+function playVoSegment(audioKey, subtitleElement, onEnded, nextAudioKey) {
     return new Promise((resolve) => {
         const lang = window.currentLanguage || 'en';
         let audioPath = voUrl(audioKey);
@@ -545,6 +586,10 @@ function playVoSegment(audioKey, subtitleElement, onEnded) {
         // path, and the element was previously held in this closure alone, reachable
         // from nowhere. Cleared in handleEnd so a finished segment is never seeked.
         window.__brandStoryAudio = audio;
+
+        // Warm the next segment once this one is actually producing sound, so its
+        // download overlaps this segment's playback instead of the gate click.
+        audio.addEventListener('playing', () => prefetchVoSegment(nextAudioKey), { once: true });
 
         const textTrack = audio.textTracks[0];
         if (textTrack) {
@@ -1996,7 +2041,7 @@ class Scene {
         }
     }
 
-    playVoWithSubtitles(audioKey, isQuizEligible = false) {
+    playVoWithSubtitles(audioKey, isQuizEligible = false, nextAudioKey = null) {
         if (window.journeyComplete) {
             return Promise.resolve();
         }
@@ -2030,6 +2075,10 @@ class Scene {
 
             document.body.appendChild(audio);
             this.voAudio = audio;
+
+            // Warm the next segment once this one is actually producing sound, so its
+            // download overlaps this segment's playback instead of the gate click.
+            audio.addEventListener('playing', () => prefetchVoSegment(nextAudioKey), { once: true });
 
             const textTrack = audio.textTracks[0];
             if (textTrack) {
@@ -2711,7 +2760,12 @@ class Scene {
                     if (isQuizSegment) this.triggerQuizDirect(segment.id);
                 } else {
                     if (window.DEV_MODE) console.log(`[VO] Playing segment ${this.voSequenceIndex + 1}/${segments.length}: ${segment.id}`);
-                    await this.playVoWithSubtitles(segment.id, isQuizSegment);
+                    // The next segment is always segments[index+1], including across a
+                    // marker or mini-quiz gate: the loop breaks there and resumes at
+                    // that same index, so the gate wait is exactly the window the
+                    // prefetch gets to use.
+                    const nextSegment = segments[this.voSequenceIndex + 1];
+                    await this.playVoWithSubtitles(segment.id, isQuizSegment, nextSegment ? nextSegment.id : null);
                 }
 
                 if (gateType === 'marker') {

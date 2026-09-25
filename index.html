@@ -1108,17 +1108,17 @@
     <div id="debug-info"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.20.0/build/playcanvas.min.js"></script>
-    <script src="./scenes/strings.js?v=57"></script>
-    <script src="./scenes/voData.js?v=57"></script>
-    <script src="./scenes/coffeeTreeArt.js?v=57"></script>
-    <script src="./main.js?v=57"></script>
-    <script src="./scenes/quizData.js?v=57"></script>
-    <script src="./scenes/videoScene.js?v=57"></script>
-    <script src="./scenes/cafeInterior.js?v=57"></script>
-    <script src="./scenes/cafeExterior.js?v=57"></script>
-    <script src="./scenes/roastery.js?v=57"></script>
-    <script src="./scenes/nursery.js?v=57"></script>
-    <script src="./scenes/streetView.js?v=57"></script>
+    <script src="./scenes/strings.js?v=58"></script>
+    <script src="./scenes/voData.js?v=58"></script>
+    <script src="./scenes/coffeeTreeArt.js?v=58"></script>
+    <script src="./main.js?v=58"></script>
+    <script src="./scenes/quizData.js?v=58"></script>
+    <script src="./scenes/videoScene.js?v=58"></script>
+    <script src="./scenes/cafeInterior.js?v=58"></script>
+    <script src="./scenes/cafeExterior.js?v=58"></script>
+    <script src="./scenes/roastery.js?v=58"></script>
+    <script src="./scenes/nursery.js?v=58"></script>
+    <script src="./scenes/streetView.js?v=58"></script>
 
     <script>
         // ------------------------------------------------------------------
@@ -1507,7 +1507,11 @@
                         playBrandStorySegment(index + 1);
                     });
                     gateContainer.appendChild(btn);
-                });
+                // 4th arg: the next segment, warmed as soon as this one starts playing.
+                // The gate wait between segments is exactly the window it downloads in,
+                // so segment 2 no longer opens with dead air after "food basket of
+                // Mindanao". undefined past the last segment, which prefetch ignores.
+                }, segments[index + 1]);
             };
 
             // Start with first segment
