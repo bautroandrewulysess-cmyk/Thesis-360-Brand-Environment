@@ -1000,10 +1000,12 @@ class NurseryScene extends Scene {
         document.body.classList.add('video-open');
 
         let transitionStarted = false;
+        let stallWatchdog = null;
 
         const completeTransition = async () => {
             if (transitionStarted) return;
             transitionStarted = true;
+            if (stallWatchdog) { clearInterval(stallWatchdog); stallWatchdog = null; }
 
             // Fade out video over 500ms
             video.style.transition = 'opacity 0.5s ease-out';
@@ -1035,18 +1037,69 @@ class NurseryScene extends Scene {
             completeTransition();
         });
 
+        // ------------------------------------------------------------------
+        // Stall watchdog.
+        //
+        // Reported by a pilot tester: the route-map video froze while its VO and the
+        // ambience kept playing, and the journey never continued. Two holes made that
+        // terminal:
+        //   - nothing watched the video at all. 'error' only covers a failed load, not
+        //     a mid-stream freeze, so a starved buffer parked the element unpaused,
+        //     not ended, currentTime stuck, forever.
+        //   - the 20s "safety fallback" that used to live here sat AFTER `await
+        //     playVoWithSubtitles(...)`, so it was only armed once the transition had
+        //     already run. It could never fire as a safety net, and if the VO promise
+        //     itself never settled -- which happens when the mp3 stalls without firing
+        //     'error', because playVoWithSubtitles only arms its own timeout on
+        //     'playing'/'loadedmetadata' -- nothing was left to rescue the player.
+        //
+        // So the watchdog is armed BEFORE the await, and it is what guarantees the
+        // journey continues whichever of the two media stalls. Both triggers route
+        // through completeTransition, which is idempotent via transitionStarted, so a
+        // late 'ended' or the VO resolving afterwards is harmless.
+        const VIDEO_STALL_MS = 8000;
+        const VIDEO_OVERRUN_MS = 5000;
+        // Unknown duration (metadata never arrived) still needs a ceiling, so fall back
+        // to a fixed cap rather than arithmetic on NaN.
+        const UNKNOWN_DURATION_CAP_MS = 30000;
+        const watchStartedAt = Date.now();
+        let lastTime = 0;
+        let lastProgressAt = Date.now();
+        // 'waiting'/'stalled' mean the element has already given up on the current
+        // position, so start the stall clock from the event rather than waiting for
+        // the poll to notice currentTime standing still.
+        const markStalled = () => { lastProgressAt = Math.min(lastProgressAt, Date.now() - VIDEO_STALL_MS / 2); };
+        video.addEventListener('waiting', markStalled);
+        video.addEventListener('stalled', markStalled);
+        video.addEventListener('timeupdate', () => {
+            if (video.currentTime !== lastTime) {
+                lastTime = video.currentTime;
+                lastProgressAt = Date.now();
+            }
+        });
+
+        stallWatchdog = setInterval(() => {
+            if (transitionStarted) return;
+            const now = Date.now();
+            if (video.currentTime !== lastTime) {
+                lastTime = video.currentTime;
+                lastProgressAt = now;
+            }
+            const frozen = !video.ended && now - lastProgressAt >= VIDEO_STALL_MS;
+            const limitMs = isFinite(video.duration) && video.duration > 0
+                ? video.duration * 1000 + VIDEO_OVERRUN_MS
+                : UNKNOWN_DURATION_CAP_MS;
+            const overran = !video.ended && now - watchStartedAt >= limitMs;
+            if (frozen || overran) {
+                console.warn(`[Nursery] Drone video watchdog: ${frozen ? 'stalled' : 'overran'} at ${video.currentTime.toFixed(2)}s — continuing the journey`);
+                completeTransition();
+            }
+        }, 1000);
+
         // Play VO narration — when it ends, complete transition (cuts video, not when video ends)
         await this.playVoWithSubtitles('journeyToFarm_en_01', false);
         if (window.DEV_MODE) console.log('[Nursery] Drone video: VO ended, completing transition');
         await completeTransition();
-
-        // Safety fallback: if transition doesn't complete within 20s, force it
-        setTimeout(() => {
-            if (!transitionStarted) {
-                console.warn('[Nursery] Drone video timeout, forcing transition');
-                completeTransition();
-            }
-        }, 20000);
     }
 
     async onLoad() {
