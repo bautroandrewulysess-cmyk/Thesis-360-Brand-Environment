@@ -140,17 +140,25 @@ const NEXT_VO_SCENE = {
     harvesting: 'roasting',
     roasting: 'backToCafe',
 };
+// A segment with no recording in the active language is skipped at playback, so warming
+// it only fetches a 404. EVERY prefetch path has to apply this, which is why the check
+// lives here rather than inline: it was duplicated into the cross-scene path alone, and
+// the in-sequence path without it shipped two Bisaya 404s per run -- a prefetch of
+// quizTime_en_01 (VO/bis/quizTime_bis_01.mp3 and Subtitles/bis/quizTime_en_01.vtt, both
+// 404 on R2) while brandStory_bis_04 played, with two console errors to match.
+function warmableSegmentId(id) {
+    if (!id) return null;
+    const missing = window.VoMissingNonEn || new Set();
+    if (missing.has(id) && (window.currentLanguage || 'en') !== 'en') return null;
+    return id;
+}
+
 function firstVoSegmentOfNextScene(sceneKey) {
     const nextKey = NEXT_VO_SCENE[sceneKey];
     if (!nextKey) return null;
     const segments = voSegmentsFor(nextKey);
     if (!segments || !segments.length) return null;
-    const first = segments[0];
-    // Segments with no recording in the active language are skipped at playback, so
-    // warming one would only fetch a 404.
-    const missing = window.VoMissingNonEn || new Set();
-    if (missing.has(first.id) && (window.currentLanguage || 'en') !== 'en') return null;
-    return first.id;
+    return warmableSegmentId(segments[0].id);
 }
 
 // Subtitles for the videos that carry their own narration in their audio track.
@@ -2796,7 +2804,7 @@ class Scene {
                     // On the last segment there is nothing further in this sequence, so
                     // reach across to the next scene's first segment instead.
                     const nextKey = nextSegment
-                        ? nextSegment.id
+                        ? warmableSegmentId(nextSegment.id)
                         : firstVoSegmentOfNextScene(this.voSceneKey);
                     await this.playVoWithSubtitles(segment.id, isQuizSegment, nextKey);
                 }
