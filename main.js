@@ -125,6 +125,34 @@ function prefetchVoSegment(audioKey) {
 }
 window.prefetchVoSegment = prefetchVoSegment;
 
+// Journey order of the VO sequences in voData.js. Prefetching within a sequence cannot
+// help its FIRST segment -- nothing plays ahead of it -- so arriving in a scene always
+// began with a download (measured: nursery_en_01 at 0.30s, unchanged by the in-sequence
+// prefetch). The last segment of each scene therefore warms the first segment of the
+// next, which runs while that segment plays and through the quiz and loading screen
+// that follow. Keys are voData's, so 'roasting', not JOURNEY_STEPS' 'roastery'.
+const NEXT_VO_SCENE = {
+    brandStoryIntro: 'cafeInterior',
+    cafeInterior: 'nursery',
+    nursery: 'journeyToFarm',
+    journeyToFarm: 'farm',
+    farm: 'harvesting',
+    harvesting: 'roasting',
+    roasting: 'backToCafe',
+};
+function firstVoSegmentOfNextScene(sceneKey) {
+    const nextKey = NEXT_VO_SCENE[sceneKey];
+    if (!nextKey) return null;
+    const segments = voSegmentsFor(nextKey);
+    if (!segments || !segments.length) return null;
+    const first = segments[0];
+    // Segments with no recording in the active language are skipped at playback, so
+    // warming one would only fetch a 404.
+    const missing = window.VoMissingNonEn || new Set();
+    if (missing.has(first.id) && (window.currentLanguage || 'en') !== 'en') return null;
+    return first.id;
+}
+
 // Subtitles for the videos that carry their own narration in their audio track.
 // playVoWithSubtitles never runs for these, so without this nothing would fill the
 // subtitle bar while they play. Keyed by gate ref, resolved per language.
@@ -2765,7 +2793,12 @@ class Scene {
                     // that same index, so the gate wait is exactly the window the
                     // prefetch gets to use.
                     const nextSegment = segments[this.voSequenceIndex + 1];
-                    await this.playVoWithSubtitles(segment.id, isQuizSegment, nextSegment ? nextSegment.id : null);
+                    // On the last segment there is nothing further in this sequence, so
+                    // reach across to the next scene's first segment instead.
+                    const nextKey = nextSegment
+                        ? nextSegment.id
+                        : firstVoSegmentOfNextScene(this.voSceneKey);
+                    await this.playVoWithSubtitles(segment.id, isQuizSegment, nextKey);
                 }
 
                 if (gateType === 'marker') {
