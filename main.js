@@ -153,6 +153,21 @@ function warmableSegmentId(id) {
     return id;
 }
 
+// Declared length of a segment from voData.js, used only as a stand-in before the real
+// duration arrives. NOTE: dur is the ENGLISH length, and several Bisaya recordings run
+// well past it, so this must never govern once audio.duration is finite -- the watchdog
+// re-arms off the real duration the moment metadata lands.
+function declaredVoDuration(audioKey) {
+    const all = window.VoSegments || {};
+    for (const k of Object.keys(all)) {
+        const list = all[k] && all[k].en;
+        if (!Array.isArray(list)) continue;
+        const hit = list.find(s => s.id === audioKey);
+        if (hit && Number.isFinite(hit.dur) && hit.dur > 0) return hit.dur;
+    }
+    return null;
+}
+
 function firstVoSegmentOfNextScene(sceneKey) {
     const nextKey = NEXT_VO_SCENE[sceneKey];
     if (!nextKey) return null;
@@ -1604,6 +1619,7 @@ class Scene {
         this.registeredWithRaycaster = new Set(); // Track all raycaster registrations
         this.voWarningTimer = null;
         this.voSafetyTimeoutHandle = null; // armed inside playVoWithSubtitles; cancelled by stopVo()
+        this.voWatchdogHandle = null; // stall watchdog interval; cancelled by stopVo()
         this.quizTriggered = false;
         this.videoPending = false;
         this.storedAmbientGain = null;
@@ -2175,12 +2191,25 @@ class Scene {
                 }
             };
 
-            audio.addEventListener('ended', () => {
+            // One idempotent way out of the segment, whatever gets us there. The gate
+            // that follows is driven by the sequence runner resuming after this
+            // promise settles, so finishing here runs the gate exactly as a real
+            // 'ended' would -- and a late 'ended' afterwards finds the flag set and
+            // returns, so it can never run twice.
+            let segmentFinished = false;
+            let watchdogHandle = null;
+            const finishSegment = (reason) => {
+                if (segmentFinished) return;
+                segmentFinished = true;
+                if (watchdogHandle) clearInterval(watchdogHandle);
+                if (this.voWatchdogHandle === watchdogHandle) this.voWatchdogHandle = null;
                 this.clearSubtitles();
                 this.isVoFinished = true;
-                if (isQuizEligible) triggerQuiz('ended');
+                if (isQuizEligible) triggerQuiz(reason);
                 resolve();
-            });
+            };
+
+            audio.addEventListener('ended', () => finishSegment('ended'));
 
             audio.addEventListener('pause', () => this.clearSubtitles());
 
@@ -2222,36 +2251,74 @@ class Scene {
                 });
             }, 300);
 
-            let safetyTimeoutHandle;
-            let timeoutArmed = false;
-            const armSafetyTimeout = () => {
-                if (timeoutArmed || !isFinite(audio.duration) || audio.duration <= 0) {
-                    return;
-                }
-                timeoutArmed = true;
-                if (safetyTimeoutHandle) clearTimeout(safetyTimeoutHandle);
-                const remainingTime = (audio.duration - audio.currentTime) * 1000 + 2000;
-                safetyTimeoutHandle = this.voSafetyTimeoutHandle = setTimeout(() => {
-                    if (!audio.paused && audio.currentTime < audio.duration - 1) {
-                        console.warn('[VO] Safety timeout fired but audio still playing, re-arming');
-                        timeoutArmed = false;
-                        armSafetyTimeout();
-                        return;
-                    }
-                    if (!this.isVoFinished) {
-                        this.isVoFinished = true;
-                        this.clearSubtitles();
-                        if (isQuizEligible) {
-                            if (window.DEV_MODE) console.warn('[VO] Quiz triggered via safety-timeout');
-                            triggerQuiz('safety-timeout');
-                        }
-                        resolve();
-                    }
-                }, remainingTime);
+            // ---- Stall safety net -------------------------------------------
+            // Same pattern as the brand story watchdog, but armed the moment the
+            // segment starts rather than on 'playing'/'loadedmetadata'. The timeout
+            // this replaces armed ONLY on those events, so an mp3 that stalled before
+            // metadata never armed anything: the promise never settled, the sequence
+            // runner never resumed, and the gate never spawned. That is the hang a
+            // pilot tester hit on the walk-to-farm handoff.
+            //
+            // Two triggers, both requiring the audio to actually be running, so
+            // nothing the game does to hold the VO can trip them:
+            //   - currentTime stops advancing for 8s while unpaused, or
+            //   - it outlives the time it had left to play, plus 5s.
+            // Before metadata the declared (English) dur stands in, and if even that
+            // is missing a 30s cap is the only ceiling. Both re-arm off the real
+            // duration as soon as metadata lands, so a long Bisaya take is never cut
+            // short by the English dur.
+            const STALL_SECONDS = 8;
+            const OVERRUN_GRACE = 5;
+            const NO_METADATA_CAP = 30;
+            const declaredDur = declaredVoDuration(audioKey);
+            let budget = null;
+            let lastTime = -1;
+            let stalledFor = 0;
+            let runningFor = 0;
+            const armBudget = () => {
+                budget = (Number.isFinite(audio.duration) && audio.duration > 0)
+                    ? (audio.duration - audio.currentTime) + OVERRUN_GRACE
+                    : null;
+                stalledFor = 0;
+                lastTime = -1;
             };
-            audio.addEventListener('playing', armSafetyTimeout);
-            audio.addEventListener('loadedmetadata', armSafetyTimeout);
-            audio.addEventListener('durationchange', armSafetyTimeout);
+            audio.addEventListener('loadedmetadata', armBudget);
+            audio.addEventListener('durationchange', armBudget);
+            // Recomputed on every seek, so seeking back to re-listen extends the
+            // budget rather than tripping it.
+            audio.addEventListener('seeking', armBudget);
+
+            // The game holds the VO in several ways that are not audio.paused, and
+            // none of them are a stall.
+            const gameHoldsVo = () => {
+                if (document.body.classList.contains('video-open')) return true;
+                const shown = (id) => {
+                    const el = document.getElementById(id);
+                    return !!el && getComputedStyle(el).display !== 'none';
+                };
+                return shown('quiz-overlay') || shown('mini-quiz-overlay') || shown('video-popup')
+                    || !!document.querySelector('#hotspot-popup.active');
+            };
+
+            watchdogHandle = this.voWatchdogHandle = setInterval(() => {
+                if (segmentFinished) return;
+                if (audio.paused || gameHoldsVo()) { lastTime = audio.currentTime; return; }
+                runningFor += 1;
+                if (budget === null) armBudget();
+
+                if (Math.abs(audio.currentTime - lastTime) < 0.05) stalledFor += 1;
+                else stalledFor = 0;
+                lastTime = audio.currentTime;
+                if (budget !== null) budget -= 1;
+
+                const stalled = stalledFor >= STALL_SECONDS;
+                const cap = declaredDur ? declaredDur + OVERRUN_GRACE : NO_METADATA_CAP;
+                const overran = budget !== null ? budget <= 0 : runningFor >= cap;
+                if (stalled || overran) {
+                    console.warn(`[VO] ${audioKey} never ended (${stalled ? 'stalled' : 'overran its duration'}) — finishing the segment so its gate runs`);
+                    finishSegment(stalled ? 'watchdog-stall' : 'watchdog-overrun');
+                }
+            }, 1000);
         });
     }
 
@@ -2263,6 +2330,13 @@ class Scene {
         if (this.voSafetyTimeoutHandle) {
             clearTimeout(this.voSafetyTimeoutHandle);
             this.voSafetyTimeoutHandle = null;
+        }
+        // The stall watchdog is an interval, so the clearTimeout above would not stop
+        // it. Left running it would tick against a segment that is already gone and
+        // finish the next one early.
+        if (this.voWatchdogHandle) {
+            clearInterval(this.voWatchdogHandle);
+            this.voWatchdogHandle = null;
         }
         if (this.voAudio) {
             this.voAudio.pause();
