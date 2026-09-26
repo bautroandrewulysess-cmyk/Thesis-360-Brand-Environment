@@ -871,12 +871,16 @@ function updateJourneyBarLabel() {
 
 // The pill's 130px max-width is load bearing (see the comment in index.html), so a
 // label that does not fit cannot be given more room -- it has to be given a smaller
-// font. Steps down from the pill's own size in 0.5px increments to a floor of 11px;
+// font. Steps down from the pill's own size in 0.5px increments to a floor of 10.5px;
 // below that the text stops being readable, so ellipsis is the better failure and the
 // CSS already provides it. 'Back to the Cafe' (en) and 'Padulong sa Uma' /
 // 'Balik sa Kapehan' (bis) are the three that need it. The expanded track uses
 // .jp-label and is untouched.
-const JOURNEY_LABEL_MIN_PX = 11;
+//
+// The floor was 11px, which left the two Bisaya labels clipping by 1-3px -- measured
+// through this function rather than by setting textContent on a bench, which is what
+// hid it the first time round. 10.5px clears both.
+const JOURNEY_LABEL_MIN_PX = 10.5;
 function fitJourneyBarLabel() {
     const label = document.getElementById('journey-bar-label');
     if (!label) return;
