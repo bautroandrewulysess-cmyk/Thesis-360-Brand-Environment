@@ -655,10 +655,15 @@
 
         #debug-info.active { display: block; }
 
+        /* .farm-hint joined this rule when the score screen started setting
+           ui-overlay-active: it was suppressed only by journey-panel-open, so any
+           full-screen overlay left it on top of itself. */
         body.ui-overlay-active .hotspot-label,
         body.ui-overlay-active #nav-prompt,
+        body.ui-overlay-active .farm-hint,
         body.video-open .hotspot-label,
-        body.video-open #nav-prompt {
+        body.video-open #nav-prompt,
+        body.video-open .farm-hint {
             display: none !important;
         }
 

@@ -1317,6 +1317,13 @@ function showScoreEndScreen() {
         const btn = el.querySelector('.sc-continue');
         btn.textContent = t_('continue');
         document.body.appendChild(el);
+        // #score-panel was already in uiOverlayActive(), so clicks and seeks were
+        // blocked -- but the BODY CLASS is what hides the furniture, and this screen
+        // never set it. The nav prompt sat visibly behind the win panel ("turn around
+        // -- it's behind you" over the prize message). The class drives the clue bar
+        // (updateClue), the journey pill (updateJourneyBar), hotspot labels, the nav
+        // prompt and now .farm-hint, so setting it here covers all five at once.
+        document.body.classList.add('ui-overlay-active');
         requestAnimationFrame(() => el.classList.add('visible'));
 
         // Recorded once the result has actually been shown, so a run that never reached
@@ -1325,7 +1332,14 @@ function showScoreEndScreen() {
 
         btn.addEventListener('click', () => {
             el.classList.remove('visible');
-            setTimeout(() => { el.remove(); resolve(); }, 260);
+            // Released with the element, not before it: the panel is still on screen
+            // through the 260ms fade, and dropping the class early would flash the
+            // pill and nav prompt back over a screen that has not gone yet.
+            setTimeout(() => {
+                el.remove();
+                document.body.classList.remove('ui-overlay-active');
+                resolve();
+            }, 260);
         }, { once: true });
         btn.focus();
     });
