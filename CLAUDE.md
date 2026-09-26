@@ -212,10 +212,15 @@ Then, since that was written:
   that have no Bisaya recording.
 - **Scene-VO stall watchdog** (`528c1dd`), armed at segment start, giving
   `playVoWithSubtitles` the same safety net the brand story already had.
-- **The collapsed pill now shrinks its label to fit** (this round). Font steps down from
-  0.8rem to a floor of 11px, ellipsis below that; pill padding went 14px → 12px to buy
-  the last 3px two Bisaya labels needed. Measured at 1280 and 900 with Inter loaded: all
-  7 labels fit in both languages, smallest 11.0px (`Padulong sa Uma`).
+- **The collapsed pill now shrinks its label to fit.** Font steps down from 0.8rem to a
+  floor of **10.5px**, ellipsis below that; pill padding went 14px → 12px. Measured
+  through the shipped path (`advanceJourneyStepTo` → `updateJourneyBarLabel` →
+  `fitJourneyBarLabel`) at 1280 and 900 with Inter loaded: all 7 labels fit in both
+  languages, smallest 10.5px (`Padulong sa Uma`), `Balik sa Kapehan` 10.8px.
+  **The floor was 11px and was wrong**: two Bisaya labels still clipped by 1–3px, and
+  the check that missed it set `textContent` on a bench instead of calling
+  `fitJourneyBarLabel`. Never verify this by measuring a label you populated yourself —
+  the running app renders those strings wider at the same size.
 - **Both VO watchdogs now stall-trigger before metadata** (this round). The 1s tick was
   re-arming the budget while `duration` was NaN, which re-zeroed the stall counter every
   tick. Measured with a deliberately hung mp3: scene VO 23.1 s → **9.0 s** (EN) /
