@@ -38,7 +38,7 @@ unload/reload.
    VTT *content* changed → bump `SUBTITLE_VERSION`. **VO audio content changed → bump
    `VO_VERSION`** (VO mp3s are served with no `cache-control`, only an etag, so a
    replaced recording can otherwise be served stale from cache indefinitely). Several
-   changed → bump each. `?v=` is currently **56**, `SUBTITLE_VERSION` is **6**,
+   changed → bump each. `?v=` is currently **62**, `SUBTITLE_VERSION` is **6**,
    `VO_VERSION` is **1**.
 4. **Splats and videos carry `immutable` cache headers.** Never overwrite in place —
    returning visitors would stay on the old file for a month. Upload under a **new
@@ -93,6 +93,22 @@ unload/reload.
 - **`curl -I` (HEAD) reports `cf-cache-status: DYNAMIC`** even when real GETs return `HIT`.
   Edge caching *is* working; test with a GET.
 
+### From the last full live check
+
+- **A localhost origin cannot fetch R2 on this machine** — the transfer stalls at about
+  0.6 MB. The way through was to serve R2's *real bytes and headers* from a local
+  **SPKI-pinned HTTPS host** standing in for `assets.granjaalegre.com`, so the app still
+  sees a real HTTPS origin with real cache headers.
+- **`page.route()` and `--ignore-certificate-errors` both bypass the HTTP cache.** Any
+  measurement of caching, 304s or repeat-visit cost is meaningless under either. The
+  SPKI-pinned host above exists precisely so the cache stays live.
+- **Click DOM buttons directly** — `.gate-marker-button` and friends. For 3D orbs use
+  `ThesisApp.camera.worldToScreen` and **reject behind-camera targets**; a generic
+  click-the-nearest-hotspot routine hits decorative ones instead (`yfc-board`).
+- **The seek summary is `#scene-summary-panel .ss-continue`**, parented to `<body>` —
+  not inside the scene's own overlay tree.
+- **The readiness signal is `ThesisApp.sceneManager.activeScene.name`.**
+
 ## Running the harness
 
 ```bash
@@ -102,9 +118,12 @@ node test/harness.mjs <scene> [en|bis] [--headless] [--clear-cache] [--port=N]
 Intercepts R2 via `page.route()` and disk-caches to `test/.asset-cache/`. Warm runs ~6 s.
 **It never modifies app source** — that is deliberate.
 
-For live testing, serve the repo (`python3 -m http.server 8000`) so HTML/JS are local while
-assets still come from real R2 — this preserves genuine network timing. `localhost:8000` is
-already allow-listed in `cors.json`. Playwright lives only in the npx cache; load it with
+For live testing, serve the repo (`python3 -m http.server 8000`) so HTML/JS are local.
+`localhost:8000` is allow-listed in `cors.json`, **but a localhost origin still cannot pull
+R2 on this machine** — it stalls around 0.6 MB, so the old advice that this "preserves
+genuine network timing" against real R2 no longer holds. Either intercept R2 the way the
+harness does (no HTTP cache) or stand up the local SPKI-pinned HTTPS host that replays R2's
+real bytes and headers (keeps the cache live). Playwright lives only in the npx cache; load it with
 `createRequire` from `~/.npm/_npx/e41f203b7505f1fb/node_modules/playwright` (matches the
 installed browser revision 1234).
 
@@ -150,23 +169,39 @@ Then, this round:
   the last brand-story gate; `journeyToFarm` rides along with the farm's as a second
   section of one panel.
 
+Then, since that was written:
+
+- **Drone-video watchdog** (`d5d9468`). A frozen `droneWeb.mp4` used to strand the
+  nursery → walk transition with nothing to click. The journey is now rescued the same
+  way the VO is.
+- **VO prefetch, within a scene** (`cb7c62f`) — the next segment is warmed while the
+  current one plays — **and across scenes** (`7ff1ceb`), where the last segment of a
+  scene warms the first segment of the next via `NEXT_VO_SCENE`.
+- **`warmableSegmentId()` guard** (`9b0f7ee`), so a Bisaya run does not prefetch segments
+  that have no Bisaya recording.
+- **Scene-VO stall watchdog** (`528c1dd`), armed at segment start, giving
+  `playVoWithSubtitles` the same safety net the brand story already had.
+- **The collapsed pill now shrinks its label to fit** (this round). Font steps down from
+  0.8rem to a floor of 11px, ellipsis below that; pill padding went 14px → 12px to buy
+  the last 3px two Bisaya labels needed. Measured at 1280 and 900 with Inter loaded: all
+  7 labels fit in both languages, smallest 11.0px (`Padulong sa Uma`).
+- **Both VO watchdogs now stall-trigger before metadata** (this round). The 1s tick was
+  re-arming the budget while `duration` was NaN, which re-zeroed the stall counter every
+  tick. Measured with a deliberately hung mp3: scene VO 23.1 s → **9.0 s** (EN) /
+  **9.1 s** (BIS); brand story **never fired** → **6.1 s** in both. Normal playback over
+  25 s in both languages triggers neither.
+
 ## Outstanding
 
 Everything below is **pending live verification**, not known-broken. The items struck
 this round were verified **locally through the harness** (real clicks, real R2 assets
 over `page.route`), which is not the same as a verification on the live site.
 
-- **Café interior load time.** Best measurement is **≥87.5 s** cold, and that is a lower
-  bound. Needs one cold run on a known-good connection, timing `#loading-screen` from the
-  brand-story gate click to `opacity:0`. Local runs load it in ~5 s from a warm asset
-  cache, which says nothing about the cold path.
 - **Brewing → testimony seam** — the ~1 s café flash between the two videos is documented
   below but has not been re-checked since `testimony_v2`.
 - **`WINNER_FORM_URL` is empty** (`main.js`), so no form button renders. The claim message
   stands alone, which is the intended fallback — confirmed on the win screen this round.
   Fill it in when the form exists.
-- **Progress pill truncates.** "Back to the Cafe" in English; in Bisaya *two* labels clip —
-  `Padulong sa Uma` (106px into 84px) and `Balik sa Kapehan` (103px).
 - **Two pre-existing bottom-band overlaps**: clue × subtitle at 800 px height, and
   nav-prompt × subtitle at 900 px width.
 - **`dur` in `voData.js` is dead data.** Written 25×, read nowhere, and it equals the
@@ -176,6 +211,12 @@ over `page.route`), which is not the same as a verification on the live site.
 - **`SUBTITLE_VERSION` may need a bump.** It is **6**, and the retimed brewing VTTs are
   live at `?v=6`. New visitors get the correct file; anyone who cached the old one at the
   same version keeps the stale timings.
+
+- **Café interior load: 8–11 s cold, ~21 s throttled to 10 Mbps**, and **the splat
+  downloads exactly once**. This replaces the old ≥87.5 s lower bound, which was measured
+  before the warm-up was re-timed onto the last brand-story segment — that number is no
+  longer the state of the app.
+- **Progress pill labels all fit** in both languages at 1280 and 900 (see above).
 
 Cleared this round, all by real clicks in the harness:
 
