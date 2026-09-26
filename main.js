@@ -699,9 +699,12 @@ function playVoSegment(audioKey, subtitleElement, onEnded, nextAudioKey) {
         // spawned exactly once either way.
         //
         // duration is NaN until loadedmetadata, so the budget is only armed once
-        // it is finite -- until then the stall trigger covers the window. The
-        // budget is recomputed on every seek, so seeking backwards to re-listen
-        // extends it rather than tripping it.
+        // it is finite -- until then the stall trigger covers the window, which is
+        // why the tick below must not call armWatchdog() while duration is still
+        // NaN: arming re-zeroes stalledFor, so stalledFor could never reach 5 and
+        // a hang before metadata escaped both triggers entirely. The budget is
+        // recomputed on every seek, so seeking backwards to re-listen extends it
+        // rather than tripping it.
         // ------------------------------------------------------------------
         const WATCHDOG_GRACE = 5;
         let budget = null;
@@ -719,7 +722,10 @@ function playVoSegment(audioKey, subtitleElement, onEnded, nextAudioKey) {
         const watchdog = setInterval(() => {
             if (ended) return;
             if (audio.paused) { lastTime = audio.currentTime; return; }
-            if (budget === null) armWatchdog();
+            // Only once duration is real -- see the note above.
+            if (budget === null && Number.isFinite(audio.duration) && audio.duration > 0) {
+                armWatchdog();
+            }
 
             if (Math.abs(audio.currentTime - lastTime) < 0.05) stalledFor += 1;
             else stalledFor = 0;
@@ -2294,7 +2300,10 @@ class Scene {
             // Before metadata the declared (English) dur stands in, and if even that
             // is missing a 30s cap is the only ceiling. Both re-arm off the real
             // duration as soon as metadata lands, so a long Bisaya take is never cut
-            // short by the English dur.
+            // short by the English dur. The tick must not arm while duration is still
+            // NaN, because arming re-zeroes stalledFor: doing so on every tick meant
+            // the 8s stall trigger could not fire before metadata, leaving the 30s cap
+            // as the only rescue for the very case this net was built for.
             const STALL_SECONDS = 8;
             const OVERRUN_GRACE = 5;
             const NO_METADATA_CAP = 30;
@@ -2332,7 +2341,10 @@ class Scene {
                 if (segmentFinished) return;
                 if (audio.paused || gameHoldsVo()) { lastTime = audio.currentTime; return; }
                 runningFor += 1;
-                if (budget === null) armBudget();
+                // Only once duration is real -- see the note above.
+                if (budget === null && Number.isFinite(audio.duration) && audio.duration > 0) {
+                    armBudget();
+                }
 
                 if (Math.abs(audio.currentTime - lastTime) < 0.05) stalledFor += 1;
                 else stalledFor = 0;
