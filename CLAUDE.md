@@ -38,7 +38,7 @@ unload/reload.
    VTT *content* changed → bump `SUBTITLE_VERSION`. **VO audio content changed → bump
    `VO_VERSION`** (VO mp3s are served with no `cache-control`, only an etag, so a
    replaced recording can otherwise be served stale from cache indefinitely). Several
-   changed → bump each. `?v=` is currently **62**, `SUBTITLE_VERSION` is **6**,
+   changed → bump each. `?v=` is currently **63**, `SUBTITLE_VERSION` is **6**,
    `VO_VERSION` is **1**.
 4. **Splats and videos carry `immutable` cache headers.** Never overwrite in place —
    returning visitors would stay on the old file for a month. Upload under a **new
@@ -107,7 +107,38 @@ unload/reload.
   click-the-nearest-hotspot routine hits decorative ones instead (`yfc-board`).
 - **The seek summary is `#scene-summary-panel .ss-continue`**, parented to `<body>` —
   not inside the scene's own overlay tree.
-- **The readiness signal is `ThesisApp.sceneManager.activeScene.name`.**
+- **The readiness signal is `ThesisApp.sceneManager.activeScene.name`.** Read it with
+  `?.` — it is null for a moment mid-transition.
+
+### From the full audit run (driver traps, all cost real time)
+
+- **`switchTo()` before `startup()` leaves the update loop dead.** `startup()` is what
+  calls `app.start()`. Jump straight into a scene without it and `activeScene.update()`
+  never runs: no tutorial, no journey pill, and `#loading-screen` never gains `.hidden`.
+  Three convincing "bugs", all driver artifact. Reach the café through the app's own
+  `initializeApp()`.
+- **A wrong mini-quiz answer leaves the overlay open by design**, so a driver that
+  guesses wrong loops forever. The correct option differs per scene — the nursery's
+  (`flowers`) is **a**, the farm's (`monitoring`) is **b**. Read it from
+  `getMiniQuizData(ref).correct`, never from a guessed strings key.
+- **Not every gate is a `.gate-marker-button`.** The roastery's `roasterVideo` gate
+  spawns no button at all: `RoasteryScene.spawnGateMarker` highlights the
+  `roasting-beans-transition` orb and returns. Watch `activeScene.highlightedHotspot`.
+- **`videoScene` waits on a Continue button** appended straight to `<body>` with no id
+  or class — the localised label is the only handle. Without clicking it, harvesting
+  never advances to the roastery.
+- **Pace with the narration or the farm close-up block looks absent.** It only arms once
+  `farm_en_01` has finished; clicking discs every 1.6 s reaches `farm1-5` long before
+  that, and nothing blocks. With `voDone` true it holds.
+- **Hide every dev surface before a screenshot**, not just the two obvious ones:
+  `#travel-menu`, `#disc-values`, `#color-menu`, `#dev-jump-menu`, `#debug-info`. The
+  colour-grading and scene-jump panels sat in a whole set of audit screenshots.
+- **The score screen is `#score-panel`** from `showScoreEndScreen()` — `#completion-panel`
+  is a different, older panel.
+- **The drone video is neither `#popup-video` nor `activeScene.videoElement`** — the
+  nursery creates its own full-viewport element. `querySelector('video')` returns the
+  leftover landing `heroLoop` element, which is muted and looping for its own reasons:
+  measuring that says nothing about the scene's footage.
 
 ## Running the harness
 
@@ -191,14 +222,23 @@ Then, since that was written:
   **9.1 s** (BIS); brand story **never fired** → **6.1 s** in both. Normal playback over
   25 s in both languages triggers neither.
 
+- **Full audit playthrough, English, all 13 stages PASS** (reproduced twice): context →
+  brand story → café → nursery → drone → walk → farm → harvesting → roastery → back to
+  café → brewing/testimony → win screen, one wrong answer, 7/7 answered. Bisaya pass
+  (context, brand story, café, nursery, harvesting) PASS. **Zero console errors and no
+  4xx in either**; every request failure was `ERR_ABORTED` on a video that returns 206.
+- **The score screen now suppresses the rest of the UI** (this round). It set no body
+  class, so the nav prompt showed behind the win panel.
+- **The brewing → testimony seam did not reproduce** with `testimony_v2`: no café frame
+  between the two videos at 200 ms sampling, gap 203 ms. A sub-200 ms flash is not ruled
+  out.
+
 ## Outstanding
 
 Everything below is **pending live verification**, not known-broken. The items struck
 this round were verified **locally through the harness** (real clicks, real R2 assets
 over `page.route`), which is not the same as a verification on the live site.
 
-- **Brewing → testimony seam** — the ~1 s café flash between the two videos is documented
-  below but has not been re-checked since `testimony_v2`.
 - **`WINNER_FORM_URL` is empty** (`main.js`), so no form button renders. The claim message
   stands alone, which is the intended fallback — confirmed on the win screen this round.
   Fill it in when the form exists.
@@ -246,4 +286,6 @@ Cleared this round, all by real clicks in the harness:
 - `index.html` sends **no `ETag`/`Last-Modified`**, so it is re-downloaded in full every
   visit (~66 KB). Harmless, but means 304s never happen.
 - The Bisaya harvesting video carries its own burned-in "click Continue" prompt from ~92 s.
-- `~1 s` of café shows between the brewing and testimony videos (fade out, then in).
+- `~1 s` of café between the brewing and testimony videos — **did not reproduce** in the
+  audit against `testimony_v2` (no café frame at 200 ms sampling, 203 ms gap). Kept here
+  only because a sub-200 ms flash was not ruled out.
