@@ -860,6 +860,31 @@ function updateJourneyBarLabel() {
     if (!label) return;
     const step = JOURNEY_STEPS[journeyProgressStep];
     label.textContent = step ? t(`ui.progress.${step.key}`) : '';
+    fitJourneyBarLabel();
+}
+
+// The pill's 130px max-width is load bearing (see the comment in index.html), so a
+// label that does not fit cannot be given more room -- it has to be given a smaller
+// font. Steps down from the pill's own size in 0.5px increments to a floor of 11px;
+// below that the text stops being readable, so ellipsis is the better failure and the
+// CSS already provides it. 'Back to the Cafe' (en) and 'Padulong sa Uma' /
+// 'Balik sa Kapehan' (bis) are the three that need it. The expanded track uses
+// .jp-label and is untouched.
+const JOURNEY_LABEL_MIN_PX = 11;
+function fitJourneyBarLabel() {
+    const label = document.getElementById('journey-bar-label');
+    if (!label) return;
+    label.style.fontSize = '';
+    if (!label.clientWidth) return;   // pill still hidden: nothing to measure yet
+    const base = parseFloat(getComputedStyle(label).fontSize);
+    if (!base) return;
+    for (let px = base; label.scrollWidth > label.clientWidth; px -= 0.5) {
+        if (px - 0.5 < JOURNEY_LABEL_MIN_PX) {
+            label.style.fontSize = JOURNEY_LABEL_MIN_PX + 'px';
+            return;
+        }
+        label.style.fontSize = (px - 0.5) + 'px';
+    }
 }
 
 function closeJourneyPanel() {
@@ -910,7 +935,10 @@ function updateJourneyBar() {
         closeJourneyPanel();
         return;
     }
-    bar.classList.add('visible');
+    if (!bar.classList.contains('visible')) {
+        bar.classList.add('visible');
+        fitJourneyBarLabel();   // first measurable moment: hidden labels report width 0
+    }
 }
 window.updateJourneyBar = updateJourneyBar;
 

@@ -447,7 +447,7 @@
         #journey-bar.visible { display: block; }
         #journey-bar-toggle {
             display: flex; align-items: center; gap: 8px;
-            max-width: 130px; padding: 10px 14px;
+            max-width: 130px; padding: 10px 12px;
             background: rgba(0,0,0,0.75); border: 1px solid rgba(244,208,63,0.35);
             border-radius: 22px; color: #f4d03f;
             font-family: inherit; font-size: 0.8rem; line-height: 1.1;
@@ -461,7 +461,10 @@
             width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%;
             background: #f4d03f; box-shadow: 0 0 8px rgba(244,208,63,0.6);
         }
-        #journey-bar-label { overflow: hidden; text-overflow: ellipsis; }
+        /* min-width:0 is what makes the label a shrinkable flex item, so it clips
+           (and reports scrollWidth > clientWidth) instead of forcing the pill wider
+           than its load-bearing max-width. fitJourneyBarLabel() reads exactly that. */
+        #journey-bar-label { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
         #journey-panel {
             position: fixed; bottom: 184px; left: 50%; transform: translateX(-50%);
