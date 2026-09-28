@@ -1082,6 +1082,12 @@ window.updateJourneyPlant = updateJourneyPlant;
 // ---------------------------------------------------------------------------
 const QUIZ_TOOL_TIMEOUT_MS = 20000;    // the tool acts on its own after this, no timer shown
 const QUIZ_TOOL_DROP_DIST = 130;       // px from the subject's centre that counts as "on it"
+// A press-and-release with no travel is a CLICK, not a drag, and must never count as
+// using the tool. Without this the only thing standing between a stray pointerup and a
+// free stage was the spawn distance -- measured at 191-205px against the 130px radius
+// at 1280x800, 1280x1200 and 900x800, for all three tools, so the spawn is comfortably
+// outside it, but that is a geometric accident rather than a rule. This is the rule.
+const QUIZ_TOOL_MIN_DRAG_PX = 20;
 const PLANT_STAGE_HOLD_MS = 1500;
 
 function paintQuizPlant(animate) {
@@ -1145,7 +1151,7 @@ function awaitToolUse(tool, subject, prompt) {
         };
         const timer = setTimeout(() => finish('auto'), QUIZ_TOOL_TIMEOUT_MS);
 
-        let dragging = false, startX = 0, startY = 0;
+        let dragging = false, startX = 0, startY = 0, movedPx = 0;
         const onDown = (e) => {
             if (settled) return;
             // Stops the press reaching the scene's window-level mousedown (camera drag)
@@ -1153,14 +1159,16 @@ function awaitToolUse(tool, subject, prompt) {
             e.preventDefault();
             e.stopPropagation();
             dragging = true;
-            startX = e.clientX; startY = e.clientY;
+            startX = e.clientX; startY = e.clientY; movedPx = 0;
             tool.classList.add('dragging');
             try { tool.setPointerCapture(e.pointerId); } catch (err) { /* not captured, fine */ }
         };
         const onMove = (e) => {
             if (!dragging) return;
             e.preventDefault();
-            tool.style.transform = `translate(${e.clientX - startX}px, ${e.clientY - startY}px)`;
+            const dx = e.clientX - startX, dy = e.clientY - startY;
+            movedPx = Math.max(movedPx, Math.hypot(dx, dy));
+            tool.style.transform = `translate(${dx}px, ${dy}px)`;
         };
         const onUp = () => {
             if (!dragging) return;
@@ -1171,11 +1179,14 @@ function awaitToolUse(tool, subject, prompt) {
             const dist = Math.hypot(
                 (tb.left + tb.width / 2) - (sb.left + sb.width / 2),
                 (tb.top + tb.height / 2) - (sb.top + sb.height / 2));
-            if (dist <= QUIZ_TOOL_DROP_DIST) {
+            // Both conditions, always: the pointer has to have travelled AND the tool
+            // has to end up on the subject. A click that never moved is neither.
+            if (movedPx >= QUIZ_TOOL_MIN_DRAG_PX && dist <= QUIZ_TOOL_DROP_DIST) {
                 finish('drag');
             } else {
-                // Missed: slide back and let them try again. The 20s timer keeps
-                // running, so a player who cannot manage the drag is never stuck.
+                // Missed, or never actually dragged: slide back and let them try
+                // again. The 20s timer keeps running, so a player who cannot manage the
+                // drag is never stuck.
                 tool.style.transition = 'transform 220ms ease-out';
                 tool.style.transform = 'translate(0px, 0px)';
                 setTimeout(() => { tool.style.transition = ''; }, 240);
@@ -1769,6 +1780,12 @@ function seekBy(delta) {
         const key = (el === window.__brandStoryAudio)
             ? 'brandStoryIntro'
             : (scene && (scene.voSceneKey || scene.audioKey || voKeyFromSrc(el) || scene.name));
+        // The ONLY place SceneSeeked is ever written, and seekBy() is reached only from
+        // the arrow-key handler and the two seek buttons. Programmatic currentTime
+        // changes -- the harvesting 30-60s loop wrap, both VO watchdogs, prefetch --
+        // deliberately do not come through here, so none of them can make a summary
+        // panel appear. Anything that starts assigning currentTime for the player must
+        // call seekBy rather than setting this directly.
         if (key) window.SceneSeeked[key] = true;
     }
     if (window.DEV_MODE) console.log(`[Seek] ${delta > 0 ? '+' : ''}${delta}s  ${from.toFixed(2)} -> ${to.toFixed(2)}  on ${el.id || el.tagName}`);
