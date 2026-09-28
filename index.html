@@ -464,20 +464,26 @@
         }
         #journey-plant svg { width: 100%; height: 100%; display: block; }
         #journey-track {
-            position: relative; width: 6px; height: 190px; border-radius: 3px;
-            /* The unfilled part has to read against a sunlit 360 photo as well as a dim
-               café, so it carries its own dark ground rather than relying on the scene
-               behind it. */
-            background: rgba(0,0,0,0.45); box-shadow: 0 0 0 1px rgba(255,255,255,0.18);
+            position: relative; width: 8px; height: 190px; border-radius: 4px;
+            /* Three layers of contrast, because this sits over whatever the 360 photo
+               happens to be: a mid-gray body so it is visible on black, a dark ring so
+               it is visible on a sunlit sky, and a soft outer shadow so the ring itself
+               never disappears into a bright edge. At 6px with a 0.16 white body it was
+               effectively invisible over the farm. */
+            background: rgba(150,150,150,0.55);
+            box-shadow: 0 0 0 1.5px rgba(0,0,0,0.65), 0 2px 10px rgba(0,0,0,0.55);
             overflow: hidden; transition: opacity 0.3s ease;
         }
-        /* Fills downward from the plant: the plant is the start of the column and the
-           journey reads top to bottom with it. */
+        /* Rises from the BOTTOM toward the plant at the top: the fill grows the way the
+           plant does, rather than draining down at it. */
         #journey-track-fill {
-            position: absolute; left: 0; top: 0; width: 100%; height: 0;
-            background: linear-gradient(#f4d03f, #d8b02c);
-            box-shadow: 0 0 8px rgba(244,208,63,0.5);
-            transition: height 0.6s ease;
+            position: absolute; left: 0; bottom: 0; width: 100%; height: 0;
+            background: linear-gradient(to top, #d8b02c, #ffe071);
+            box-shadow: 0 0 10px rgba(244,208,63,0.65);
+            transition: height 900ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #journey-track-fill { transition: none; }
         }
         /* visibility, not display: the seek buttons are in this column and follow their
            own rules, so hiding the plant and the track must not move them. */

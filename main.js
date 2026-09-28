@@ -885,8 +885,11 @@ function updateJourneyRail() {
     const rail = document.getElementById('journey-rail');
     if (!rail) return;
     const loading = document.getElementById('loading-screen');
-    const hidden = window.journeyComplete
-        || document.body.classList.contains('video-open')
+    // Quizzes, overlays, videos and the loading screen -- and nothing else. It used to
+    // hide on window.journeyComplete too, which took the bar away for the whole of free
+    // roam; the brief is that it is visible while exploring, including before the first
+    // quiz, when the track is simply empty.
+    const hidden = document.body.classList.contains('video-open')
         || document.body.classList.contains('ui-overlay-active')
         || (loading && !loading.classList.contains('hidden'));
     // visibility rather than display: the seek buttons live in this column and follow
