@@ -1539,6 +1539,109 @@ window.addEventListener('keydown', (e) => {
     seekBy(e.key === 'ArrowRight' ? SEEK_STEP : -SEEK_STEP);
 });
 
+// ----------------------------------------------------------------------------
+// On-screen seek buttons.
+//
+// They are a second way into seekBy(), never a second implementation of seeking:
+// quizzes-never-skipped, back-stops-at-the-start, forward-marks-the-scene-seeked and
+// the seekPending accumulation all live inside seekBy and are inherited whole.
+//
+// Debounce: the keydown path drops e.repeat, which is what stops a HELD key from
+// firing dozens of seeks. A held mouse button produces no auto-repeat, so the
+// equivalent hazard here is a rapid click storm, and SEEK_CLICK_MIN_MS is its floor.
+// It is deliberately shorter than SEEK_STEP: two quick deliberate clicks must still
+// go 20s, exactly as two quick key presses do.
+//
+// Pointer events are stopped at the button. Every scene binds mousedown on WINDOW and
+// decides whether to start a camera drag from an allowlist of UI ids it should ignore,
+// and RaycastSystem binds click on window -- so without this a press on a button would
+// also swing the camera, and a release would cast a ray into the scene behind it.
+// #seek-controls is in the raycaster's ignore list too; both are kept because the
+// stopPropagation also covers the five scenes' drag handlers, which have no shared list.
+// ----------------------------------------------------------------------------
+const SEEK_CLICK_MIN_MS = 120;
+let lastSeekClickAt = 0;
+
+function initSeekControls() {
+    const wrap = document.getElementById('seek-controls');
+    if (!wrap || wrap.dataset.wired) return;
+    wrap.dataset.wired = '1';
+    const press = (delta) => {
+        const now = Date.now();
+        if (now - lastSeekClickAt < SEEK_CLICK_MIN_MS) return;
+        lastSeekClickAt = now;
+        seekBy(delta);
+    };
+    const wire = (id, delta, labelKey) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.dataset.labelKey = labelKey;
+        btn.addEventListener('mousedown', (e) => e.stopPropagation());
+        btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            press(delta);
+            // Otherwise the button keeps focus and the next ArrowLeft/Right is spent
+            // moving between the two buttons instead of reaching the seek handler.
+            btn.blur();
+        });
+    };
+    wire('seek-back', -SEEK_STEP, 'ui.seek.back');
+    wire('seek-fwd', SEEK_STEP, 'ui.seek.forward');
+    refreshSeekLabels();
+}
+
+// The buttons are wired on the first tick, which is BEFORE the language picker -- the
+// ticker starts at page load and the picker is two screens in. Labelling once at wire
+// time therefore froze both aria-labels in English for a Bisaya run (measured). They
+// are re-read whenever the language actually changes instead.
+let seekLabelLang = null;
+function refreshSeekLabels() {
+    const lang = window.currentLanguage || 'en';
+    if (lang === seekLabelLang) return;
+    seekLabelLang = lang;
+    for (const id of ['seek-back', 'seek-fwd']) {
+        const btn = document.getElementById(id);
+        if (btn && btn.dataset.labelKey) btn.setAttribute('aria-label', t(btn.dataset.labelKey));
+    }
+}
+window.initSeekControls = initSeekControls;
+
+// Shown only when there is something a press would actually move: a media element that
+// is playing, with a real duration. seekBlocked() is the same gate the keys pass
+// through, so the buttons cannot be visible in a state where clicking them is refused.
+// The journey panel is included because it opens over this corner.
+function updateSeekControls() {
+    const wrap = document.getElementById('seek-controls');
+    if (!wrap) return;
+    initSeekControls();
+    refreshSeekLabels();
+    let show = false;
+    if (!seekBlocked() && !document.body.classList.contains('journey-panel-open')) {
+        const el = currentSeekTarget();
+        show = !!el && !el.paused && !el.ended && el.readyState > 0
+            && Number.isFinite(el.duration) && el.duration > 0;
+    }
+    wrap.classList.toggle('visible', show);
+}
+window.updateSeekControls = updateSeekControls;
+
+// A ticker as well as the frame loop, because the brand story runs BEFORE app.start():
+// startup() is fired by start360Experience, after the last brand-story gate, so
+// app.on('update') is dead for the whole narration the arrow keys already seek. Without
+// this the buttons would be missing from exactly the sequence they are most needed in.
+//
+// Polling is safe here only because this decides VISIBILITY, not timing: a frame or two
+// of lag is invisible, and nothing downstream measures from it. Anything time-critical
+// still belongs in the media element's own events (see the subtitle notes in CLAUDE.md).
+setInterval(() => {
+    try {
+        updateUiSuppression();
+        updateSeekControls();
+    } catch (e) { /* never let the ticker die on a transient null */ }
+}, 150);
+
 // ============================================================================
 // HOTSPOT POPUP ANCHORING
 //
@@ -1606,7 +1709,7 @@ class RaycastSystem {
         }
         // The journey bar sits over the canvas and is clickable, so without this a
         // click on the pill would also cast a ray into the scene behind it.
-        if (event.target.closest('#quiz-overlay, #completion-panel, #color-menu, #journey-bar, #journey-panel')) {
+        if (event.target.closest('#quiz-overlay, #completion-panel, #color-menu, #journey-bar, #journey-panel, #seek-controls')) {
             return;
         }
 
@@ -3405,6 +3508,7 @@ app.on('update', function(deltaTime) {
         activeScene.update(deltaTime);
     }
     updateJourneyBar();
+    updateSeekControls();
 });
 
 // ============================================================================

@@ -150,7 +150,13 @@ window.Strings = {
     'ui.summary.backToCafe': { en: 'Grind 15g medium-coarse, rinse the filter, bloom with 45ml for 45 seconds, then pour to 225ml. Every cup carries the care of the people behind it.', bis: 'Galingon ang 15g nga medium-coarse, banlawi ang filter, i-bloom gamit ang 45ml sulod sa 45 segundos, dayon ibubo hangtod 225ml. Ang matag tasa nagdala sa pag-atiman sa mga tawo luyo niini.' },
 
     // Tutorial: a standing hint, not a step -- it never blocks and never needs a press.
-    'ui.tutorial.seekHint': { en: 'Press \u2192 to skip ahead, \u2190 to go back', bis: 'Pindota ang → aron molaktaw, ← aron mobalik' },
+    // Leads with the on-screen buttons because they are the discoverable control; the
+    // arrow keys are named after them as the shortcut, not as the primary way in.
+    'ui.tutorial.seekHint': { en: 'Use the ⏪ ⏩ buttons to skip 10s (or the \u2190 \u2192 keys)', bis: 'Gamita ang ⏪ ⏩ nga buton aron molaktaw 10s (o ang \u2190 \u2192 nga yawi)' },
+
+    // Seek buttons: aria-labels only -- the visible face is the icon plus −10s / +10s.
+    'ui.seek.back': { en: 'Go back 10 seconds', bis: 'Balik 10 segundos' },
+    'ui.seek.forward': { en: 'Skip ahead 10 seconds', bis: 'Laktaw 10 segundos' },
 
     // Coffee tree: one line per stage, including the intermediate stages the nursery
     // and farm pop-ups pass through on their way to the stage the hook ends at.

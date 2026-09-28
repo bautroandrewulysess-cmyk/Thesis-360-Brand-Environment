@@ -466,6 +466,46 @@
            than its load-bearing max-width. fitJourneyBarLabel() reads exactly that. */
         #journey-bar-label { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
+        /* ---- Seek buttons. Bottom-right, directly ABOVE the progress pill and sharing
+           its right edge, so the corner reads as one control stack.
+
+           Geometry, measured: the pill (#journey-bar-toggle) is 10px+10px padding plus
+           a 1px border each side over a 0.8rem/1.1 line = 36px tall at bottom:16px, so
+           its top edge is at 52px. These sit at bottom:60px, leaving 8px of air, and
+           are 34px tall -> top edge 94px. #journey-panel opens at bottom:184px and
+           #subtitle-bar at bottom:8vh centred with max-width:70vw, both clear.
+
+           z-index 9997: above #brand-story-screen (1002) and the journey bar (930) so
+           the buttons work during the brand story, below #subtitle-bar (9998) so a long
+           two-line subtitle is never covered by them. ---- */
+        #seek-controls {
+            position: fixed; right: 16px; bottom: 60px; z-index: 9997;
+            display: none; gap: 8px; font-family: 'Inter', sans-serif;
+        }
+        #seek-controls.visible { display: flex; }
+        #seek-controls button {
+            display: flex; align-items: center; gap: 5px;
+            height: 34px; padding: 0 11px;
+            background: rgba(0,0,0,0.75); border: 1px solid rgba(244,208,63,0.35);
+            border-radius: 17px; color: #f4d03f;
+            font-family: inherit; font-size: 0.78rem; font-weight: 500; line-height: 1;
+            white-space: nowrap; cursor: pointer;
+            transition: background 0.25s ease, border-color 0.25s ease;
+        }
+        #seek-controls button:hover {
+            background: rgba(0,0,0,0.9); border-color: rgba(244,208,63,0.7);
+        }
+        #seek-controls button:focus-visible {
+            outline: 2px solid rgba(244,208,63,0.8); outline-offset: 2px;
+        }
+        #seek-controls .sk-icon { font-size: 0.9rem; line-height: 1; }
+        /* The label is what costs width; below the pill's own 900px floor the icons
+           alone still say which way each button goes. */
+        @media (max-width: 899px) {
+            #seek-controls .sk-text { display: none; }
+            #seek-controls button { padding: 0 9px; }
+        }
+
         #journey-panel {
             position: fixed; bottom: 184px; left: 50%; transform: translateX(-50%);
             z-index: 931; display: none; align-items: center; gap: 20px;
@@ -696,12 +736,14 @@
         body.scene-loading .farm-closeup-badge,
         body.scene-loading .gate-marker-button,
         body.scene-loading .farm-hint,
+        body.scene-loading #seek-controls,
         body.overlay-suppressed .hotspot-label,
         body.overlay-suppressed .arrow-label,
         body.overlay-suppressed .farm-closeup-badge,
         body.overlay-suppressed .gate-marker-button,
         body.overlay-suppressed #nav-prompt,
-        body.overlay-suppressed .farm-hint {
+        body.overlay-suppressed .farm-hint,
+        body.overlay-suppressed #seek-controls {
             display: none !important;
         }
 
@@ -885,6 +927,16 @@
         <div id="journey-panel-track"></div>
     </div>
 
+    <!-- Seek buttons. They call window.seekBy() -- the same function the arrow keys
+         call -- so every rule that already governs seeking (quizzes never skipped,
+         back stops at the segment start, a forward press marks the scene seeked,
+         presses accumulated through seekPending) holds for a click with no second
+         implementation to keep in step. -->
+    <div id="seek-controls">
+        <button id="seek-back" type="button"><span class="sk-icon">&#9194;</span><span class="sk-text">&minus;10s</span></button>
+        <button id="seek-fwd" type="button"><span class="sk-icon">&#9193;</span><span class="sk-text">+10s</span></button>
+    </div>
+
 <div id="nav-prompt" style="display:none; opacity:0; transition:opacity 0.6s ease; position:fixed; bottom:3vh; left:50%; transform:translateX(-50%); padding:10px 22px; background:rgba(0,0,0,0.7); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; letter-spacing:0.5px; text-align:center; border:1px solid rgba(244,208,63,0.35); border-radius:30px; z-index:900; pointer-events:none; backdrop-filter:blur(4px);"></div>
 
     <!-- Hotspot Pop-up Container -->
@@ -975,7 +1027,7 @@
 
             <h2 style="font-family:'Oswald',sans-serif; font-size:1.35rem; margin:0 0 14px 0; font-weight:400; letter-spacing:1px;">How to Explore</h2>
 
-            <div style="display:flex; flex-direction:column; gap:16px; align-items:center;">
+            <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
                 <!-- Top row: Move and Look (two-up, large) -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px; width:100%;">
                     <!-- Move -->
@@ -1015,8 +1067,22 @@
                 </div>
 
                 <!-- Bottom row: Markers, Gold markers, Discs (three-up, small) -->
-                <div style="width:100%; border-top:1px solid rgba(255,255,255,0.1); padding-top:14px;">
-                    <div style="font-size:0.78rem; letter-spacing:1.4px; text-transform:uppercase; color:#8f8f8f; margin-bottom:10px;">What you'll see</div>
+                <div style="width:100%; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
+                    <!-- The seek note rides on the "What you'll see" header line rather
+                         than taking a row of its own. Measured: the card has ~5px of
+                         headroom at 1280x800 before it starts scrolling, so a row of its
+                         own (+89px) was not affordable; this costs the difference between
+                         a 13px label line and a 22px chip, and the gap trim below pays
+                         for that. The chips are drawn as the buttons actually look; the
+                         keys are named after them as the shortcut. -->
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+                        <div style="font-size:0.78rem; letter-spacing:1.4px; text-transform:uppercase; color:#8f8f8f;">What you'll see</div>
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.74rem; color:#a8a8a8; white-space:nowrap;">
+                            <span style="display:inline-flex; align-items:center; height:22px; padding:0 8px; background:rgba(0,0,0,0.75); border:1px solid rgba(244,208,63,0.35); border-radius:11px; color:#f4d03f; font-size:0.68rem; font-weight:500;">&#9194;&nbsp;&minus;10s</span>
+                            <span style="display:inline-flex; align-items:center; height:22px; padding:0 8px; background:rgba(0,0,0,0.75); border:1px solid rgba(244,208,63,0.35); border-radius:11px; color:#f4d03f; font-size:0.68rem; font-weight:500;">&#9193;&nbsp;+10s</span>
+                            <span>skip through a narration or video (or the &larr; &rarr; keys). Quizzes are never skipped.</span>
+                        </div>
+                    </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px 22px; width:100%;">
                     <div style="display:flex; align-items:flex-start; gap:10px; text-align:left;">
                         <div style="flex:0 0 34px; height:34px; display:flex; align-items:center; justify-content:center;"><svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="14" fill="rgba(12,12,12,0.72)" stroke="rgba(79,195,247,0.85)"/><g stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" fill="none"><circle cx="15" cy="15" r="9"/><line x1="15" y1="14" x2="15" y2="19.5"/></g><circle cx="15" cy="10.6" r="1" fill="#4fc3f7"/></svg></div>
