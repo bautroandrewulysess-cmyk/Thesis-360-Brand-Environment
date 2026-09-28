@@ -10,3 +10,4 @@ extras/
 test/.asset-cache/
 test/screens/
 test/vtt/
+test/loudness/_src/
