@@ -2919,13 +2919,20 @@ class Scene {
     // at or above 1.0 is not a duck at all.
     duckAmbient(level = 0.47) {
         if (!this.ambientGain) return;
-        this.storedAmbientGain = this.ambientGain.gain.value;
+        // Only store if nothing is stored yet. Ducking twice without an intervening
+        // restore -- brewing then testimony in the final cafe -- used to overwrite the
+        // original with the already-ducked value, so restoreAmbient() put the bed back
+        // to half its base gain and left it there for the rest of the scene. Measured:
+        // stored went 0.1 then 0.05 across that pair.
+        if (this.storedAmbientGain === null) this.storedAmbientGain = this.ambientGain.gain.value;
         const targetGain = this.storedAmbientGain * level;
         this.ambientGain.gain.setTargetAtTime(targetGain, this.audioContext.currentTime, 0.4);
     }
 
     restoreAmbient() {
         if (!this.ambientGain || this.storedAmbientGain === null) return;
+        // Back to the ORIGINAL base gain -- the one captured by the first duck of the
+        // chain -- and cleared so the next chain captures afresh.
         this.ambientGain.gain.setTargetAtTime(this.storedAmbientGain, this.audioContext.currentTime, 0.4);
         this.storedAmbientGain = null;
     }
