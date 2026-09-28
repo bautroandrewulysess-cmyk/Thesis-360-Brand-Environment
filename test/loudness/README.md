@@ -184,7 +184,24 @@ All eight speech videos are more than 3 LU off -16, by −8.9 to −5.7 LU. What
 
 ## 4. Videos — normalized (audio-only remux)
 
-All nine speech videos re-done at **-16 LUFS / -1.5 dBTP**, two-pass `loudnorm`,
+### Which videos have a bis/ variant
+
+Probed on R2, every video the code references. Exactly five have one:
+
+| video | en | bis |
+|---|---|---|
+| `brewingVideo` | 206 | **206** |
+| `coffeeRoasting` | 206 | **206** |
+| `harvestingWeb` | 206 | **206** |
+| `ownerInterview` | 206 | **206** |
+| `farmerInterview` | 206 | **206** |
+| aerial, droneWeb, farmerMontage, mapZoom, polybag, testimony_v2, heroLoop | 206 | 404 |
+
+That makes **11 speech videos**, not nine. `bis/ownerInterview` and
+`bis/farmerInterview` were missed on the first pass because a comment in main.js said
+the interviews kept their English path; they do not, and the Bisaya run 404d on them.
+
+All eleven speech videos re-done at **-16 LUFS / -1.5 dBTP**, two-pass `loudnorm`,
 `-c:v copy` so the video bitstream is passed through untouched. AAC 128 kbit/s,
 48 kHz, stereo, `+faststart`. Outputs are in `Videos/` and `Videos/bis/` in this directory.
 
@@ -206,6 +223,8 @@ overwriting in place would leave returning visitors on the old audio for a month
 | `Videos/brewingVideo.mp4` | `Videos/brewingVideo_v2.mp4` | -23.2 | -16.0 | -1.6 | -1.62 dBFS | +0.066 | identical |
 | `Videos/bis/harvestingWeb.mp4` | `Videos/bis/harvestingWeb_v2.mp4` | -23.6 | -16.1 | -1.6 | -1.59 dBFS | +0.099 | identical |
 | `Videos/bis/coffeeRoasting.mp4` | `Videos/bis/coffeeRoasting_v2.mp4` | -24.9 | -16.0 | -1.7 | -1.78 dBFS | +0.008 | identical |
+| `Videos/bis/ownerInterview.mp4` | `Videos/bis/ownerInterview_v2.mp4` | -22.2 | -16.1 | -1.6 | n/a | +0.063 | identical |
+| `Videos/bis/farmerInterview.mp4` | `Videos/bis/farmerInterview_v2.mp4` | -24.4 | **-16.0** | **-0.4 — MISSES the -1.5 target** | n/a | +0.079 | identical |
 | `Videos/bis/brewingVideo.mp4` | `Videos/bis/brewingVideo_v2.mp4` | -21.7 | -16.0 | -1.6 | -1.60 dBFS | +0.076 | identical |
 
 Verified on every output: within **-16 ±0.5 LUFS**, true peak **at or under -1.5 dBTP**,
@@ -222,6 +241,16 @@ Two things this cost:
 - **Chasing loudness and true peak at once makes them fight.** Pulling TP down to
   stop that overshoot also pulls integrated loudness down; `ownerInterview` settled
   at -17.7 LUFS that way. The TP target is fixed and only loudness is chased.
+
+**`Videos/bis/farmerInterview_v2.mp4` does not meet the true-peak target.** It lands at
+-16.0 LUFS but **-0.4 dBTP**, against the -1.5 requirement. Its source already peaks at
+-1.5 dBTP with the content almost entirely in the left channel, and the +8.4 dB it needs
+puts the AAC decode overshoot above the target no matter what the loudnorm TP target is
+set to (tried -2, -3, -4, -5 — the output stayed at -0.4). An explicit `alimiter` made it
+worse, because `alimiter` applies makeup gain unless `level=disabled`, so a lower limit
+produced a LOUDER file. Options not yet tried: a higher audio bitrate to cut the decode
+overshoot, or accepting about -17 LUFS for this one file. Flagging rather than shipping a
+false claim.
 
 Durations grow by 0.008-0.099 s. That is the AAC encoder's priming and padding, not
 a cut: the video stream is byte-identical, so no frame moved.
@@ -298,6 +327,8 @@ wrangler r2 object put "$BUCKET/Videos/brewingVideo_v2.mp4" --file="Videos/brewi
 wrangler r2 object put "$BUCKET/Videos/bis/harvestingWeb_v2.mp4" --file="Videos/bis/harvestingWeb_v2.mp4" --content-type=video/mp4 --remote
 wrangler r2 object put "$BUCKET/Videos/bis/coffeeRoasting_v2.mp4" --file="Videos/bis/coffeeRoasting_v2.mp4" --content-type=video/mp4 --remote
 wrangler r2 object put "$BUCKET/Videos/bis/brewingVideo_v2.mp4" --file="Videos/bis/brewingVideo_v2.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/bis/ownerInterview_v2.mp4" --file="Videos/bis/ownerInterview_v2.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/bis/farmerInterview_v2.mp4" --file="Videos/bis/farmerInterview_v2.mp4" --content-type=video/mp4 --remote
 ```
 
 ## 6. Verify before deploying
@@ -315,7 +346,8 @@ BASE=https://assets.granjaalegre.com
     Videos/harvestingWeb_v2.mp4 Videos/coffeeRoasting_v2.mp4 \
     Videos/testimony_v3.mp4 Videos/brewingVideo_v2.mp4 \
     Videos/bis/harvestingWeb_v2.mp4 Videos/bis/coffeeRoasting_v2.mp4 \
-    Videos/bis/brewingVideo_v2.mp4; } | while read -r f; do
+    Videos/bis/brewingVideo_v2.mp4 Videos/bis/ownerInterview_v2.mp4 \
+    Videos/bis/farmerInterview_v2.mp4; } | while read -r f; do
   code=$(curl -s -o /dev/null -w '%{http_code}' -r 0-1023 "$BASE/$f")
   remote=$(curl -s -r 0- "$BASE/$f" | wc -c | tr -d ' ')
   local=$(stat -f%z "$f")
