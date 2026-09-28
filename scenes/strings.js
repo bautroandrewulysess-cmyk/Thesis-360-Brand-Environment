@@ -163,9 +163,12 @@ window.Strings = {
     'ui.seek.back': { en: 'Go back 10 seconds', bis: 'Balik 10 segundos' },
     'ui.seek.forward': { en: 'Skip ahead 10 seconds', bis: 'Laktaw 10 segundos' },
 
-    // Watering can. The prompt is the only instruction the player gets, so it names
-    // both the object and the target rather than saying "drag me".
+    // Quiz tools. The prompt is the only instruction the player gets, so each one names
+    // both the object and what to do with it rather than saying "drag me". One per tool:
+    // the can waters a growing plant, the flame roasts green beans, the kettle brews.
     'ui.water.prompt': { en: 'Drag the watering can to your plant', bis: 'I-drag ang regadera ngadto sa imong tanom' },
+    'ui.roast.prompt': { en: 'Drag the flame under the beans to roast them', bis: 'I-drag ang kalayo ilalom sa mga liso aron masanlag' },
+    'ui.brew.prompt': { en: 'Drag the kettle to brew your coffee', bis: 'I-drag ang takure aron maghimo sa imong kape' },
 
     // Coffee tree: one line per stage, including the intermediate stages the nursery
     // and farm pop-ups pass through on their way to the stage the hook ends at.

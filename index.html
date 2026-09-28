@@ -569,61 +569,103 @@
             min-height: 1.2em;
         }
 
-        /* The watering can. Large on purpose: it is the only interactive thing in the
-           box at that moment, and it has to read as draggable at a glance. Sits on the
-           LEFT with the spout facing the plant. */
-        #quiz-water-can {
+        /* The tool: a watering can, a flame or a kettle depending on the stage being
+           earned. Large on purpose -- it is the only interactive thing in the box at
+           that moment, and it has to read as draggable at a glance. Always on the LEFT
+           with its working end facing the subject, whatever the tool is. */
+        #quiz-tool {
             position: absolute; left: 4px; top: 8px;
             width: 92px; height: 92px; display: none;
             cursor: grab; touch-action: none; user-select: none; z-index: 3;
         }
-        #quiz-water-can.visible { display: block; }
-        #quiz-water-can.dragging { cursor: grabbing; }
-        /* The can is TWO elements on purpose. The outer #quiz-water-can carries the
+        #quiz-tool.visible { display: block; }
+        #quiz-tool.dragging { cursor: grabbing; }
+        /* The can is TWO elements on purpose. The outer #quiz-tool carries the
            travel (an inline transform: translate, set from measured rects), and .wc-inner
            carries the tilt. A CSS animation's transform beats an inline one outright, so
            when the pour keyframes lived on the outer element they wiped the travel and
            the can tilted in place on the far left instead of over the plant. Measured:
            can centre x=439 against a plant at x=640. */
-        #quiz-water-can .wc-inner { display: block; width: 100%; height: 100%; }
-        #quiz-water-can svg { width: 100%; height: 100%; display: block; pointer-events: none; }
+        #quiz-tool .wc-inner { display: block; width: 100%; height: 100%; }
+        #quiz-tool svg { width: 100%; height: 100%; display: block; pointer-events: none; }
         /* Pulsing highlight, on the halo rather than the can, so the can's own silhouette
            stays crisp while it pulses. */
-        #quiz-water-can::before {
+        #quiz-tool::before {
             content: ''; position: absolute; inset: -8px; border-radius: 50%;
             background: radial-gradient(circle, rgba(244,208,63,0.35) 0%, rgba(244,208,63,0) 70%);
             animation: qp-can-pulse 1.6s ease-in-out infinite; pointer-events: none;
         }
-        #quiz-water-can.dragging::before, #quiz-water-can.poured::before { animation: none; opacity: 0; }
+        #quiz-tool.dragging::before, #quiz-tool.poured::before { animation: none; opacity: 0; }
         @keyframes qp-can-pulse {
             0%, 100% { transform: scale(0.92); opacity: 0.55; }
             50%      { transform: scale(1.08); opacity: 1; }
         }
         /* Tilt for the pour, on the INNER element (see above). The origin is the handle
            end, on the left, so rotating clockwise swings the spout -- which is on the
-           right -- down over the plant. */
-        #quiz-water-can.pouring .wc-inner {
+           right -- down over the subject. Shared by the can and the kettle: both pour. */
+        #quiz-tool.pouring .wc-inner {
             transform-origin: 22% 58%; animation: qp-pour 900ms ease-in-out forwards;
+        }
+        /* The flame does not tilt -- it sits under the beans and burns. Scale and
+           brightness rather than position, so it flickers in place. */
+        #quiz-tool.flickering .wc-inner {
+            transform-origin: 50% 90%; animation: qp-flicker 380ms ease-in-out infinite;
+        }
+        @keyframes qp-flicker {
+            0%, 100% { transform: scaleY(1) scaleX(1);       filter: brightness(1); }
+            35%      { transform: scaleY(1.14) scaleX(0.94); filter: brightness(1.25); }
+            70%      { transform: scaleY(0.93) scaleX(1.05); filter: brightness(0.92); }
         }
         @keyframes qp-pour {
             0%   { transform: rotate(0deg); }
             25%  { transform: rotate(38deg); }
             100% { transform: rotate(38deg); }
         }
-        #quiz-water-prompt {
+        #quiz-tool-prompt {
             font-size: 0.86rem; line-height: 1.35; text-align: center;
             color: rgba(244,208,63,0.92); min-height: 1.1em; display: none;
         }
-        #quiz-water-prompt.visible { display: block; }
-        .qp-drop {
-            position: absolute; width: 5px; height: 9px; border-radius: 50% 50% 55% 55%;
-            background: linear-gradient(#bfe6ff, #5aa9e6); pointer-events: none; z-index: 2;
-            animation: qp-drop 620ms ease-in forwards;
+        #quiz-tool-prompt.visible { display: block; }
+        /* Three particle kinds, one geometry: each travels --qp-travel px and fades.
+           Water falls (positive travel), smoke and steam rise (negative). */
+        .qp-drop, .qp-smoke, .qp-steam {
+            position: absolute; pointer-events: none; z-index: 2;
         }
-        @keyframes qp-drop {
+        .qp-drop {
+            width: 5px; height: 9px; border-radius: 50% 50% 55% 55%;
+            background: linear-gradient(#bfe6ff, #5aa9e6);
+            animation: qp-particle 620ms ease-in forwards;
+        }
+        .qp-smoke {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: rgba(190,190,190,0.5); filter: blur(3px);
+            animation: qp-particle 1200ms ease-out forwards;
+        }
+        .qp-steam {
+            width: 10px; height: 14px; border-radius: 50% 50% 45% 45%;
+            background: rgba(232,240,255,0.55); filter: blur(2.5px);
+            animation: qp-particle 1300ms ease-out forwards;
+        }
+        @keyframes qp-particle {
             0%   { transform: translateY(0) scale(0.7); opacity: 0; }
             15%  { opacity: 1; }
-            100% { transform: translateY(var(--qp-fall, 52px)) scale(1); opacity: 0; }
+            100% { transform: translateY(var(--qp-travel, 52px)) scale(1.15); opacity: 0; }
+        }
+        /* The kettle's pour-over spiral. Drawn as a stroke sweep rather than a column
+           of droplets: a stream is continuous, and droplets never read as one. */
+        .qp-stream {
+            position: absolute; width: 80px; height: 90px; pointer-events: none; z-index: 2;
+        }
+        .qp-stream svg { width: 100%; height: 100%; display: block; overflow: visible; }
+        .qp-stream path {
+            stroke-dasharray: 210; stroke-dashoffset: 210;
+            animation: qp-stream 1800ms ease-in-out forwards;
+        }
+        @keyframes qp-stream {
+            0%   { stroke-dashoffset: 210; opacity: 0; }
+            12%  { opacity: 1; }
+            85%  { stroke-dashoffset: 0;   opacity: 1; }
+            100% { stroke-dashoffset: 0;   opacity: 0; }
         }
 
         /* Short viewports: the plant and the can give up size before the question and
@@ -633,7 +675,7 @@
             #quiz-card { padding: 24px; }
             #quiz-plant-stage { min-height: 104px; margin-top: 12px; padding-top: 10px; }
             #quiz-plant-art { width: 92px; height: 92px; flex: 0 0 92px; }
-            #quiz-water-can { width: 74px; height: 74px; }
+            #quiz-tool { width: 74px; height: 74px; }
         }
 
         /* Reduced motion: the stage still changes and the can still pours -- the
@@ -641,11 +683,12 @@
         @media (prefers-reduced-motion: reduce) {
             #quiz-plant-art.qp-sway,
             #quiz-plant-art.qp-grow,
-            #quiz-water-can::before,
-            #quiz-water-can.pouring .wc-inner,
-            .qp-drop { animation: none !important; }
+            #quiz-tool::before,
+            #quiz-tool.pouring .wc-inner,
+            #quiz-tool.flickering .wc-inner,
+            .qp-drop, .qp-smoke, .qp-steam, .qp-stream path { animation: none !important; }
             #quiz-plant-art.qp-sway { transform: none; }
-            .qp-drop { display: none; }
+            .qp-drop, .qp-smoke, .qp-steam, .qp-stream { display: none; }
         }
 
         #scene-summary-panel {
@@ -765,6 +808,13 @@
         body.ui-overlay-active .hotspot-label,
         body.ui-overlay-active #nav-prompt,
         body.ui-overlay-active .farm-hint,
+        /* #subtitle-bar is z-index 9998 and #quiz-overlay is 950, so a subtitle left on
+           screen sits OVER the quiz card -- and the card is taller now that it carries
+           the plant, so it reaches into the subtitle band. showQuiz clears the text, but
+           a stalled or seeked segment can put it back. Deliberately only in the
+           ui-overlay-active branch, never under video-open, where subtitles are the
+           whole point. */
+        body.ui-overlay-active #subtitle-bar,
         body.video-open .hotspot-label,
         body.video-open #nav-prompt,
         body.video-open .farm-hint {
@@ -1014,8 +1064,8 @@
         <div id="quiz-plant-stage">
             <div id="quiz-plant-art"></div>
             <div id="quiz-plant-caption"></div>
-            <div id="quiz-water-can" role="button" tabindex="0"></div>
-            <div id="quiz-water-prompt"></div>
+            <div id="quiz-tool" role="button" tabindex="0"></div>
+            <div id="quiz-tool-prompt"></div>
         </div>
       </div>
     </div>
@@ -1153,8 +1203,8 @@
                          they meet it. English only: the language picker is the next
                          screen. -->
                     <div style="display:flex; align-items:center; gap:10px; margin:0 0 10px 0; font-size:0.74rem; color:#a8a8a8; line-height:1.35;">
-                        <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="flex:0 0 26px;"><path d="M68 52 L92 38 L97 47 L74 62 Z" fill="#c9962f"/><path d="M88 33 L99 40 L95 50 L84 43 Z" fill="#e0b448"/><path d="M28 46 h42 a4 4 0 0 1 4 4 v22 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-22 a4 4 0 0 1 4 -4 z" fill="#f4d03f"/><path d="M34 44 q14 -24 32 -8" fill="none" stroke="#c9962f" stroke-width="6" stroke-linecap="round"/><rect x="22" y="39" width="56" height="9" rx="4.5" fill="#e0b448"/></svg>
-                        <span>Answer a question correctly and a watering can appears — drag it onto your coffee plant to make it grow. Your plant follows you on the right of the screen.</span>
+<span style="flex:0 0 auto; display:flex; gap:3px;"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M68 52 L92 38 L97 47 L74 62 Z" fill="#c9962f"/><path d="M88 33 L99 40 L95 50 L84 43 Z" fill="#e0b448"/><path d="M28 46 h42 a4 4 0 0 1 4 4 v22 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-22 a4 4 0 0 1 4 -4 z" fill="#f4d03f"/><path d="M34 44 q14 -24 32 -8" fill="none" stroke="#c9962f" stroke-width="6" stroke-linecap="round"/><rect x="22" y="39" width="56" height="9" rx="4.5" fill="#e0b448"/></svg><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 10 C 63 32, 79 41, 75 61 C 72 78, 62 88, 50 88 C 38 88, 28 78, 25 61 C 21 41, 37 32, 50 10 Z" fill="#f4d03f"/><path d="M50 40 C 58 53, 63 59, 61 69 C 59 79, 55 84, 50 84 C 45 84, 41 79, 39 69 C 37 59, 42 53, 50 40 Z" fill="#c9962f"/></svg><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><path d="M66 48 C 78 44, 89 35, 94 25 L 99 30 C 94 43, 82 54, 69 59 Z" fill="#c9962f"/><path d="M18 46 h50 v18 a25 22 0 0 1 -50 0 z" fill="#f4d03f"/><ellipse cx="43" cy="46" rx="25" ry="7" fill="#e0b448"/><path d="M26 43 q17 -21 34 -5" fill="none" stroke="#c9962f" stroke-width="6" stroke-linecap="round"/><circle cx="43" cy="37" r="4.5" fill="#c9962f"/></svg></span>
+                        <span>After a correct answer, drag the tool that appears to grow your coffee — a watering can, a flame to roast the beans, a kettle to brew. Your plant follows you on the right of the screen.</span>
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px 22px; width:100%;">
                     <div style="display:flex; align-items:flex-start; gap:10px; text-align:left;">

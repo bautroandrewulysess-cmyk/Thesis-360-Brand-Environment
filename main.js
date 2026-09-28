@@ -974,8 +974,8 @@ function plantArtFor(idx) {
 }
 window.plantArtFor = plantArtFor;
 
-// The watering can. Gold body, handle left, spout pointing RIGHT -- it is placed on the
-// left of the plant, so the spout has to face across the box toward it.
+// The watering can. Gold body, handle left, spout pointing RIGHT -- every tool is
+// placed on the left of its subject, so the business end has to face across the box.
 const WATERING_CAN_SVG =
     '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
   + '<path d="M68 52 L92 38 L97 47 L74 62 Z" fill="#c9962f"/>'
@@ -984,6 +984,69 @@ const WATERING_CAN_SVG =
   + '<path d="M34 44 q14 -24 32 -8" fill="none" stroke="#c9962f" stroke-width="6" stroke-linecap="round"/>'
   + '<rect x="22" y="39" width="56" height="9" rx="4.5" fill="#e0b448"/>'
   + '</svg>';
+
+// The roastery's flame. Two nested teardrops, gold outer and darker core, so it still
+// reads as fire at 92px against the card's near-black background.
+const FLAME_SVG =
+    '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+  + '<path d="M50 10 C 63 32, 79 41, 75 61 C 72 78, 62 88, 50 88 C 38 88, 28 78, 25 61 C 21 41, 37 32, 50 10 Z" fill="#f4d03f"/>'
+  + '<path d="M50 40 C 58 53, 63 59, 61 69 C 59 79, 55 84, 50 84 C 45 84, 41 79, 39 69 C 37 59, 42 53, 50 40 Z" fill="#c9962f"/>'
+  + '<path d="M50 60 C 53 67, 55 70, 54 75 C 53 80, 52 82, 50 82 C 48 82, 47 80, 46 75 C 45 70, 47 67, 50 60 Z" fill="#fdf0b8"/>'
+  + '</svg>';
+
+// The final café's kettle. Gooseneck spout to the right -- it is the pour-over kettle
+// from the brewing video, which is what the player has just watched.
+const KETTLE_SVG =
+    '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+  + '<path d="M66 48 C 78 44, 89 35, 94 25 L 99 30 C 94 43, 82 54, 69 59 Z" fill="#c9962f"/>'
+  + '<path d="M18 46 h50 v18 a25 22 0 0 1 -50 0 z" fill="#f4d03f"/>'
+  + '<ellipse cx="43" cy="46" rx="25" ry="7" fill="#e0b448"/>'
+  + '<path d="M26 43 q17 -21 34 -5" fill="none" stroke="#c9962f" stroke-width="6" stroke-linecap="round"/>'
+  + '<circle cx="43" cy="37" r="4.5" fill="#c9962f"/>'
+  + '</svg>';
+
+// Green, unroasted beans -- the roastery's subject. It is NOT a coffee-tree stage: the
+// plant's stage at that point is ripeCherries, but what goes into a roaster is the
+// green bean, and a flame held under a bowl of red cherries would be nonsense. Same
+// 200x200 viewBox and y=178 ground line as every stage, so the swap to roastedBeans
+// lines up exactly.
+const GREEN_BEANS_ART =
+    '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="ct-svg">'
+  + '<defs><linearGradient id="gbG" x1="0" y1="0" x2="0.3" y2="1">'
+  + '<stop offset="0" stop-color="#9fd07a"/><stop offset="1" stop-color="#5f8f3f"/></linearGradient></defs>'
+  + '<ellipse cx="100" cy="178" rx="52" ry="10" fill="#2a1d10" opacity="0.6"/>'
+  + '<g class="gb-pile">'
+  + '<g transform="translate(74,166) rotate(-18)"><ellipse rx="15" ry="10" fill="url(#gbG)"/>'
+  +   '<path d="M-12 0 C -5 -5, 5 5, 12 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
+  + '<g transform="translate(126,166) rotate(14)"><ellipse rx="15" ry="10" fill="url(#gbG)"/>'
+  +   '<path d="M-12 0 C -5 -5, 5 5, 12 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
+  + '<g transform="translate(100,168) rotate(-4)"><ellipse rx="16" ry="10.5" fill="url(#gbG)"/>'
+  +   '<path d="M-13 0 C -5 -5, 5 5, 13 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
+  + '<g transform="translate(87,150) rotate(22)"><ellipse rx="14" ry="9.5" fill="url(#gbG)"/>'
+  +   '<path d="M-11 0 C -4 -5, 4 5, 11 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
+  + '<g transform="translate(114,150) rotate(-24)"><ellipse rx="14" ry="9.5" fill="url(#gbG)"/>'
+  +   '<path d="M-11 0 C -4 -5, 4 5, 11 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
+  + '<g transform="translate(100,134) rotate(6)"><ellipse rx="13" ry="9" fill="url(#gbG)"/>'
+  +   '<path d="M-10 0 C -4 -4, 4 4, 10 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
+  + '</g></svg>';
+
+// Which tool each hook hands the player, where it goes, and what it does when it gets
+// there. The drag, the 20s auto path and the "only after a correct answer" rule are
+// shared -- only these three fields differ, so there is exactly one interaction to
+// maintain however many tools there eventually are.
+//
+// `subject` overrides what the box shows BEFORE the growth runs. Only the roastery
+// needs it (see GREEN_BEANS_ART); everywhere else the subject is simply the stage the
+// player is already on.
+const QUIZ_TOOLS = {
+    cafeInterior: { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour' },
+    nursery:      { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour' },
+    farm:         { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour' },
+    harvesting:   { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour' },
+    roastery:     { svg: FLAME_SVG,        promptKey: 'ui.roast.prompt', place: 'below', effect: 'roast',
+                    subject: GREEN_BEANS_ART },
+    backToCafe:   { svg: KETTLE_SVG,       promptKey: 'ui.brew.prompt',  place: 'above', effect: 'brew' },
+};
 
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const prefersReducedMotion = () =>
@@ -1014,8 +1077,8 @@ window.updateJourneyPlant = updateJourneyPlant;
 // pass) -> pour -> stage(s) change -> THEN the quiz closes and onPass runs. Nothing
 // about passing or failing is touched; this only ever observes a pass.
 // ---------------------------------------------------------------------------
-const QUIZ_WATER_TIMEOUT_MS = 20000;   // auto-waters after this, with no visible timer
-const QUIZ_WATER_DROP_DIST = 130;      // px from the plant's centre that counts as "on it"
+const QUIZ_TOOL_TIMEOUT_MS = 20000;    // the tool acts on its own after this, no timer shown
+const QUIZ_TOOL_DROP_DIST = 130;       // px from the subject's centre that counts as "on it"
 const PLANT_STAGE_HOLD_MS = 1500;
 
 function paintQuizPlant(animate) {
@@ -1032,49 +1095,52 @@ window.paintQuizPlant = paintQuizPlant;
 function resetQuizPlantStage() {
     const host = document.getElementById('quiz-plant-stage');
     if (!host) return;
-    const can = document.getElementById('quiz-water-can');
-    const prompt = document.getElementById('quiz-water-prompt');
+    const tool = document.getElementById('quiz-tool');
+    const prompt = document.getElementById('quiz-tool-prompt');
     const caption = document.getElementById('quiz-plant-caption');
-    if (can) { can.className = ''; can.style.transform = ''; can.style.transition = ''; can.innerHTML = ''; }
+    const art = document.getElementById('quiz-plant-art');
+    if (tool) { tool.className = ''; tool.style.transform = ''; tool.style.transition = ''; tool.innerHTML = ''; }
     if (prompt) { prompt.className = ''; prompt.textContent = ''; }
     if (caption) caption.textContent = '';
-    host.querySelectorAll('.qp-drop').forEach(d => d.remove());
+    if (art) art.style.filter = '';
+    host.querySelectorAll('.qp-drop, .qp-smoke, .qp-steam, .qp-stream').forEach(d => d.remove());
 }
 window.resetQuizPlantStage = resetQuizPlantStage;
 
-// Water drops falling from the spout onto the plant. Purely decorative, and skipped
-// entirely under reduced motion.
-function spawnWaterDrops(host, fromX, fromY, fallPx) {
+// Small particles -- water drops, roasting smoke, brewing steam. One helper because
+// they differ only in class, count and travel; all three are decoration and all three
+// are skipped entirely under reduced motion.
+function spawnParticles(host, cls, count, fromX, fromY, travelPx, stepMs) {
     if (prefersReducedMotion()) return;
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < count; i++) {
         const d = document.createElement('div');
-        d.className = 'qp-drop';
+        d.className = cls;
         d.style.left = `${fromX + (Math.random() * 16 - 8)}px`;
         d.style.top = `${fromY}px`;
-        d.style.setProperty('--qp-fall', `${fallPx}px`);
-        d.style.animationDelay = `${i * 85}ms`;
+        d.style.setProperty('--qp-travel', `${travelPx}px`);
+        d.style.animationDelay = `${i * stepMs}ms`;
         host.appendChild(d);
-        setTimeout(() => d.remove(), 620 + i * 85 + 120);
+        setTimeout(() => d.remove(), 1400 + i * stepMs);
     }
 }
 
-// Resolves when the player drops the can on the plant, or when the timeout fires.
-// Deliberately one promise with two ways to settle, so the pour that follows is written
+// Resolves when the player drops the tool on the subject, or when the timeout fires.
+// Deliberately one promise with two ways to settle, so everything downstream is written
 // once rather than duplicated down a manual path and an automatic one.
-function awaitWatering(can, plantArt, prompt) {
+function awaitToolUse(tool, subject, prompt) {
     return new Promise((resolve) => {
         let settled = false;
         const finish = (how) => {
             if (settled) return;
             settled = true;
             clearTimeout(timer);
-            can.removeEventListener('pointerdown', onDown);
+            tool.removeEventListener('pointerdown', onDown);
             window.removeEventListener('pointermove', onMove);
             window.removeEventListener('pointerup', onUp);
-            can.removeEventListener('keydown', onKey);
+            tool.removeEventListener('keydown', onKey);
             resolve(how);
         };
-        const timer = setTimeout(() => finish('auto'), QUIZ_WATER_TIMEOUT_MS);
+        const timer = setTimeout(() => finish('auto'), QUIZ_TOOL_TIMEOUT_MS);
 
         let dragging = false, startX = 0, startY = 0;
         const onDown = (e) => {
@@ -1085,40 +1151,40 @@ function awaitWatering(can, plantArt, prompt) {
             e.stopPropagation();
             dragging = true;
             startX = e.clientX; startY = e.clientY;
-            can.classList.add('dragging');
-            try { can.setPointerCapture(e.pointerId); } catch (err) { /* not captured, fine */ }
+            tool.classList.add('dragging');
+            try { tool.setPointerCapture(e.pointerId); } catch (err) { /* not captured, fine */ }
         };
         const onMove = (e) => {
             if (!dragging) return;
             e.preventDefault();
-            can.style.transform = `translate(${e.clientX - startX}px, ${e.clientY - startY}px)`;
+            tool.style.transform = `translate(${e.clientX - startX}px, ${e.clientY - startY}px)`;
         };
         const onUp = () => {
             if (!dragging) return;
             dragging = false;
-            can.classList.remove('dragging');
-            const canBox = can.getBoundingClientRect();
-            const plantBox = plantArt.getBoundingClientRect();
+            tool.classList.remove('dragging');
+            const tb = tool.getBoundingClientRect();
+            const sb = subject.getBoundingClientRect();
             const dist = Math.hypot(
-                (canBox.left + canBox.width / 2) - (plantBox.left + plantBox.width / 2),
-                (canBox.top + canBox.height / 2) - (plantBox.top + plantBox.height / 2));
-            if (dist <= QUIZ_WATER_DROP_DIST) {
+                (tb.left + tb.width / 2) - (sb.left + sb.width / 2),
+                (tb.top + tb.height / 2) - (sb.top + sb.height / 2));
+            if (dist <= QUIZ_TOOL_DROP_DIST) {
                 finish('drag');
             } else {
                 // Missed: slide back and let them try again. The 20s timer keeps
                 // running, so a player who cannot manage the drag is never stuck.
-                can.style.transition = 'transform 220ms ease-out';
-                can.style.transform = 'translate(0px, 0px)';
-                setTimeout(() => { can.style.transition = ''; }, 240);
+                tool.style.transition = 'transform 220ms ease-out';
+                tool.style.transform = 'translate(0px, 0px)';
+                setTimeout(() => { tool.style.transition = ''; }, 240);
             }
         };
         const onKey = (e) => {
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); finish('key'); }
         };
-        can.addEventListener('pointerdown', onDown);
+        tool.addEventListener('pointerdown', onDown);
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
-        can.addEventListener('keydown', onKey);
+        tool.addEventListener('keydown', onKey);
         if (prompt) prompt.classList.add('visible');
     });
 }
@@ -1128,66 +1194,106 @@ function awaitWatering(can, plantArt, prompt) {
 async function runQuizGrowth(hookKey) {
     const host = document.getElementById('quiz-plant-stage');
     const art = document.getElementById('quiz-plant-art');
-    const can = document.getElementById('quiz-water-can');
-    const prompt = document.getElementById('quiz-water-prompt');
+    const tool = document.getElementById('quiz-tool');
+    const prompt = document.getElementById('quiz-tool-prompt');
     const caption = document.getElementById('quiz-plant-caption');
     const target = COFFEE_TREE_HOOKS[hookKey];
-    if (!host || !art || !can || !target) return;
+    const cfg = QUIZ_TOOLS[hookKey];
+    if (!host || !art || !tool || !target || !cfg) return;
 
     const targetIdx = COFFEE_TREE_STAGES.indexOf(target);
     // Already there: a replayed scene, or a hook that somehow fired twice. Nothing to
-    // grow, so nothing to water for either.
+    // grow, so no tool to hand out either.
     if (window.CoffeeTree.fired[hookKey] || targetIdx <= window.CoffeeTree.stageIndex) return;
     window.CoffeeTree.fired[hookKey] = true;
 
-    can.innerHTML = '<span class="wc-inner">' + WATERING_CAN_SVG + '</span>';
-    can.setAttribute('aria-label', t('ui.water.prompt'));
-    can.classList.add('visible');
-    if (prompt) prompt.textContent = t('ui.water.prompt');
+    // The roastery swaps the subject for green beans before the flame arrives.
+    if (cfg.subject) {
+        art.classList.remove('qp-sway');
+        art.innerHTML = cfg.subject;
+        art.removeAttribute('data-to');
+    }
 
-    const how = await awaitWatering(can, art, prompt);
-    if (window.DEV_MODE) console.log(`[Plant] ${hookKey} watered via ${how}`);
+    tool.innerHTML = '<span class="wc-inner">' + cfg.svg + '</span>';
+    tool.setAttribute('aria-label', t(cfg.promptKey));
+    tool.classList.add('visible');
+    if (prompt) prompt.textContent = t(cfg.promptKey);
+
+    const how = await awaitToolUse(tool, art, prompt);
+    if (window.DEV_MODE) console.log(`[Plant] ${hookKey} used ${cfg.effect} via ${how}`);
     if (prompt) prompt.classList.remove('visible');
 
-    // Move the can above the plant and tip it. Measured against the live boxes rather
-    // than assumed, because the card's width -- and therefore the plant's centre --
-    // depends on the viewport.
+    // Travel. The translate is absolute -- it REPLACES whatever the drag left on the
+    // element -- so it is measured from the tool's UNTRANSFORMED position, which is
+    // what offsetLeft/offsetTop give against #quiz-plant-stage (the position:relative
+    // offsetParent). Measuring from the live rect cancels the drag's own translate
+    // twice and leaves the tool stranded on the left.
     const hostBox = host.getBoundingClientRect();
     const artBox = art.getBoundingClientRect();
-    const canBox = can.getBoundingClientRect();
-    // The translate is absolute -- it REPLACES whatever the drag left on the element --
-    // so it has to be measured from the can's UNTRANSFORMED position, not from its
-    // current rect. offsetLeft/offsetTop give exactly that, and #quiz-plant-stage is
-    // position:relative so it is the offsetParent. Measured the wrong way round first:
-    // subtracting the live rect left the can at x=430 against a plant at x=640,
-    // because the drag's own translate was being cancelled out twice.
-    //
-    // 0.62 of the can's width left of the plant's centre puts the SPOUT, which is at
-    // the can's right edge, just over the plant rather than past it.
-    const restLeft = hostBox.left + can.offsetLeft;
-    const restTop = hostBox.top + can.offsetTop;
-    const wantX = (artBox.left + artBox.width / 2) - canBox.width * 0.62;
-    const wantY = artBox.top - canBox.height * 0.55;
-    const targetX = wantX - restLeft;
-    const targetY = wantY - restTop;
-    can.style.transition = prefersReducedMotion() ? '' : 'transform 420ms ease-in-out';
-    can.style.transform = `translate(${targetX}px, ${targetY}px)`;
+    const toolBox = tool.getBoundingClientRect();
+    const restLeft = hostBox.left + tool.offsetLeft;
+    const restTop = hostBox.top + tool.offsetTop;
+    // 'above' puts the working end (right edge) just over the subject's centre.
+    // 'below' centres the tool under the subject: a flame heats from underneath.
+    const wantX = cfg.place === 'below'
+        ? (artBox.left + artBox.width / 2) - toolBox.width / 2
+        : (artBox.left + artBox.width / 2) - toolBox.width * 0.62;
+    const wantY = cfg.place === 'below'
+        ? artBox.bottom - toolBox.height * 0.72
+        : artBox.top - toolBox.height * 0.55;
+    tool.style.transition = prefersReducedMotion() ? '' : 'transform 420ms ease-in-out';
+    tool.style.transform = `translate(${wantX - restLeft}px, ${wantY - restTop}px)`;
     await wait(prefersReducedMotion() ? 0 : 440);
-    can.style.transition = '';
-    can.classList.add('pouring');
-    // Spout tip in host coordinates, once the can has arrived.
-    // Drops start at the spout and fall to the plant's middle. Host-relative, because
-    // that is what the absolutely-positioned .qp-drop is laid out against.
-    const spoutX = (wantX + canBox.width * 0.9) - hostBox.left;
-    const spoutY = (wantY + canBox.height * 0.62) - hostBox.top;
-    spawnWaterDrops(host, spoutX, spoutY, Math.max(30, (artBox.top - hostBox.top) + artBox.height * 0.55 - spoutY));
-    await wait(prefersReducedMotion() ? 0 : 900);
+    tool.style.transition = '';
+
+    // Host-relative, because that is what the absolutely-positioned particles are laid
+    // out against.
+    const tipX = (wantX + (cfg.place === 'below' ? toolBox.width / 2 : toolBox.width * 0.9)) - hostBox.left;
+    const tipY = (wantY + (cfg.place === 'below' ? 0 : toolBox.height * 0.62)) - hostBox.top;
+    const subjMidY = (artBox.top - hostBox.top) + artBox.height * 0.55;
+
+    if (cfg.effect === 'pour') {
+        tool.classList.add('pouring');
+        spawnParticles(host, 'qp-drop', 7, tipX, tipY, Math.max(30, subjMidY - tipY), 85);
+        await wait(prefersReducedMotion() ? 0 : 900);
+    } else if (cfg.effect === 'roast') {
+        tool.classList.add('flickering');
+        // Green to brown, on the beans already on screen, before the stage swap. A
+        // filter rather than a second artwork: it is the same beans darkening, which
+        // is the thing being shown, and it costs no extra SVG to keep in step.
+        if (!prefersReducedMotion()) {
+            art.style.transition = 'filter 1100ms ease-in';
+            art.style.filter = 'sepia(0.95) saturate(1.5) hue-rotate(-18deg) brightness(0.72)';
+        }
+        spawnParticles(host, 'qp-smoke', 5, (artBox.left + artBox.width / 2) - hostBox.left, subjMidY - 10, -46, 180);
+        await wait(prefersReducedMotion() ? 0 : 1250);
+    } else if (cfg.effect === 'brew') {
+        tool.classList.add('pouring');
+        // The slow spiral from the brewing video, drawn rather than particled: a
+        // stroke-dashoffset sweep along a spiral path reads as a continuous stream,
+        // which a column of droplets does not.
+        if (!prefersReducedMotion()) {
+            const stream = document.createElement('div');
+            stream.className = 'qp-stream';
+            stream.style.left = `${tipX - 34}px`;
+            stream.style.top = `${tipY - 6}px`;
+            stream.innerHTML = '<svg viewBox="0 0 80 90" aria-hidden="true">'
+                + '<path d="M40 2 C 52 16, 56 30, 46 40 C 36 50, 26 44, 30 34 C 34 25, 48 27, 50 38 '
+                + 'C 53 52, 44 62, 40 74" fill="none" stroke="#cfe8ff" stroke-width="3.4" '
+                + 'stroke-linecap="round" opacity="0.9"/></svg>';
+            host.appendChild(stream);
+            setTimeout(() => stream.remove(), 2200);
+        }
+        await wait(prefersReducedMotion() ? 0 : 1400);
+    }
 
     // Growth. Every stage passed through gets its own caption -- captioning the
     // intermediate ones with the target's line described a plant not yet on screen.
     for (let i = window.CoffeeTree.stageIndex + 1; i <= targetIdx; i++) {
         window.CoffeeTree.stageIndex = i;
         art.classList.remove('qp-sway', 'qp-grow');
+        art.style.transition = '';
+        art.style.filter = '';
         void art.offsetWidth;                       // restart the animation
         art.innerHTML = plantArtFor(i);
         art.setAttribute('data-to', COFFEE_TREE_STAGES[i]);
@@ -1195,11 +1301,16 @@ async function runQuizGrowth(hookKey) {
         if (caption) caption.textContent = t(`ui.tree.${COFFEE_TREE_STAGES[i]}`);
         updateJourneyPlant();
         if (window.updateJourneyRail) window.updateJourneyRail();
+        // Steam rises off the finished cup, not off a seedling.
+        if (cfg.effect === 'brew' && i === targetIdx) {
+            spawnParticles(host, 'qp-steam', 4, (artBox.left + artBox.width / 2) - hostBox.left,
+                           (artBox.top - hostBox.top) + artBox.height * 0.32, -40, 220);
+        }
         await wait(prefersReducedMotion() ? 450 : PLANT_STAGE_HOLD_MS);
     }
 
-    can.classList.remove('visible', 'pouring');
-    can.classList.add('poured');
+    tool.classList.remove('visible', 'pouring', 'flickering');
+    tool.classList.add('used');
     art.classList.remove('qp-grow');
     if (!prefersReducedMotion()) art.classList.add('qp-sway');
     await wait(400);
