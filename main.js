@@ -3615,10 +3615,10 @@ class Scene {
                 // Fully-resolved URLs. Only the two narrated videos go through videoUrl();
                 // ownerInterview/farmerInterview keep their English path.
                 const videoMap = {
-                    roasterVideo: videoUrl('coffeeRoasting.mp4'),
-                    brewingPOV: videoUrl('brewingVideo.mp4'),
-                    ownerInterview: videoUrl('ownerInterview.mp4'),
-                    farmerInterview: videoUrl('farmerInterview.mp4')
+                    roasterVideo: videoUrl('coffeeRoasting_v2.mp4'),
+                    brewingPOV: videoUrl('brewingVideo_v2.mp4'),
+                    ownerInterview: videoUrl('ownerInterview_v2.mp4'),
+                    farmerInterview: videoUrl('farmerInterview_v2.mp4')
                 };
                     const videoSrc = videoMap[gate.ref];
                 // Dialogue videos (roaster, owner, farmer, brewing) at full volume; ambience videos at 15%

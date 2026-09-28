@@ -49,7 +49,7 @@ class CafeInteriorScene extends Scene {
                 position: new pc.Vec3(0.140, 1.490, -0.660),
                 isVideo: true,
                 isGateMarker: true,
-                get videoSrc() { return videoUrl('brewingVideo.mp4'); },
+                get videoSrc() { return videoUrl('brewingVideo_v2.mp4'); },
                 // Carried on the hotspot so the gate play and the later replay resolve
                 // the same subtitles; the replay cannot key off voSceneKey, which is
                 // null by the time the sequence has finished.
@@ -1066,7 +1066,7 @@ class CafeInteriorScene extends Scene {
         // Burned-in audio and subtitles: no subtitleSrc, and clear any cue still on
         // screen from backToCafe_en_01 so it cannot sit under the burned-in text.
         this.clearSubtitles();
-        this.showVideoPopup(assetUrl('Videos/testimony_v2.mp4'), {
+        this.showVideoPopup(assetUrl('Videos/testimony_v3.mp4'), {
             required: true,
             volume: 1.0,
             duckAmbient: 0.5,
@@ -1090,7 +1090,7 @@ class CafeInteriorScene extends Scene {
         });
         if (!window.brewingVideoPreloaded) {
             window.brewingVideoPreloaded = true;
-            fetch(videoUrl('brewingVideo.mp4'), { mode: 'no-cors' }).catch(() => {});
+            fetch(videoUrl('brewingVideo_v2.mp4'), { mode: 'no-cors' }).catch(() => {});
         }
         if (this.isReturnVisit) {
             this.hideNavPrompt();
@@ -1319,7 +1319,7 @@ class CafeInteriorScene extends Scene {
                 }
                 if (!window.ownerInterviewPreloaded) {
                     window.ownerInterviewPreloaded = true;
-                    fetch(videoUrl('ownerInterview.mp4'), { mode: 'no-cors' }).catch(() => {});
+                    fetch(videoUrl('ownerInterview_v2.mp4'), { mode: 'no-cors' }).catch(() => {});
                 }
             }
 

@@ -515,7 +515,7 @@ class VideoScene extends Scene {
 // Register harvesting scene
 sceneManager.registerScene('harvesting', new VideoScene({
     name: 'harvesting',
-    videoSrc: () => videoUrl('harvestingWeb.mp4'),
+    videoSrc: () => videoUrl('harvestingWeb_v2.mp4'),
     audioKey: 'harvesting',
     quizKey: 'harvesting',
     // Only the Bisaya cut has subtitles burned into the picture, where the overlay

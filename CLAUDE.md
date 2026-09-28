@@ -215,7 +215,7 @@ installed browser revision 1234).
 Phase 4 — progress pill + coffee-tree reward with real stage art · Phase 5 — arrow-key
 ±10 s seeking (tutorial teaches the keys; brand story seekable) and per-scene summaries ·
 nursery VO recut from the new single-take recordings, with regenerated EN/BIS subtitles ·
-testimony now points at `testimony_v2.mp4` · farm close-up orb moved beside the forward
+testimony now points at `testimony_v3.mp4` · farm close-up orb moved beside the forward
 disc (scale 0.95, radius 0.67, `11b0890`) · brewing subtitles retimed in **both**
 languages, live and ending ~1:16 / ~1:18.
 

@@ -158,7 +158,7 @@ instead. Integrated loudness is gain-linear, so for a clip that short this is ex
 | `VO/roasting_en_01.mp3` | -24.9 | -16.4 | -1.9 | +0.000 |
 | `VO/roasting_en_04.mp3` | -24.4 | -16.3 | -2.4 | +0.000 |
 
-## 3. Videos — measured only, unchanged
+## 3. Videos — as measured, before the fix
 
 Every video with speech sits far below -16 LUFS. None was touched.
 
@@ -182,25 +182,65 @@ All eight speech videos are more than 3 LU off -16, by −8.9 to −5.7 LU. What
 - **Every replacement needs a NEW FILENAME.** Videos carry `immutable` cache headers (CLAUDE.md, hard rule 4), so overwriting in place leaves returning visitors on the old file for a month. `brewingVideo_v2.mp4`, `ownerInterview_v2.mp4` and so on, with the old files kept as a rollback path, and the `videoUrl()` / `assetUrl()` call sites updated to match.
 - The five silent videos need nothing — they are meant to be silent.
 
-## 4. Uploading
+## 4. Videos — normalized (audio-only remux)
 
-**These files cannot ship until they are uploaded.** `VO_VERSION` has been bumped so the
-new files bust the CDN cache, but VO mp3s are served with an etag and no `cache-control`
-(CLAUDE.md, hard rule 3) — if the version ships before the bytes, players get the old
-recordings at the new version and the cache is poisoned for them. Upload first, then
-deploy.
+All nine speech videos re-done at **-16 LUFS / -1.5 dBTP**, two-pass `loudnorm`,
+`-c:v copy` so the video bitstream is passed through untouched. AAC 128 kbit/s,
+48 kHz, stereo, `+faststart`. Outputs are in `Videos/` and `Videos/bis/` in this directory.
 
-Set the bucket name first — it is not recorded anywhere in this repo, so I could not
-fill it in:
+**They are gitignored**, like `_src/`. 224 MB of video whose destination is R2 does not
+belong in git history — once pushed it can only be removed by rewriting history. The
+files are on disk and ready to upload; only the code changes and this report are
+committed.
+
+Each one gets a **new filename** — videos carry `immutable` cache headers, so
+overwriting in place would leave returning visitors on the old audio for a month.
+
+| old | new | before LUFS | after LUFS | after dBTP | sample peak | dur drift s | video stream |
+|---|---|---:|---:|---:|---:|---:|---|
+| `Videos/ownerInterview.mp4` | `Videos/ownerInterview_v2.mp4` | -22.2 | -16.0 | -1.6 | -1.56 dBFS | +0.029 | identical |
+| `Videos/farmerInterview.mp4` | `Videos/farmerInterview_v2.mp4` | -24.5 | -16.1 | -1.5 | -1.54 dBFS | +0.079 | identical |
+| `Videos/harvestingWeb.mp4` | `Videos/harvestingWeb_v2.mp4` | -23.4 | -16.0 | -1.5 | -1.53 dBFS | +0.098 | identical |
+| `Videos/coffeeRoasting.mp4` | `Videos/coffeeRoasting_v2.mp4` | -24.5 | -15.9 | -1.6 | -1.61 dBFS | +0.028 | identical |
+| `Videos/testimony_v2.mp4` | `Videos/testimony_v3.mp4` | -18.4 | -16.1 | -2.0 | -1.97 dBFS | +0.029 | identical |
+| `Videos/brewingVideo.mp4` | `Videos/brewingVideo_v2.mp4` | -23.2 | -16.0 | -1.6 | -1.62 dBFS | +0.066 | identical |
+| `Videos/bis/harvestingWeb.mp4` | `Videos/bis/harvestingWeb_v2.mp4` | -23.6 | -16.1 | -1.6 | -1.59 dBFS | +0.099 | identical |
+| `Videos/bis/coffeeRoasting.mp4` | `Videos/bis/coffeeRoasting_v2.mp4` | -24.9 | -16.0 | -1.7 | -1.78 dBFS | +0.008 | identical |
+| `Videos/bis/brewingVideo.mp4` | `Videos/bis/brewingVideo_v2.mp4` | -21.7 | -16.0 | -1.6 | -1.60 dBFS | +0.076 | identical |
+
+Verified on every output: within **-16 ±0.5 LUFS**, true peak **at or under -1.5 dBTP**,
+sample peak at or under -1.53 dBFS so nothing clips, `moov` before `mdat` (faststart),
+audio `aac, 48000 Hz, stereo`, and the **video stream md5 is identical to the source**
+in all nine — `-c:v copy` really did copy.
+
+Two things this cost:
+
+- **AAC overshoots the true peak loudnorm hands it.** `brewingVideo` came out at
+  **+1.1 dBTP** from a loudnorm target of -1.5, i.e. worse than the source it was
+  meant to fix. The loudnorm TP target is now -2.0, which leaves the encoder enough
+  headroom that its overshoot still lands under -1.5.
+- **Chasing loudness and true peak at once makes them fight.** Pulling TP down to
+  stop that overshoot also pulls integrated loudness down; `ownerInterview` settled
+  at -17.7 LUFS that way. The TP target is fixed and only loudness is chased.
+
+Durations grow by 0.008-0.099 s. That is the AAC encoder's priming and padding, not
+a cut: the video stream is byte-identical, so no frame moved.
+
+## 5. Uploading
+
+**Nothing here can ship before it is uploaded.** `VO_VERSION` is already bumped to 2 and
+the code already points at the `_v2` / `_v3` video filenames, so a deploy without the
+upload gives players a 404 on every video and the OLD mp3 cached under the NEW stamp
+(VO mp3s carry an etag and no `cache-control` — CLAUDE.md hard rule 3). Upload, verify,
+then deploy.
+
+Run from this directory. One block, all 55 files:
 
 ```sh
-BUCKET=<your-r2-bucket-name>
+BUCKET=granja-alegre-assets
 cd test/loudness
-```
 
-Then, all 46 files:
-
-```sh
+# --- 46 VO mp3s ---
 wrangler r2 object put "$BUCKET/VO/backToCafe_en_01.mp3" --file="VO/backToCafe_en_01.mp3" --content-type=audio/mpeg --remote
 wrangler r2 object put "$BUCKET/VO/backToCafe_en_02.mp3" --file="VO/backToCafe_en_02.mp3" --content-type=audio/mpeg --remote
 wrangler r2 object put "$BUCKET/VO/brandStory_en_01.mp3" --file="VO/brandStory_en_01.mp3" --content-type=audio/mpeg --remote
@@ -247,22 +287,51 @@ wrangler r2 object put "$BUCKET/VO/bis/nursery_bis_02.mp3" --file="VO/bis/nurser
 wrangler r2 object put "$BUCKET/VO/bis/nursery_bis_03.mp3" --file="VO/bis/nursery_bis_03.mp3" --content-type=audio/mpeg --remote
 wrangler r2 object put "$BUCKET/VO/bis/roasting_bis_01.mp3" --file="VO/bis/roasting_bis_01.mp3" --content-type=audio/mpeg --remote
 wrangler r2 object put "$BUCKET/VO/bis/roasting_bis_04.mp3" --file="VO/bis/roasting_bis_04.mp3" --content-type=audio/mpeg --remote
+
+# --- 9 videos (new filenames; the old ones stay as a rollback path) ---
+wrangler r2 object put "$BUCKET/Videos/ownerInterview_v2.mp4" --file="Videos/ownerInterview_v2.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/farmerInterview_v2.mp4" --file="Videos/farmerInterview_v2.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/harvestingWeb_v2.mp4" --file="Videos/harvestingWeb_v2.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/coffeeRoasting_v2.mp4" --file="Videos/coffeeRoasting_v2.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/testimony_v3.mp4" --file="Videos/testimony_v3.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/brewingVideo_v2.mp4" --file="Videos/brewingVideo_v2.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/bis/harvestingWeb_v2.mp4" --file="Videos/bis/harvestingWeb_v2.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/bis/coffeeRoasting_v2.mp4" --file="Videos/bis/coffeeRoasting_v2.mp4" --content-type=video/mp4 --remote
+wrangler r2 object put "$BUCKET/Videos/bis/brewingVideo_v2.mp4" --file="Videos/bis/brewingVideo_v2.mp4" --content-type=video/mp4 --remote
 ```
 
-Or as a loop over the same list:
+## 6. Verify before deploying
+
+`curl -I` reports `cf-cache-status: DYNAMIC` even when real GETs return `HIT`, and a
+`HEAD` has reported a new `content-length` while ranged GETs still served stale bytes
+(CLAUDE.md). So verify with a **ranged GET**, and re-measure what actually comes back:
 
 ```sh
-find VO -name '*.mp3' | while read -r f; do
-  wrangler r2 object put "$BUCKET/$f" --file="$f" --content-type=audio/mpeg --remote
+BASE=https://assets.granjaalegre.com
+
+# Every file: ranged GET must return 206, and the byte count must match what is on disk.
+{ find VO -name '*.mp3'; printf '%s\n' \
+    Videos/ownerInterview_v2.mp4 Videos/farmerInterview_v2.mp4 \
+    Videos/harvestingWeb_v2.mp4 Videos/coffeeRoasting_v2.mp4 \
+    Videos/testimony_v3.mp4 Videos/brewingVideo_v2.mp4 \
+    Videos/bis/harvestingWeb_v2.mp4 Videos/bis/coffeeRoasting_v2.mp4 \
+    Videos/bis/brewingVideo_v2.mp4; } | while read -r f; do
+  code=$(curl -s -o /dev/null -w '%{http_code}' -r 0-1023 "$BASE/$f")
+  remote=$(curl -s -r 0- "$BASE/$f" | wc -c | tr -d ' ')
+  local=$(stat -f%z "$f")
+  if [ "$code" = "206" ] && [ "$remote" = "$local" ]; then
+    echo "ok    $f  ($local bytes)"
+  else
+    echo "FAIL  $f  http=$code remote=$remote local=$local"
+  fi
 done
-```
 
-After uploading, verify before deploying — `HEAD` has reported a new `content-length`
-while ranged GETs still served stale bytes (CLAUDE.md), so probe with a real GET:
-
-```sh
-ffprobe -v error -show_entries format=duration,bit_rate -of default=nw=1 \
-  "https://assets.granjaalegre.com/VO/nursery_en_01.mp3?v=2"
-ffmpeg -nostats -hide_banner -i "https://assets.granjaalegre.com/VO/nursery_en_01.mp3?v=2" \
-  -af ebur128 -f null - 2>&1 | tail -12   # expect I: about -16.4 LUFS
+# Spot-check that the bytes served really are the normalized ones: every line
+# should read about -16 LUFS.
+for f in VO/nursery_en_01.mp3 VO/bis/nursery_bis_02.mp3 \
+         Videos/brewingVideo_v2.mp4 Videos/testimony_v3.mp4; do
+  I=$(ffmpeg -nostdin -nostats -hide_banner -i "$BASE/$f" -map 0:a:0 -af ebur128 -f null - 2>&1 \
+      | awk '/Integrated loudness/{x=1} x&&/I:/{print $2; exit}')
+  echo "$I LUFS  $f"
+done
 ```
