@@ -2907,7 +2907,17 @@ class Scene {
         this.audioLoaded = false;
     }
 
-    duckAmbient(level = 0.2) {
+    // level is what fraction of the bed survives while a video talks over it.
+    //
+    // Raised from 0.2 after the VO and video loudness pass. Everything narrated is now
+    // -16 LUFS, about 7.5 dB louder than the ~-23.5 it used to be, and the ambient beds
+    // did not move -- so the old values buried the music. Measured in the cafe: a -16
+    // video over a bed ducked to 0.02 gain sits +33.5 dB above it, against +26 dB
+    // before. 0.47 is 0.2 scaled by that same 7.5 dB, which restores the old balance.
+    //
+    // The 0.5 call sites went to 0.7 rather than the arithmetic 1.19, because anything
+    // at or above 1.0 is not a duck at all.
+    duckAmbient(level = 0.47) {
         if (!this.ambientGain) return;
         this.storedAmbientGain = this.ambientGain.gain.value;
         const targetGain = this.storedAmbientGain * level;

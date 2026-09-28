@@ -1069,7 +1069,7 @@ class CafeInteriorScene extends Scene {
         this.showVideoPopup(assetUrl('Videos/testimony_v3.mp4'), {
             required: true,
             volume: 1.0,
-            duckAmbient: 0.5,
+            duckAmbient: 0.7,
             onFinish: () => {
                 this.resumeAmbient();
                 this.resumeVoSequence();
@@ -1177,7 +1177,7 @@ class CafeInteriorScene extends Scene {
                     // The brewing narration is baked into this video's audio track, so
                     // the VO sequence is parked here and cannot drive the subtitle bar.
                     subtitleSrc: videoSubtitleUrl(hotspot.subtitleRef),
-                    duckAmbient: 0.5,
+                    duckAmbient: 0.7,
                     // Hand straight to the testimony in the same popup -- see
                     // playTestimonyThenResume.
                     keepPopupForNext: true,

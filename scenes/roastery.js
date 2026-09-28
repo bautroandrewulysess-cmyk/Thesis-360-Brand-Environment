@@ -1183,7 +1183,7 @@ class RoasteryScene extends Scene {
                     // The roasting narration is baked into this video's audio track, so
                     // the VO sequence is parked here and cannot drive the subtitle bar.
                     subtitleSrc: videoSubtitleUrl(hotspot.subtitleRef),
-                    duckAmbient: 0.5,
+                    duckAmbient: 0.7,
                     onFinish: () => {
                         this.resumeAmbient();
                         this.resumeVoSequence();
