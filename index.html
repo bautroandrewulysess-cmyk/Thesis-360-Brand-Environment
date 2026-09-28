@@ -608,7 +608,10 @@
         }
         /* Tilt for the pour, on the INNER element (see above). The origin is the handle
            end, on the left, so rotating clockwise swings the spout -- which is on the
-           right -- down over the subject. Shared by the can and the kettle: both pour. */
+           right -- down over the subject. Shared by the can and the kettle: both pour.
+           The angle and origin are mirrored in main.js as TOOL_POUR_DEG /
+           TOOL_POUR_ORIGIN, because the spout tip moves with this tilt and that is
+           where the water has to come from. Change both together. */
         #quiz-tool.pouring .wc-inner {
             transform-origin: 22% 58%; animation: qp-pour 900ms ease-in-out forwards;
         }
@@ -659,8 +662,10 @@
         }
         /* The kettle's pour-over spiral. Drawn as a stroke sweep rather than a column
            of droplets: a stream is continuous, and droplets never read as one. */
+        /* Above the tool (z-index 3), not below it: at z-index 2 the stream was drawn
+           behind the kettle body and simply never seen. */
         .qp-stream {
-            position: absolute; width: 80px; height: 90px; pointer-events: none; z-index: 2;
+            position: absolute; width: 80px; height: 90px; pointer-events: none; z-index: 4;
         }
         .qp-stream svg { width: 100%; height: 100%; display: block; overflow: visible; }
         .qp-stream path {

@@ -997,40 +997,53 @@ const FLAME_SVG =
   + '<path d="M50 60 C 53 67, 55 70, 54 75 C 53 80, 52 82, 50 82 C 48 82, 47 80, 46 75 C 45 70, 47 67, 50 60 Z" fill="#fdf0b8"/>'
   + '</svg>';
 
-// The final café's kettle. Gooseneck spout to the right -- it is the pour-over kettle
-// from the brewing video, which is what the player has just watched.
+// The final café's kettle: a flat, bold gooseneck in the same gold as the can and the
+// flame. Supplied design, paths verbatim; only the viewBox aspect differs from the other
+// tools (140x120 rather than 100x100), so it letterboxes inside the square tool box and
+// lands at roughly the can's on-screen size.
+//
+// The spout TIP is at (130, 40) in this viewBox, before any tilt -- that is where the
+// pour has to come from, and QUIZ_TOOLS carries it as a fraction so the stream is
+// aimed at the rendered SVG rather than at the tool box's corner.
 const KETTLE_SVG =
-    '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-  + '<path d="M66 48 C 78 44, 89 35, 94 25 L 99 30 C 94 43, 82 54, 69 59 Z" fill="#c9962f"/>'
-  + '<path d="M18 46 h50 v18 a25 22 0 0 1 -50 0 z" fill="#f4d03f"/>'
-  + '<ellipse cx="43" cy="46" rx="25" ry="7" fill="#e0b448"/>'
-  + '<path d="M26 43 q17 -21 34 -5" fill="none" stroke="#c9962f" stroke-width="6" stroke-linecap="round"/>'
-  + '<circle cx="43" cy="37" r="4.5" fill="#c9962f"/>'
+    '<svg viewBox="0 0 140 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+  + '<path d="M34 108 L40 58 Q70 50 100 58 L106 108 Z" fill="#f4d03f"/>'
+  + '<path d="M100 98 C130 95 116 55 130 40" stroke="#f4d03f" stroke-width="7" fill="none" stroke-linecap="round"/>'
+  + '<path d="M40 64 L22 64 L22 100 L36 100" stroke="#f4d03f" stroke-width="9" fill="none" stroke-linejoin="round"/>'
+  + '<rect x="60" y="46" width="20" height="8" rx="3" fill="#f4d03f"/>'
   + '</svg>';
 
-// Green, unroasted beans -- the roastery's subject. It is NOT a coffee-tree stage: the
-// plant's stage at that point is ripeCherries, but what goes into a roaster is the
-// green bean, and a flame held under a bowl of red cherries would be nonsense. Same
-// 200x200 viewBox and y=178 ground line as every stage, so the swap to roastedBeans
-// lines up exactly.
-const GREEN_BEANS_ART =
+// Raw ("green") coffee beans -- the roastery's subject. The trade calls them green, but
+// they are actually pale: off-white with a faint brown cast. They used to be drawn
+// literally green, which made the roast look like a hue shift rather than a roast; pale
+// beans going brown is a visible transformation.
+//
+// It is NOT a coffee-tree stage: the plant's stage at that point is ripeCherries, but
+// what goes into a roaster is the raw bean, and a flame held under a bowl of red
+// cherries would be nonsense. Same 200x200 viewBox and y=178 ground line as every
+// stage, so the swap to roastedBeans lines up exactly.
+const RAW_BEANS_ART =
     '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="ct-svg">'
-  + '<defs><linearGradient id="gbG" x1="0" y1="0" x2="0.3" y2="1">'
-  + '<stop offset="0" stop-color="#9fd07a"/><stop offset="1" stop-color="#5f8f3f"/></linearGradient></defs>'
-  + '<ellipse cx="100" cy="178" rx="52" ry="10" fill="#2a1d10" opacity="0.6"/>'
-  + '<g class="gb-pile">'
-  + '<g transform="translate(74,166) rotate(-18)"><ellipse rx="15" ry="10" fill="url(#gbG)"/>'
-  +   '<path d="M-12 0 C -5 -5, 5 5, 12 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
-  + '<g transform="translate(126,166) rotate(14)"><ellipse rx="15" ry="10" fill="url(#gbG)"/>'
-  +   '<path d="M-12 0 C -5 -5, 5 5, 12 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
-  + '<g transform="translate(100,168) rotate(-4)"><ellipse rx="16" ry="10.5" fill="url(#gbG)"/>'
-  +   '<path d="M-13 0 C -5 -5, 5 5, 13 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
-  + '<g transform="translate(87,150) rotate(22)"><ellipse rx="14" ry="9.5" fill="url(#gbG)"/>'
-  +   '<path d="M-11 0 C -4 -5, 4 5, 11 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
-  + '<g transform="translate(114,150) rotate(-24)"><ellipse rx="14" ry="9.5" fill="url(#gbG)"/>'
-  +   '<path d="M-11 0 C -4 -5, 4 5, 11 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
-  + '<g transform="translate(100,134) rotate(6)"><ellipse rx="13" ry="9" fill="url(#gbG)"/>'
-  +   '<path d="M-10 0 C -4 -4, 4 4, 10 0" fill="none" stroke="#3f6b2a" stroke-width="2.2"/></g>'
+  + '<defs>'
+  + '<linearGradient id="rbG" x1="0" y1="0" x2="0.3" y2="1">'
+  +   '<stop offset="0" stop-color="#f6efdd"/><stop offset="1" stop-color="#ddcfb0"/></linearGradient>'
+  + '<filter id="rbShadow" x="-30%" y="-30%" width="160%" height="160%">'
+  +   '<feDropShadow dx="0" dy="1.6" stdDeviation="1.8" flood-color="#5a4a2e" flood-opacity="0.45"/></filter>'
+  + '</defs>'
+  + '<ellipse cx="100" cy="178" rx="52" ry="10" fill="#2a1d10" opacity="0.55"/>'
+  + '<g class="rb-pile" filter="url(#rbShadow)">'
+  + '<g transform="translate(74,166) rotate(-18)"><ellipse rx="15" ry="10" fill="url(#rbG)"/>'
+  +   '<path d="M-12 0 C -5 -5, 5 5, 12 0" fill="none" stroke="#c9b48c" stroke-width="2.2"/></g>'
+  + '<g transform="translate(126,166) rotate(14)"><ellipse rx="15" ry="10" fill="url(#rbG)"/>'
+  +   '<path d="M-12 0 C -5 -5, 5 5, 12 0" fill="none" stroke="#c9b48c" stroke-width="2.2"/></g>'
+  + '<g transform="translate(100,168) rotate(-4)"><ellipse rx="16" ry="10.5" fill="url(#rbG)"/>'
+  +   '<path d="M-13 0 C -5 -5, 5 5, 13 0" fill="none" stroke="#c9b48c" stroke-width="2.2"/></g>'
+  + '<g transform="translate(87,150) rotate(22)"><ellipse rx="14" ry="9.5" fill="url(#rbG)"/>'
+  +   '<path d="M-11 0 C -4 -5, 4 5, 11 0" fill="none" stroke="#c9b48c" stroke-width="2.2"/></g>'
+  + '<g transform="translate(114,150) rotate(-24)"><ellipse rx="14" ry="9.5" fill="url(#rbG)"/>'
+  +   '<path d="M-11 0 C -4 -5, 4 5, 11 0" fill="none" stroke="#c9b48c" stroke-width="2.2"/></g>'
+  + '<g transform="translate(100,134) rotate(6)"><ellipse rx="13" ry="9" fill="url(#rbG)"/>'
+  +   '<path d="M-10 0 C -4 -4, 4 4, 10 0" fill="none" stroke="#c9b48c" stroke-width="2.2"/></g>'
   + '</g></svg>';
 
 // Which tool each hook hands the player, where it goes, and what it does when it gets
@@ -1039,16 +1052,21 @@ const GREEN_BEANS_ART =
 // maintain however many tools there eventually are.
 //
 // `subject` overrides what the box shows BEFORE the growth runs. Only the roastery
-// needs it (see GREEN_BEANS_ART); everywhere else the subject is simply the stage the
+// needs it (see RAW_BEANS_ART); everywhere else the subject is simply the stage the
 // player is already on.
 const QUIZ_TOOLS = {
-    cafeInterior: { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour' },
-    nursery:      { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour' },
-    farm:         { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour' },
-    harvesting:   { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour' },
+    // `tip` is where the liquid leaves the tool, as a fraction of the RENDERED SVG box
+    // (not the tool box -- the kettle's 140x120 viewBox letterboxes inside the square
+    // one, so the two differ). Can: the spout end at (92,44) of 100x100. Kettle: the
+    // gooseneck tip at (130,40) of 140x120, as supplied.
+    cafeInterior: { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour', tip: [0.92, 0.44] },
+    nursery:      { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour', tip: [0.92, 0.44] },
+    farm:         { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour', tip: [0.92, 0.44] },
+    harvesting:   { svg: WATERING_CAN_SVG, promptKey: 'ui.water.prompt', place: 'above', effect: 'pour', tip: [0.92, 0.44] },
     roastery:     { svg: FLAME_SVG,        promptKey: 'ui.roast.prompt', place: 'below', effect: 'roast',
-                    subject: GREEN_BEANS_ART },
-    backToCafe:   { svg: KETTLE_SVG,       promptKey: 'ui.brew.prompt',  place: 'above', effect: 'brew' },
+                    subject: RAW_BEANS_ART, tip: [0.5, 0.0] },
+    backToCafe:   { svg: KETTLE_SVG,       promptKey: 'ui.brew.prompt',  place: 'above', effect: 'brew',
+                    tip: [130 / 140, 40 / 120] },
 };
 
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
@@ -1084,10 +1102,16 @@ const QUIZ_TOOL_TIMEOUT_MS = 20000;    // the tool acts on its own after this, n
 const QUIZ_TOOL_DROP_DIST = 130;       // px from the subject's centre that counts as "on it"
 // A press-and-release with no travel is a CLICK, not a drag, and must never count as
 // using the tool. Without this the only thing standing between a stray pointerup and a
-// free stage was the spawn distance -- measured at 191-205px against the 130px radius
+// free stage was the spawn distance -- measured at 191-200px against the 130px radius
 // at 1280x800, 1280x1200 and 900x800, for all three tools, so the spawn is comfortably
 // outside it, but that is a geometric accident rather than a rule. This is the rule.
 const QUIZ_TOOL_MIN_DRAG_PX = 20;
+// The pour tilt, duplicated from the qp-pour keyframes and its transform-origin in
+// index.html. It has to be known in JS as well, because the spout tip moves with the
+// tilt and that is where the water comes out -- see the tip maths in runQuizGrowth.
+// If either value changes in the CSS, change it here too.
+const TOOL_POUR_DEG = 38;
+const TOOL_POUR_ORIGIN = [0.22, 0.58];
 const PLANT_STAGE_HOLD_MS = 1500;
 
 function paintQuizPlant(animate) {
@@ -1260,10 +1284,37 @@ async function runQuizGrowth(hookKey) {
     await wait(prefersReducedMotion() ? 0 : 440);
     tool.style.transition = '';
 
-    // Host-relative, because that is what the absolutely-positioned particles are laid
-    // out against.
-    const tipX = (wantX + (cfg.place === 'below' ? toolBox.width / 2 : toolBox.width * 0.9)) - hostBox.left;
-    const tipY = (wantY + (cfg.place === 'below' ? 0 : toolBox.height * 0.62)) - hostBox.top;
+    // Where the liquid actually leaves the tool, host-relative (what the absolutely
+    // positioned particles are laid out against). Three things have to be undone to get
+    // there, and missing any of them put the stream 55px above the spout, behind the
+    // kettle body:
+    //
+    //   1. The <svg> element fills the square tool box, but a 140x120 viewBox letterboxes
+    //      inside it, so the artwork's own box is smaller and offset. Read the real
+    //      viewBox and redo the preserveAspectRatio="meet" fit rather than assuming the
+    //      element box is the artwork box.
+    //   2. cfg.tip is given in viewBox units of the UNTILTED artwork.
+    //   3. The pour tilts .wc-inner by TOOL_POUR_DEG about its transform-origin, which
+    //      swings the spout down and to the right. The tip has to be rotated with it.
+    const svgEl = tool.querySelector('svg');
+    const vb = (svgEl && svgEl.viewBox && svgEl.viewBox.baseVal && svgEl.viewBox.baseVal.width)
+        ? { w: svgEl.viewBox.baseVal.width, h: svgEl.viewBox.baseVal.height }
+        : { w: 100, h: 100 };
+    const fit = Math.min(toolBox.width / vb.w, toolBox.height / vb.h);
+    const artW = vb.w * fit, artH = vb.h * fit;
+    const offX = (toolBox.width - artW) / 2, offY = (toolBox.height - artH) / 2;
+    const tipFrac = cfg.tip || [0.9, 0.62];
+    let localX = offX + artW * tipFrac[0];
+    let localY = offY + artH * tipFrac[1];
+    if (cfg.effect === 'pour' || cfg.effect === 'brew') {
+        const rad = TOOL_POUR_DEG * Math.PI / 180;
+        const ox = toolBox.width * TOOL_POUR_ORIGIN[0], oy = toolBox.height * TOOL_POUR_ORIGIN[1];
+        const dxr = localX - ox, dyr = localY - oy;
+        localX = ox + dxr * Math.cos(rad) - dyr * Math.sin(rad);
+        localY = oy + dxr * Math.sin(rad) + dyr * Math.cos(rad);
+    }
+    const tipX = (wantX + localX) - hostBox.left;
+    const tipY = (wantY + localY) - hostBox.top;
     const subjMidY = (artBox.top - hostBox.top) + artBox.height * 0.55;
 
     if (cfg.effect === 'pour') {
@@ -1276,8 +1327,12 @@ async function runQuizGrowth(hookKey) {
         // filter rather than a second artwork: it is the same beans darkening, which
         // is the thing being shown, and it costs no extra SVG to keep in step.
         if (!prefersReducedMotion()) {
-            art.style.transition = 'filter 1100ms ease-in';
-            art.style.filter = 'sepia(0.95) saturate(1.5) hue-rotate(-18deg) brightness(0.72)';
+            // Retuned for the pale beans. The old values started from a green pile and
+            // only had to dull it; from off-white (#f6efdd) the same filter left a light
+            // tan, so saturation is up and brightness well down to land on a roasted
+            // brown close to the roastedBeans artwork it cross-fades into.
+            art.style.transition = 'filter 1150ms ease-in';
+            art.style.filter = 'sepia(1) saturate(2.6) hue-rotate(-14deg) brightness(0.46) contrast(1.08)';
         }
         spawnParticles(host, 'qp-smoke', 5, (artBox.left + artBox.width / 2) - hostBox.left, subjMidY - 10, -46, 180);
         await wait(prefersReducedMotion() ? 0 : 1250);
