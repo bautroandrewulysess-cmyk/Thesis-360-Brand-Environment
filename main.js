@@ -3169,6 +3169,19 @@ class Scene {
 
         if (!popup || !video) return;
 
+        // Whether THIS popup ducked, so its teardown knows to undo it. Every exit path
+        // below -- normal end, skip, error -- has to consult it.
+        //
+        // The three teardowns used to call resumeAmbient() alone, which is a different
+        // thing: it restores a PAUSED buffer source from ambientPausedGain and returns
+        // early when that is undefined. Nothing undid a duck, so a ducked cafe bed sat
+        // 30% down for the rest of the visit. Measured: gain 0.07 against a 0.1 base
+        // with storedAmbientGain still holding 0.1, in both languages.
+        //
+        // restoreAmbient() is the matching half of duckAmbient(), and it runs AFTER
+        // resumeAmbient() on every path -- resumeAmbient assigns gain.value directly,
+        // so it has to go first or it would clobber the ramp.
+        let didDuck = false;
         if (required) {
             this.videoPending = true;
             if (duckAmbient) {
@@ -3177,6 +3190,7 @@ class Scene {
                 } else {
                     this.duckAmbient();
                 }
+                didDuck = true;
             } else {
                 this.pauseAmbient();
             }
@@ -3246,6 +3260,7 @@ class Scene {
 
             await cleanupVideo();
             this.resumeAmbient();
+            if (didDuck) this.restoreAmbient();
             this.videoPending = false;
             this.hideVideoPopup(onFinish);
         };
@@ -3270,6 +3285,7 @@ class Scene {
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
             await cleanupVideo();
             this.resumeAmbient();
+            if (didDuck) this.restoreAmbient();
             this.videoPending = false;
             this.hideVideoPopup(onFinish);
         };
@@ -3306,6 +3322,7 @@ class Scene {
             if (fallbackTimeoutHandle) clearTimeout(fallbackTimeoutHandle);
             await cleanupVideo();
             this.resumeAmbient();
+            if (didDuck) this.restoreAmbient();
             this.videoPending = false;
             this.hideVideoPopup(onFinish);
         }, { once: true });
