@@ -307,7 +307,7 @@ let isSceneChangeFromPopstate = false;
 
 // Loading screen trivia
 const loadingTrivia = [
-  "Coffee seedlings spend six to twelve months in polybags before they're strong enough to be planted.",
+  "Coffee seedlings spend six to seven months in polybags before they're strong enough to be planted.",
   "Only the bright red, fully ripe cherries are hand-picked — green and yellow ones are left to ripen.",
   "During roasting, the \"first crack\" is the moment the beans expand and begin developing their flavour.",
   "Granja Alegre sits at the foot of Mount Kalatungan, in Pangantucan, Bukidnon.",

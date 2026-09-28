@@ -875,7 +875,7 @@
             <div class="stages-row">
                 <div class="stage gs-reveal">
                     <div class="stage-name">Nursery</div>
-                    <div class="stage-description">Seedlings spend six to twelve months building roots, nurtured with care from the first sprout.</div>
+                    <div class="stage-description">Seedlings spend six to seven months building roots, nurtured with care from the first sprout.</div>
                 </div>
                 <div class="stage gs-reveal">
                     <div class="stage-name">Farm</div>
@@ -1598,7 +1598,16 @@
                     // in-scene orb badges use, inked #050505 because the disc is gold
                     // (the same pairing .gate-marker-button already uses).
                     btn.style.cssText = `width:80px; height:80px; border-radius:50%; background:#f4d03f; border:none; cursor:pointer; outline:none; z-index:1010; box-shadow:0 0 30px rgba(244,208,63,0.6); animation:brand-story-pulse 1.8s ease-in-out infinite; display:flex; align-items:center; justify-content:center; padding:0;`;
-                    btn.innerHTML = window.hotspotIconSvg(gateData.kind, { size: 34, color: '#050505' });
+                    // A coffee bean on all three gates — same geometry as the loading
+                    // screen's .loading-bean (ellipse + S-curve crease), re-inked
+                    // #050505 for the gold disc and drawn at 34px like the marker icons
+                    // it replaces. gateData.kind is still what the aria-label is chosen
+                    // from, so the two gates that play and the one that enters the café
+                    // are still told apart by the label, just not by the glyph.
+                    btn.innerHTML = '<svg width="34" height="34" viewBox="0 0 56 56" aria-hidden="true" fill="none" stroke="#050505" stroke-width="3" stroke-linecap="round">'
+                        + '<ellipse cx="28" cy="28" rx="15" ry="22" transform="rotate(-25 28 28)"/>'
+                        + '<path d="M28 8 C 20 18, 36 26, 28 36 C 20 44, 32 46, 28 48" transform="rotate(-25 28 28)"/>'
+                        + '</svg>';
                     // The icon carries no text, so the label is the only thing naming
                     // which of the two things this gate does.
                     btn.setAttribute('aria-label', t(gateData.ariaKey));
