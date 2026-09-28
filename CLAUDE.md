@@ -16,7 +16,7 @@ every rule below.**
 | Path | What |
 |---|---|
 | `index.html` | Landing → context → language → brand story chain, all overlay markup and CSS, the 10 versioned `<script>` tags |
-| `main.js` | `sceneManager`, base `Scene` class, `RaycastSystem`, `showVideoPopup`, quizzes, VO playback + subtitles, splat preload |
+| `main.js` | `sceneManager`, base `Scene` class, `RaycastSystem`, `showVideoPopup`, quizzes, the in-quiz plant growth, the journey rail, VO playback + subtitles, splat preload |
 | `scenes/strings.js` | Every UI string, `{ en, bis }`. Looked up with `t('key')` |
 | `scenes/voData.js` | `VoSegments` — per-scene narration order and gate types. `VoMissingNonEn` = segments with no Bisaya recording |
 | `scenes/quizData.js` | `PendingQuizzes` |
@@ -27,6 +27,58 @@ every rule below.**
 
 Scenes are constructed **once** at load and reused; instance state survives
 unload/reload.
+
+## The plant, the quiz box and the journey rail
+
+The coffee plant grows **inside the quiz box**, never at a scene's exit. There is no
+`#coffee-tree-popup` any more — it was removed, and nothing should reintroduce one.
+
+Sequence, and it is strict: the last question of a set is answered correctly →
+`runQuizGrowth(hook)` shows the watering can on the left with the prompt from
+`ui.water.prompt` → the player drags it onto the plant, **or 20 s pass and it waters
+itself** (no countdown is ever shown) → the can travels over the plant, tilts, drops
+fall → the stage or stages change with their captions → **only then** does the box fade
+out and `onPass` run. `showQuiz`'s close is awaited on that promise, so nothing
+downstream can start early.
+
+- **Which quiz earns what** is `this.quizGrowHook`, set per scene, read by `showQuiz`.
+  `cafeInterior` → seed · `nursery` → polybagSeedling (two stages) · `farm` → flowering
+  (two stages) · `harvesting` → ripeCherries · `roastery` → roastedBeans · `backToCafe`
+  → cup. Mini-quizzes never grow anything.
+- **The final café's set is two questions and one hook.** `showQuiz` fires its callback
+  after the LAST question, so `backToTheCafe` earns nothing on its own and the cup grows
+  only after `finalChallenge`. Verified by answering the first and watching for a can.
+- **`finishSceneExit(hookKey)` is the scene-exit hook and only shows the summary.** It
+  used to be `growCoffeeTree` and used to grow the plant; the name changed with the
+  behaviour deliberately. Do not "restore" growth to it.
+- **The can is two elements.** The outer `#quiz-water-can` carries the travel (an inline
+  `transform: translate` from measured rects) and `.wc-inner` carries the tilt. A CSS
+  animation's transform beats an inline one outright, so with the pour keyframes on the
+  outer element the travel was wiped and the can tilted in place on the far left —
+  measured at centre x=439 against a plant at x=640.
+- **The travel translate is absolute**, so it must be measured from the can's
+  *untransformed* position (`offsetLeft`/`offsetTop` against `#quiz-plant-stage`, which
+  is the `position:relative` offsetParent), not from its current rect. Measuring from the
+  live rect cancels the drag's own translate twice and leaves the can at x=430.
+
+**The journey rail** (`#journey-rail`) replaced the collapsed pill and its expandable
+panel; `#journey-bar`, `#journey-panel`, `toggleJourneyPanel`, `fitJourneyBarLabel`,
+`JOURNEY_LABEL_MIN_PX` and the `ui.journey.*` strings are all gone, along with the whole
+label-fitting problem. One fixed column on the right, vertically centred: plant on top,
+track, seek buttons at the bottom. `pointer-events:none` on the column, re-enabled only
+on the buttons.
+
+- **The track's fill is driven by the PLANT's stage, not `journeyProgressStep`.** The
+  café sets that step to 0 the moment it loads, so a step-based fill sat at 14% before
+  the player had answered anything.
+- **The rail hides its plant and track with `visibility`, not `display`** — the seek
+  buttons live in the same column and follow their own rules, so hiding the rest must
+  not move them.
+- **`anchorHotspotPopup` clamps against the rail's left edge, not the viewport's.**
+  Without that an orb near the right edge put the popup at 968–1268 at 1280 wide,
+  straight on top of the rail at 1216–1262.
+- The named `o---o---o` track (`paintJourneyTrack`, the `.jp-*` styles) still exists, but
+  only on the loading screen.
 
 ## Hard rules — each of these was learned by breaking something
 
@@ -212,15 +264,9 @@ Then, since that was written:
   that have no Bisaya recording.
 - **Scene-VO stall watchdog** (`528c1dd`), armed at segment start, giving
   `playVoWithSubtitles` the same safety net the brand story already had.
-- **The collapsed pill now shrinks its label to fit.** Font steps down from 0.8rem to a
-  floor of **10.5px**, ellipsis below that; pill padding went 14px → 12px. Measured
-  through the shipped path (`advanceJourneyStepTo` → `updateJourneyBarLabel` →
-  `fitJourneyBarLabel`) at 1280 and 900 with Inter loaded: all 7 labels fit in both
-  languages, smallest 10.5px (`Padulong sa Uma`), `Balik sa Kapehan` 10.8px.
-  **The floor was 11px and was wrong**: two Bisaya labels still clipped by 1–3px, and
-  the check that missed it set `textContent` on a bench instead of calling
-  `fitJourneyBarLabel`. Never verify this by measuring a label you populated yourself —
-  the running app renders those strings wider at the same size.
+- **The collapsed pill and its label-fitting routine are gone** — replaced by the
+  journey rail, which carries no text at all. The old note about a 10.5px font floor and
+  two clipping Bisaya labels no longer applies to anything in the tree.
 - **Both VO watchdogs now stall-trigger before metadata** (this round). The 1s tick was
   re-arming the budget while `duration` was NaN, which re-zeroed the stall counter every
   tick. Measured with a deliberately hung mp3: scene VO 23.1 s → **9.0 s** (EN) /
@@ -237,6 +283,23 @@ Then, since that was written:
 - **The brewing → testimony seam did not reproduce** with `testimony_v2`: no café frame
   between the two videos at 200 ms sampling, gap 203 ms. A sub-200 ms flash is not ruled
   out.
+
+Then, this round:
+
+- **The plant moved into the quiz box, with a watering can the player drags** (Job B).
+  The exit pop-up is gone; each stage grows exactly once, because the quiz passes once.
+  Measured in both languages, 35/35 checks each, zero console errors: the can appears
+  only after a correct answer, a wrong answer grows nothing and retries normally, a real
+  drag waters it, an untouched can waters itself at **20.9 s / 20.8 s**, the box stays
+  open through the whole growth and `onPass` fires only after it closes, the nursery and
+  farm each grow two stages, and the harvesting box fits over the looping video without
+  scrolling.
+- **The progress pill became the journey rail** (Job C). Right side, vertically centred:
+  plant, gold-filled track, seek buttons. No overlap with the subtitle bar, nav prompt,
+  tutorial card, clue bar, farm hint, quiz box or a clamped info popup at 1280×800,
+  900×800 or 1280×1200.
+- **All nine quiz questions rewritten in both languages**, with the correct option
+  passing and a wrong one failing in each, 9/9 in both.
 
 ## Outstanding
 
@@ -261,15 +324,15 @@ over `page.route`), which is not the same as a verification on the live site.
   downloads exactly once**. This replaces the old ≥87.5 s lower bound, which was measured
   before the warm-up was re-timed onto the last brand-story segment — that number is no
   longer the state of the app.
-- **Progress pill labels all fit** in both languages at 1280 and 900 (see above).
 
 Cleared this round, all by real clicks in the harness:
 
 - **Full six-quiz playthrough** — one run, café → nursery → walk → farm → harvesting →
   roastery → café, all seven questions, exactly one wrong. The win screen appeared
   ("You did it — a coffee expert!") with the claim message and no form button.
-- **Coffee tree, all six hooks** — seed · sprout · polybagSeedling · youngTree ·
-  flowering · ripeCherries · roastedBeans · cup, each with its own caption.
+- **Coffee plant, all six hooks** — seed · sprout · polybagSeedling · youngTree ·
+  flowering · ripeCherries · roastedBeans · cup, each with its own caption. These now
+  grow inside the quiz box rather than in an exit pop-up.
 - **Nursery VO recut, both languages** — EN traversed; in BIS all three gates fired
   against the real durations (15.09 / 34.00 / 31.31): marker at 15 s, mini-quiz at 34 s,
   scene quiz at ~31 s.

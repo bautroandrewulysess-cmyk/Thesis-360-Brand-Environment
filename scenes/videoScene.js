@@ -59,6 +59,8 @@ class VideoScene extends Scene {
         this.videoElement = null;
         this.voAudio = null;
         this.quiz = window.PendingQuizzes?.[quizKey] || null;
+        // Only harvesting carries a coffee-tree hook; the type is generic.
+        this.quizGrowHook = (this.quiz && quizKey === 'harvesting') ? 'harvesting' : null;
         this.quizPassed = false;
         this.forwardButton = null;
         this.sceneLoadTime = null;
@@ -445,7 +447,7 @@ class VideoScene extends Scene {
             if (window.DEV_MODE) console.log(`[VideoScene] Continue clicked, transitioning to ${this.nextScene} with spawn ${JSON.stringify(this.nextSpawn)}`);
             // Below the unpassed-quiz escape hatch above, which opens the quiz instead
             // of advancing, so reaching here means the quiz is genuinely passed.
-            if (this.name === 'harvesting') await growCoffeeTree('harvesting');
+            if (this.name === 'harvesting') await finishSceneExit('harvesting');
             sceneManager.switchTo(this.nextScene, this.nextSpawn);
         });
 

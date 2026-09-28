@@ -93,6 +93,8 @@ class CafeInteriorScene extends Scene {
         this.quizPassed = false;
         // Strings resolve lazily via t(): scenes are constructed before the
         // language is chosen, so eager lookup would freeze them to English.
+        // Which coffee-tree hook this scene's quiz earns. showQuiz reads it.
+        this.quizGrowHook = 'cafeInterior';
         this.quiz = {
             get question() { return t('cafe.quiz.question'); },
             get choices() { return [0, 1, 2, 3].map(i => t(`cafe.quiz.choice.${i}`)); },
@@ -1092,10 +1094,11 @@ class CafeInteriorScene extends Scene {
         }
         if (this.isReturnVisit) {
             this.hideNavPrompt();
-            // showQuiz fires its callback once, after the last question of the set, so
-            // this runs when BOTH backToTheCafe and finalChallenge are passed. Awaited
-            // so the cup lands before the completion panel covers the screen.
-            await growCoffeeTree('backToCafe');
+            // The cup is already grown by this point: it happens inside the quiz
+            // box, after finalChallenge, which is the last question of this set.
+            // This only closes out the summary before the completion panel covers
+            // the screen.
+            await finishSceneExit('backToCafe');
             this.showCompletionPanel('Coffee Journey Complete', window.PendingQuizzes.finalChallenge.feedback, 'https://forms.gle/UmT9jCX7bCieUKDW9');
         }
     }
@@ -1137,9 +1140,10 @@ class CafeInteriorScene extends Scene {
             if (this.isReturnVisit && !window.journeyComplete) {
                 return;
             }
-            // Every guard above has passed, so the quiz is done and this transition is
-            // really happening. Awaited so the pop-up finishes before switchTo's fade.
-            await growCoffeeTree('cafeInterior');
+            // Every guard above has passed, so the quiz is done and this transition
+            // is really happening. The seed was grown in the quiz box; this is the
+            // summary only, awaited so it finishes before switchTo's fade.
+            await finishSceneExit('cafeInterior');
             sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
             return;
         }
@@ -1304,6 +1308,9 @@ class CafeInteriorScene extends Scene {
 
             if (this.isReturnVisit) {
                 this.quiz = [window.PendingQuizzes.backToTheCafe, window.PendingQuizzes.finalChallenge];
+                // One hook for the whole set, so the cup grows once, after the LAST
+                // question -- finalChallenge. backToTheCafe earns nothing on its own.
+                this.quizGrowHook = 'backToCafe';
                 this.cafeVoSequence = 'backToCafe';
             } else {
                 this.cafeVoSequence = 'cafeInterior';

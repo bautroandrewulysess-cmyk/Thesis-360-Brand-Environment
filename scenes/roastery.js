@@ -67,6 +67,8 @@ class RoasteryScene extends Scene {
         this.quizPassed = false;
         // Strings resolve lazily via t(): scenes are constructed before the
         // language is chosen, so eager lookup would freeze them to English.
+        // Which coffee-tree hook this scene's quiz earns. showQuiz reads it.
+        this.quizGrowHook = 'roastery';
         this.quiz = {
             get question() { return t('roastery.quiz.question'); },
             get choices() { return [0, 1, 2, 3].map(i => t(`roastery.quiz.choice.${i}`)); },
@@ -1148,7 +1150,7 @@ class RoasteryScene extends Scene {
             if (hotspot.targetScene === 'cafe-interior' && !window.journeyComplete) {
                 sceneManager.scenes['cafe-interior'].isReturnVisit = true;
             }
-            await growCoffeeTree('roastery');
+            await finishSceneExit('roastery');
             sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
             return;
         }

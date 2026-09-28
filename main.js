@@ -795,7 +795,6 @@ function updateJourneyProgress(targetScene) {
     if (window.journeyComplete) {           // free roam: no journey to show
         el.classList.remove('visible');
         el.innerHTML = '';
-        updateJourneyBar();
         return;
     }
 
@@ -808,8 +807,6 @@ function updateJourneyProgress(targetScene) {
 
     paintJourneyTrack(el);
     el.classList.add('visible');
-    paintJourneyPanelTrack();
-    updateJourneyBarLabel();
 }
 window.updateJourneyProgress = updateJourneyProgress;
 
@@ -826,8 +823,6 @@ function advanceJourneyStepTo(key) {
         paintJourneyTrack(el);
         el.classList.add('visible');
     }
-    paintJourneyPanelTrack();
-    updateJourneyBarLabel();
 }
 window.advanceJourneyStepTo = advanceJourneyStepTo;
 
@@ -855,102 +850,59 @@ function paintJourneyTrack(el) {
     });
 }
 
-function paintJourneyPanelTrack() {
-    const track = document.getElementById('journey-panel-track');
-    if (track && journeyProgressStep >= 0) paintJourneyTrack(track);
-}
-
-// Current location, shown on the collapsed pill.
-function updateJourneyBarLabel() {
-    const label = document.getElementById('journey-bar-label');
-    if (!label) return;
-    const step = JOURNEY_STEPS[journeyProgressStep];
-    label.textContent = step ? t(`ui.progress.${step.key}`) : '';
-    fitJourneyBarLabel();
-}
-
-// The pill's 130px max-width is load bearing (see the comment in index.html), so a
-// label that does not fit cannot be given more room -- it has to be given a smaller
-// font. Steps down from the pill's own size in 0.5px increments to a floor of 10.5px;
-// below that the text stops being readable, so ellipsis is the better failure and the
-// CSS already provides it. 'Back to the Cafe' (en) and 'Padulong sa Uma' /
-// 'Balik sa Kapehan' (bis) are the three that need it. The expanded track uses
-// .jp-label and is untouched.
+// How full the rail's track is. Driven by the PLANT's stage, not by journeyProgressStep.
 //
-// The floor was 11px, which left the two Bisaya labels clipping by 1-3px -- measured
-// through this function rather than by setting textContent on a bench, which is what
-// hid it the first time round. 10.5px clears both.
-const JOURNEY_LABEL_MIN_PX = 10.5;
-function fitJourneyBarLabel() {
-    const label = document.getElementById('journey-bar-label');
-    if (!label) return;
-    label.style.fontSize = '';
-    if (!label.clientWidth) return;   // pill still hidden: nothing to measure yet
-    const base = parseFloat(getComputedStyle(label).fontSize);
-    if (!base) return;
-    for (let px = base; label.scrollWidth > label.clientWidth; px -= 0.5) {
-        if (px - 0.5 < JOURNEY_LABEL_MIN_PX) {
-            label.style.fontSize = JOURNEY_LABEL_MIN_PX + 'px';
-            return;
-        }
-        label.style.fontSize = (px - 0.5) + 'px';
-    }
+// Measured, and the reason this is not the scene step: the café sets journeyProgressStep
+// to 0 the moment it loads, so a step-based fill sat at 14% before the player had
+// answered anything -- and the brief asks for an empty track before the first quiz. The
+// plant is also what the rail is about: the stage sits directly above the track, so the
+// two telling the same story is the point, not a coincidence.
+function journeyFraction() {
+    const idx = window.CoffeeTree.stageIndex;
+    if (idx < 0) return 0;
+    return Math.min(1, (idx + 1) / COFFEE_TREE_STAGES.length);
 }
 
-function closeJourneyPanel() {
-    const panel = document.getElementById('journey-panel');
-    if (panel) panel.classList.remove('visible');
-    // Drives the CSS that suppresses the tutorial card and the farm hint while the
-    // panel is open; removing it puts both back exactly as they were, because the
-    // suppression is a !important display rule and never touches their own styles.
-    document.body.classList.remove('journey-panel-open');
-    const toggle = document.getElementById('journey-bar-toggle');
-    if (toggle) {
-        toggle.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('aria-label', t('ui.journey.expand'));
-    }
-}
-
-function toggleJourneyPanel() {
-    const panel = document.getElementById('journey-panel');
-    if (!panel) return;
-    if (panel.classList.contains('visible')) { closeJourneyPanel(); return; }
-    paintJourneyPanelTrack();
-    if (window.updateJourneyPlant) updateJourneyPlant();
-    panel.classList.add('visible');
-    document.body.classList.add('journey-panel-open');
-    const toggle = document.getElementById('journey-bar-toggle');
-    if (toggle) {
-        toggle.setAttribute('aria-expanded', 'true');
-        toggle.setAttribute('aria-label', t('ui.journey.collapse'));
-    }
-}
-window.toggleJourneyPanel = toggleJourneyPanel;
-
-// Visibility follows the clue bar's rules (main.js updateClue): gone while a video or
-// any overlay is up. Driven from the global app update rather than a scene's, because
-// street-view and videoScene never call updateClue.
-function updateJourneyBar() {
-    const bar = document.getElementById('journey-bar');
-    if (!bar) return;
+// ---------------------------------------------------------------------------
+// The journey rail.
+//
+// Replaces the collapsed pill and its expandable panel. One fixed column on the right,
+// vertically centred: the plant at the top, a thin track under it whose gold fill is
+// how far through the journey the player is, and the seek buttons at the bottom.
+//
+// Three reasons it is shaped this way:
+//   - The pill needed a label, the label needed to fit, and fitting it needed a
+//     font-shrinking routine with a measured floor. A bar has nothing to fit.
+//   - The plant used to be reachable only by opening the panel. Here it is simply
+//     always visible, which is the whole point of a thing that grows.
+//   - The seek buttons were already anchored bottom-right, so folding them into the
+//     same column removes an independent thing to keep clear of.
+//
+// The column is pointer-events:none and only the seek buttons re-enable it, so the rail
+// can never swallow a click meant for the scene behind it.
+// ---------------------------------------------------------------------------
+function updateJourneyRail() {
+    const rail = document.getElementById('journey-rail');
+    if (!rail) return;
     const loading = document.getElementById('loading-screen');
-    const blocked = window.journeyComplete
-        || journeyProgressStep < 0
+    const hidden = window.journeyComplete
         || document.body.classList.contains('video-open')
         || document.body.classList.contains('ui-overlay-active')
-        || (loading && !loading.classList.contains('hidden'))
-        || window.innerWidth < 900;
-    if (blocked) {
-        bar.classList.remove('visible');
-        closeJourneyPanel();
-        return;
-    }
-    if (!bar.classList.contains('visible')) {
-        bar.classList.add('visible');
-        fitJourneyBarLabel();   // first measurable moment: hidden labels report width 0
+        || (loading && !loading.classList.contains('hidden'));
+    // visibility rather than display: the seek buttons live in this column and follow
+    // their OWN rules, so the plant and track going away must not move them.
+    rail.classList.toggle('rail-hidden', !!hidden);
+
+    const fill = document.getElementById('journey-track-fill');
+    if (fill) fill.style.height = `${Math.round(journeyFraction() * 100)}%`;
+    const slot = document.getElementById('journey-plant');
+    // Repainted only when the stage actually changes -- this runs every frame.
+    if (slot && slot.dataset.stageIdx !== String(window.CoffeeTree.stageIndex)) {
+        slot.dataset.stageIdx = String(window.CoffeeTree.stageIndex);
+        updateJourneyPlant();
     }
 }
-window.updateJourneyBar = updateJourneyBar;
+window.updateJourneyRail = updateJourneyRail;
 
 // ============================================================================
 // COFFEE TREE
@@ -967,8 +919,9 @@ const COFFEE_TREE_STAGES = [
     'flowering', 'ripeCherries', 'roastedBeans', 'cup'
 ];
 
-// Where each hook leaves the plant. growCoffeeTree walks from wherever it is to here,
-// so pass-through stages need no special casing.
+// Where each hook leaves the plant. runQuizGrowth walks from wherever it is to here,
+// so pass-through stages need no special casing: the nursery's quiz grows seed ->
+// sprout -> polybagSeedling in one go, and the farm's youngTree -> flowering.
 const COFFEE_TREE_HOOKS = {
     cafeInterior: 'seed',
     nursery: 'polybagSeedling',
@@ -1001,107 +954,266 @@ const CoffeeTreeArt = window.CoffeeTreeArt || {};
 // share quizPassed, which already means "this scene's transition is unlocked".
 window.CoffeeTree = { stageIndex: -1, fired: {} };
 
-const COFFEE_TREE_TIMING = { popIn: 280, hold: 1800, cross: 420, popOut: 260 };
+// Stage -1: the pot before anything is in it. The quiz box and the journey rail both
+// need something to show before the first quiz is ever passed, and an empty frame there
+// read as a bug. Same 200x200 viewBox and the same y=178 ground line as every stage in
+// coffeeTreeArt.js, so the first real stage does not jump when it replaces this.
+const EMPTY_SOIL_ART =
+    '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="ct-svg">'
+  + '<defs><linearGradient id="s0gSoil" x1="0" y1="0" x2="0" y2="1">'
+  + '<stop offset="0" stop-color="#9b6c3f"/><stop offset="1" stop-color="#5a3c22"/></linearGradient></defs>'
+  + '<ellipse cx="100" cy="178" rx="52" ry="12" fill="url(#s0gSoil)"/>'
+  + '<ellipse cx="100" cy="174" rx="44" ry="9" fill="#3f2a17" opacity="0.55"/>'
+  + '<circle cx="86" cy="175" r="2.2" fill="#7d5730"/><circle cx="108" cy="177" r="1.8" fill="#7d5730"/>'
+  + '<circle cx="98" cy="172" r="1.6" fill="#7d5730"/>'
+  + '</svg>';
 
-function ensureCoffeeTreePopup() {
-    let el = document.getElementById('coffee-tree-popup');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'coffee-tree-popup';
-        el.innerHTML = '<div class="ct-card"><div class="ct-art"></div><div class="ct-line"></div></div>';
-        document.body.appendChild(el);
-    }
-    return el;
+function plantArtFor(idx) {
+    const stage = COFFEE_TREE_STAGES[idx];
+    return stage ? (CoffeeTreeArt[stage] || '') : EMPTY_SOIL_ART;
 }
+window.plantArtFor = plantArtFor;
 
-function removeCoffeeTreePopup() {
-    const el = document.getElementById('coffee-tree-popup');
-    if (el) el.remove();
-}
-window.removeCoffeeTreePopup = removeCoffeeTreePopup;
+// The watering can. Gold body, handle left, spout pointing RIGHT -- it is placed on the
+// left of the plant, so the spout has to face across the box toward it.
+const WATERING_CAN_SVG =
+    '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+  + '<path d="M68 52 L92 38 L97 47 L74 62 Z" fill="#c9962f"/>'
+  + '<path d="M88 33 L99 40 L95 50 L84 43 Z" fill="#e0b448"/>'
+  + '<path d="M28 46 h42 a4 4 0 0 1 4 4 v22 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-22 a4 4 0 0 1 4 -4 z" fill="#f4d03f"/>'
+  + '<path d="M34 44 q14 -24 32 -8" fill="none" stroke="#c9962f" stroke-width="6" stroke-linecap="round"/>'
+  + '<rect x="22" y="39" width="56" height="9" rx="4.5" fill="#e0b448"/>'
+  + '</svg>';
 
-// The plant's resting place: the journey panel's slot. Repainted whenever it grows and
-// whenever the panel opens, so it always shows the stage actually reached.
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+const prefersReducedMotion = () =>
+    !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+// The plant's resting place: the journey rail's slot. Repainted whenever it grows, so it
+// always shows the stage actually reached. Stage -1 paints the empty pot rather than
+// nothing -- see EMPTY_SOIL_ART.
 function updateJourneyPlant() {
     const slot = document.getElementById('journey-plant');
     if (!slot) return;
-    const stage = COFFEE_TREE_STAGES[window.CoffeeTree.stageIndex];
-    slot.innerHTML = stage ? CoffeeTreeArt[stage] : '';
-    if (stage) slot.setAttribute('data-to', stage);
-    else slot.removeAttribute('data-to');
-    // Hidden outright until the first hook fires. stageIndex starts at -1, and an
-    // empty-but-present slot reserved a visible gap in the journey bar for the whole
-    // of the first scene -- a placeholder for something the player had no way to
-    // know was coming.
-    // 'flex' rather than '' because the rule's own default is flex and this runs on
-    // every journey-panel open, so the slot is always correct as the panel appears.
-    slot.style.display = window.CoffeeTree.stageIndex >= 0 ? 'flex' : 'none';
+    const idx = window.CoffeeTree.stageIndex;
+    slot.innerHTML = plantArtFor(idx);
+    const stage = COFFEE_TREE_STAGES[idx];
+    if (stage) slot.setAttribute('data-to', stage); else slot.removeAttribute('data-to');
 }
 window.updateJourneyPlant = updateJourneyPlant;
 
-const wait = (ms) => new Promise(r => setTimeout(r, ms));
+// ---------------------------------------------------------------------------
+// Growth, inside the quiz box.
+//
+// This replaces the old full-screen pop-up at a scene's exit (#coffee-tree-popup, gone
+// with it). Two things made the move worth it: the player now sees the plant the whole
+// time they are answering, and the reward lands in the box they earned it in instead of
+// interrupting the transition afterwards.
+//
+// The sequence is strictly: correct answer -> can appears -> player drags it (or 20s
+// pass) -> pour -> stage(s) change -> THEN the quiz closes and onPass runs. Nothing
+// about passing or failing is touched; this only ever observes a pass.
+// ---------------------------------------------------------------------------
+const QUIZ_WATER_TIMEOUT_MS = 20000;   // auto-waters after this, with no visible timer
+const QUIZ_WATER_DROP_DIST = 130;      // px from the plant's centre that counts as "on it"
+const PLANT_STAGE_HOLD_MS = 1500;
 
-// Grow to wherever this hook leaves the plant, showing every stage passed through.
-// Awaited by each hook so the pop-up finishes before the transition it precedes.
-// Idempotent per hook: a replayed scene or a double-fired handler does nothing.
-async function growCoffeeTree(hookKey) {
-    const target = COFFEE_TREE_HOOKS[hookKey];
-    if (!target) {
-        console.warn(`[CoffeeTree] Unknown hook: ${hookKey}`);
-        return;
+function paintQuizPlant(animate) {
+    const art = document.getElementById('quiz-plant-art');
+    if (!art) return;
+    const idx = window.CoffeeTree.stageIndex;
+    art.innerHTML = plantArtFor(idx);
+    const stage = COFFEE_TREE_STAGES[idx];
+    if (stage) art.setAttribute('data-to', stage); else art.removeAttribute('data-to');
+    art.classList.toggle('qp-sway', !!animate && !prefersReducedMotion());
+}
+window.paintQuizPlant = paintQuizPlant;
+
+function resetQuizPlantStage() {
+    const host = document.getElementById('quiz-plant-stage');
+    if (!host) return;
+    const can = document.getElementById('quiz-water-can');
+    const prompt = document.getElementById('quiz-water-prompt');
+    const caption = document.getElementById('quiz-plant-caption');
+    if (can) { can.className = ''; can.style.transform = ''; can.style.transition = ''; can.innerHTML = ''; }
+    if (prompt) { prompt.className = ''; prompt.textContent = ''; }
+    if (caption) caption.textContent = '';
+    host.querySelectorAll('.qp-drop').forEach(d => d.remove());
+}
+window.resetQuizPlantStage = resetQuizPlantStage;
+
+// Water drops falling from the spout onto the plant. Purely decorative, and skipped
+// entirely under reduced motion.
+function spawnWaterDrops(host, fromX, fromY, fallPx) {
+    if (prefersReducedMotion()) return;
+    for (let i = 0; i < 7; i++) {
+        const d = document.createElement('div');
+        d.className = 'qp-drop';
+        d.style.left = `${fromX + (Math.random() * 16 - 8)}px`;
+        d.style.top = `${fromY}px`;
+        d.style.setProperty('--qp-fall', `${fallPx}px`);
+        d.style.animationDelay = `${i * 85}ms`;
+        host.appendChild(d);
+        setTimeout(() => d.remove(), 620 + i * 85 + 120);
     }
-    if (window.CoffeeTree.fired[hookKey]) return;
+}
+
+// Resolves when the player drops the can on the plant, or when the timeout fires.
+// Deliberately one promise with two ways to settle, so the pour that follows is written
+// once rather than duplicated down a manual path and an automatic one.
+function awaitWatering(can, plantArt, prompt) {
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = (how) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            can.removeEventListener('pointerdown', onDown);
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            can.removeEventListener('keydown', onKey);
+            resolve(how);
+        };
+        const timer = setTimeout(() => finish('auto'), QUIZ_WATER_TIMEOUT_MS);
+
+        let dragging = false, startX = 0, startY = 0;
+        const onDown = (e) => {
+            if (settled) return;
+            // Stops the press reaching the scene's window-level mousedown (camera drag)
+            // and the raycaster's window-level click, exactly as the seek buttons do.
+            e.preventDefault();
+            e.stopPropagation();
+            dragging = true;
+            startX = e.clientX; startY = e.clientY;
+            can.classList.add('dragging');
+            try { can.setPointerCapture(e.pointerId); } catch (err) { /* not captured, fine */ }
+        };
+        const onMove = (e) => {
+            if (!dragging) return;
+            e.preventDefault();
+            can.style.transform = `translate(${e.clientX - startX}px, ${e.clientY - startY}px)`;
+        };
+        const onUp = () => {
+            if (!dragging) return;
+            dragging = false;
+            can.classList.remove('dragging');
+            const canBox = can.getBoundingClientRect();
+            const plantBox = plantArt.getBoundingClientRect();
+            const dist = Math.hypot(
+                (canBox.left + canBox.width / 2) - (plantBox.left + plantBox.width / 2),
+                (canBox.top + canBox.height / 2) - (plantBox.top + plantBox.height / 2));
+            if (dist <= QUIZ_WATER_DROP_DIST) {
+                finish('drag');
+            } else {
+                // Missed: slide back and let them try again. The 20s timer keeps
+                // running, so a player who cannot manage the drag is never stuck.
+                can.style.transition = 'transform 220ms ease-out';
+                can.style.transform = 'translate(0px, 0px)';
+                setTimeout(() => { can.style.transition = ''; }, 240);
+            }
+        };
+        const onKey = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); finish('key'); }
+        };
+        can.addEventListener('pointerdown', onDown);
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        can.addEventListener('keydown', onKey);
+        if (prompt) prompt.classList.add('visible');
+    });
+}
+
+// The whole in-quiz reward. Resolves when the plant has finished growing -- the quiz
+// must not close before this settles.
+async function runQuizGrowth(hookKey) {
+    const host = document.getElementById('quiz-plant-stage');
+    const art = document.getElementById('quiz-plant-art');
+    const can = document.getElementById('quiz-water-can');
+    const prompt = document.getElementById('quiz-water-prompt');
+    const caption = document.getElementById('quiz-plant-caption');
+    const target = COFFEE_TREE_HOOKS[hookKey];
+    if (!host || !art || !can || !target) return;
+
     const targetIdx = COFFEE_TREE_STAGES.indexOf(target);
-    if (targetIdx <= window.CoffeeTree.stageIndex) return;
+    // Already there: a replayed scene, or a hook that somehow fired twice. Nothing to
+    // grow, so nothing to water for either.
+    if (window.CoffeeTree.fired[hookKey] || targetIdx <= window.CoffeeTree.stageIndex) return;
     window.CoffeeTree.fired[hookKey] = true;
 
-    const el = ensureCoffeeTreePopup();
-    const art = el.querySelector('.ct-art');
-    const line = el.querySelector('.ct-line');
+    can.innerHTML = '<span class="wc-inner">' + WATERING_CAN_SVG + '</span>';
+    can.setAttribute('aria-label', t('ui.water.prompt'));
+    can.classList.add('visible');
+    if (prompt) prompt.textContent = t('ui.water.prompt');
 
-    // Art, motion and caption move together. Every stage gets its own line, including
-    // the intermediate ones the nursery and farm walk through -- captioning those with
-    // the target's line described a plant the viewer could not yet see.
-    const showStage = (idx) => {
-        const stage = COFFEE_TREE_STAGES[idx];
-        art.innerHTML = CoffeeTreeArt[stage] || '';
-        art.setAttribute('data-to', stage);
-        line.textContent = t(`ui.tree.${stage}`);
-    };
+    const how = await awaitWatering(can, art, prompt);
+    if (window.DEV_MODE) console.log(`[Plant] ${hookKey} watered via ${how}`);
+    if (prompt) prompt.classList.remove('visible');
 
-    const first = window.CoffeeTree.stageIndex + 1;
-    showStage(first);
-    el.classList.add('visible');
-    await wait(COFFEE_TREE_TIMING.popIn + COFFEE_TREE_TIMING.hold);
+    // Move the can above the plant and tip it. Measured against the live boxes rather
+    // than assumed, because the card's width -- and therefore the plant's centre --
+    // depends on the viewport.
+    const hostBox = host.getBoundingClientRect();
+    const artBox = art.getBoundingClientRect();
+    const canBox = can.getBoundingClientRect();
+    // The translate is absolute -- it REPLACES whatever the drag left on the element --
+    // so it has to be measured from the can's UNTRANSFORMED position, not from its
+    // current rect. offsetLeft/offsetTop give exactly that, and #quiz-plant-stage is
+    // position:relative so it is the offsetParent. Measured the wrong way round first:
+    // subtracting the live rect left the can at x=430 against a plant at x=640,
+    // because the drag's own translate was being cancelled out twice.
+    //
+    // 0.62 of the can's width left of the plant's centre puts the SPOUT, which is at
+    // the can's right edge, just over the plant rather than past it.
+    const restLeft = hostBox.left + can.offsetLeft;
+    const restTop = hostBox.top + can.offsetTop;
+    const wantX = (artBox.left + artBox.width / 2) - canBox.width * 0.62;
+    const wantY = artBox.top - canBox.height * 0.55;
+    const targetX = wantX - restLeft;
+    const targetY = wantY - restTop;
+    can.style.transition = prefersReducedMotion() ? '' : 'transform 420ms ease-in-out';
+    can.style.transform = `translate(${targetX}px, ${targetY}px)`;
+    await wait(prefersReducedMotion() ? 0 : 440);
+    can.style.transition = '';
+    can.classList.add('pouring');
+    // Spout tip in host coordinates, once the can has arrived.
+    // Drops start at the spout and fall to the plant's middle. Host-relative, because
+    // that is what the absolutely-positioned .qp-drop is laid out against.
+    const spoutX = (wantX + canBox.width * 0.9) - hostBox.left;
+    const spoutY = (wantY + canBox.height * 0.62) - hostBox.top;
+    spawnWaterDrops(host, spoutX, spoutY, Math.max(30, (artBox.top - hostBox.top) + artBox.height * 0.55 - spoutY));
+    await wait(prefersReducedMotion() ? 0 : 900);
 
-    for (let i = first + 1; i <= targetIdx; i++) {
-        art.classList.remove('ct-grow');
-        void art.offsetWidth;                 // restart the animation
-        showStage(i);
-        art.classList.add('ct-grow');
-        await wait(COFFEE_TREE_TIMING.cross + COFFEE_TREE_TIMING.hold);
+    // Growth. Every stage passed through gets its own caption -- captioning the
+    // intermediate ones with the target's line described a plant not yet on screen.
+    for (let i = window.CoffeeTree.stageIndex + 1; i <= targetIdx; i++) {
+        window.CoffeeTree.stageIndex = i;
+        art.classList.remove('qp-sway', 'qp-grow');
+        void art.offsetWidth;                       // restart the animation
+        art.innerHTML = plantArtFor(i);
+        art.setAttribute('data-to', COFFEE_TREE_STAGES[i]);
+        if (!prefersReducedMotion()) art.classList.add('qp-grow');
+        if (caption) caption.textContent = t(`ui.tree.${COFFEE_TREE_STAGES[i]}`);
+        updateJourneyPlant();
+        if (window.updateJourneyRail) window.updateJourneyRail();
+        await wait(prefersReducedMotion() ? 450 : PLANT_STAGE_HOLD_MS);
     }
 
-    el.classList.remove('visible');
-    await wait(COFFEE_TREE_TIMING.popOut);
-    removeCoffeeTreePopup();
-
-    window.CoffeeTree.stageIndex = targetIdx;
-    updateJourneyPlant();
+    can.classList.remove('visible', 'pouring');
+    can.classList.add('poured');
+    art.classList.remove('qp-grow');
+    if (!prefersReducedMotion()) art.classList.add('qp-sway');
+    await wait(400);
 }
-// The summary runs after the tree pop-up and before the caller's transition, and it
-// runs even when the tree itself no-ops (an already-fired hook), because whether the
-// player seeked is independent of whether the plant still had a stage left to grow.
-// Captured BEFORE the global is reassigned below. A top-level function declaration in
-// a classic script is a property of the global object, and the scene files call the
-// bare identifier -- so without this const the wrapper would resolve to itself and
-// recurse forever.
-const growCoffeeTreeOnly = growCoffeeTree;
-async function growCoffeeTreeThenSummarise(hookKey) {
-    await growCoffeeTreeOnly(hookKey);
+window.runQuizGrowth = runQuizGrowth;
+
+// The scene-exit hook. It USED to grow the plant and then show the summary; the growth
+// moved into the quiz box (runQuizGrowth), so all this still does is the summary. The
+// name changed with the behaviour -- a function called growCoffeeTree that grows nothing
+// is exactly the kind of thing someone later "fixes" back. Every caller was renamed too.
+async function finishSceneExit(hookKey) {
     await showSceneSummary(HOOK_TO_SUMMARY[hookKey]);
 }
-window.growCoffeeTree = growCoffeeTreeThenSummarise;
+window.finishSceneExit = finishSceneExit;
 
 // Scene summary. Shown at a scene's exit only when the player seeked FORWARD in that
 // scene -- a recap of narration they chose not to hear. Explicit Continue rather than a
@@ -1325,7 +1437,7 @@ function showScoreEndScreen() {
         // blocked -- but the BODY CLASS is what hides the furniture, and this screen
         // never set it. The nav prompt sat visibly behind the win panel ("turn around
         // -- it's behind you" over the prize message). The class drives the clue bar
-        // (updateClue), the journey pill (updateJourneyBar), hotspot labels, the nav
+        // (updateClue), the journey rail (updateJourneyRail), hotspot labels, the nav
         // prompt and now .farm-hint, so setting it here covers all five at once.
         document.body.classList.add('ui-overlay-active');
         requestAnimationFrame(() => el.classList.add('visible'));
@@ -1392,7 +1504,6 @@ function uiOverlayActive() {
     return shown('quiz-overlay')
         || shown('completion-panel')
         || shown('mini-quiz-overlay')
-        || shown('coffee-tree-popup')
         || shown('scene-summary-panel')
         || shown('score-panel');
 }
@@ -1636,14 +1747,15 @@ window.initSeekControls = initSeekControls;
 // Shown only when there is something a press would actually move: a media element that
 // is playing, with a real duration. seekBlocked() is the same gate the keys pass
 // through, so the buttons cannot be visible in a state where clicking them is refused.
-// The journey panel is included because it opens over this corner.
+// They sit at the bottom of the journey rail but keep their own rules: the rail hides
+// its plant and track during a quiz, and the buttons are governed only by seekBlocked().
 function updateSeekControls() {
     const wrap = document.getElementById('seek-controls');
     if (!wrap) return;
     initSeekControls();
     refreshSeekLabels();
     let show = false;
-    if (!seekBlocked() && !document.body.classList.contains('journey-panel-open')) {
+    if (!seekBlocked()) {
         const el = currentSeekTarget();
         show = !!el && !el.paused && !el.ended && el.readyState > 0
             && Number.isFinite(el.duration) && el.duration > 0;
@@ -1688,7 +1800,17 @@ function anchorHotspotPopup(popup, screen) {
     const h = popup.offsetHeight;
     // Math.max guards a card larger than the viewport: it pins to the top-left
     // margin rather than being clamped to a negative coordinate.
-    const maxLeft = Math.max(HOTSPOT_POPUP_MARGIN, window.innerWidth - w - HOTSPOT_POPUP_MARGIN);
+    // The journey rail occupies the right edge at the vertical centre, so the popup's
+    // right-hand limit is the rail's left edge, not the viewport's. Measured: without
+    // this an orb near the right edge clamped to x=968..1268 at 1280 wide and sat
+    // straight on top of the rail at 1216..1262.
+    const rail = document.getElementById('journey-rail');
+    let rightLimit = window.innerWidth - HOTSPOT_POPUP_MARGIN;
+    if (rail) {
+        const rb = rail.getBoundingClientRect();
+        if (rb.width > 0) rightLimit = Math.min(rightLimit, rb.left - HOTSPOT_POPUP_MARGIN);
+    }
+    const maxLeft = Math.max(HOTSPOT_POPUP_MARGIN, rightLimit - w);
     const maxTop = Math.max(HOTSPOT_POPUP_MARGIN, window.innerHeight - h - HOTSPOT_POPUP_MARGIN);
     popup.style.left = `${Math.min(Math.max(screen.x + 20, HOTSPOT_POPUP_MARGIN), maxLeft)}px`;
     popup.style.top = `${Math.min(Math.max(screen.y - 60, HOTSPOT_POPUP_MARGIN), maxTop)}px`;
@@ -1732,9 +1854,10 @@ class RaycastSystem {
         if (uiOverlayActive()) {
             return;
         }
-        // The journey bar sits over the canvas and is clickable, so without this a
-        // click on the pill would also cast a ray into the scene behind it.
-        if (event.target.closest('#quiz-overlay, #completion-panel, #color-menu, #journey-bar, #journey-panel, #seek-controls')) {
+        // The journey rail sits over the canvas. The column itself is
+        // pointer-events:none, but its seek buttons are not, so without this a click on
+        // one would also cast a ray into the scene behind it.
+        if (event.target.closest('#quiz-overlay, #completion-panel, #color-menu, #journey-rail')) {
             return;
         }
 
@@ -1876,7 +1999,6 @@ class Scene {
         // Defensive only: the pop-up normally removes itself at the end of its own
         // animation, and every hook awaits it before transitioning. This catches the
         // case where a scene is torn down mid-animation, e.g. via browser history.
-        if (window.removeCoffeeTreePopup) window.removeCoffeeTreePopup();
 
         // Cancel this scene's VO sequence state. Leaving mid-segment means playVoSequence
         // never reaches its finally, so voSequenceRunning would stay true forever and the
@@ -2634,7 +2756,10 @@ class Scene {
         this.ambientPausedOffset = undefined;
     }
 
-    showQuiz(quizData, onPass) {
+    // growHook names which coffee-tree hook this quiz set earns, or null for a quiz
+    // that earns nothing. It defaults to the scene's own quizGrowHook so the two
+    // generic call sites do not each have to know which scene they are in.
+    showQuiz(quizData, onPass, growHook = this.quizGrowHook || null) {
         this.clearSubtitles();
         const overlay = document.getElementById('quiz-overlay');
         const questionEl = document.getElementById('quiz-question');
@@ -2649,17 +2774,29 @@ class Scene {
 
         const showQuestion = (qIdx) => {
             if (qIdx >= questions.length) {
-                overlay.style.opacity = '0';
-                setTimeout(() => {
-                    overlay.style.display = 'none';
-                    document.body.classList.remove('ui-overlay-active');
-                    choicesEl.innerHTML = '';
-                    feedbackEl.textContent = '';
-                    feedbackEl.style.color = '#f4f4f4';
-                    if (encouragementEl) encouragementEl.textContent = '';
-                    if (progressEl) progressEl.textContent = '';
-                    setTimeout(onPass, 100);
-                }, 800);
+                // Every question is answered. The plant is watered and grown INSIDE the
+                // box, and only when that has finished does the box close and the scene
+                // carry on -- so the reward is never cut off by the transition behind
+                // it. A quiz with no hook (the mini-quizzes never reach here, and
+                // backToTheCafe is only ever the first half of a set) awaits a resolved
+                // promise and closes exactly as it always did.
+                const grown = growHook && window.runQuizGrowth
+                    ? window.runQuizGrowth(growHook)
+                    : Promise.resolve();
+                grown.catch(err => console.error('[Plant] growth failed:', err)).then(() => {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        document.body.classList.remove('ui-overlay-active');
+                        choicesEl.innerHTML = '';
+                        feedbackEl.textContent = '';
+                        feedbackEl.style.color = '#f4f4f4';
+                        if (encouragementEl) encouragementEl.textContent = '';
+                        if (progressEl) progressEl.textContent = '';
+                        if (window.resetQuizPlantStage) window.resetQuizPlantStage();
+                        setTimeout(onPass, 100);
+                    }, 800);
+                });
                 return;
             }
 
@@ -2713,6 +2850,10 @@ class Scene {
         };
 
         showQuestion(0);
+        // The plant is on screen from the moment the box opens, at whatever stage the
+        // player has actually reached (the empty pot before the first quiz), swaying.
+        if (window.resetQuizPlantStage) window.resetQuizPlantStage();
+        if (window.paintQuizPlant) window.paintQuizPlant(true);
         document.body.classList.add('ui-overlay-active');
         overlay.style.display = 'flex';
         setTimeout(() => {
@@ -2736,6 +2877,7 @@ class Scene {
         }
         const clear = () => {
             overlay.style.display = 'none';
+            if (window.resetQuizPlantStage) window.resetQuizPlantStage();
             if (choicesEl) choicesEl.innerHTML = '';
             if (feedbackEl) {
                 feedbackEl.textContent = '';
@@ -3492,10 +3634,11 @@ class Scene {
     }
 }
 
-// The completion panel is the last thing a run shows, and cafeInterior already awaits
-// growCoffeeTree (the cup, then the summary) immediately before calling it. Wrapping
-// the method rather than that one call site keeps the whole end-of-run order in one
-// place: cup -> summary -> score -> completion panel.
+// The completion panel is the last thing a run shows. The cup is grown earlier now --
+// inside the final café's quiz box, after finalChallenge -- and cafeInterior awaits
+// finishSceneExit (the summary) immediately before calling this. Wrapping the method
+// rather than that one call site keeps the whole end-of-run order in one place:
+// cup (in the quiz box) -> summary -> score -> completion panel.
 (function wrapCompletionPanelWithScore() {
     const original = Scene.prototype.showCompletionPanel;
     Scene.prototype.showCompletionPanel = async function (...args) {
@@ -3521,7 +3664,7 @@ app.on('update', function(deltaTime) {
     if (activeScene && activeScene.update) {
         activeScene.update(deltaTime);
     }
-    updateJourneyBar();
+    updateJourneyRail();
     updateSeekControls();
 });
 

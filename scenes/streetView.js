@@ -62,6 +62,8 @@ class StreetViewScene extends Scene {
         this.preloadedVideoElements = [];
         this._screenPos = new pc.Vec3();
         this.isInputLocked = false;
+        // Which coffee-tree hook this scene's quiz earns. showQuiz reads it.
+        this.quizGrowHook = 'farm';
         this.quiz = {
             get question() { return t('streetView.quiz.question'); },
             get choices() { return [0, 1, 2, 3].map(i => t(`streetView.quiz.choice.${i}`)); },
@@ -1058,7 +1060,7 @@ class StreetViewScene extends Scene {
         if (arrow.targetScene) {
             // Below the farm1-4 close-up guard above deliberately: a refused transition
             // must not grow the tree. Only the harvest disc leaves the farm.
-            if (arrow.isHarvestMarker) await growCoffeeTree('farm');
+            if (arrow.isHarvestMarker) await finishSceneExit('farm');
             await sceneManager.switchTo(arrow.targetScene, arrow.spawnPosition || null);
         } else if (arrow.target) {
             if (window.DEV_MODE) console.log(`[navigation] ${this.currentPosition} → ${arrow.target}`);

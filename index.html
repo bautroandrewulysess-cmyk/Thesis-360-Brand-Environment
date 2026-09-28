@@ -440,55 +440,72 @@
            the subtitle bar's tallest measured top (170px at 900x1200) by 14px, which
            only works because the tutorial card and farm hint are suppressed while it
            is open. */
-        #journey-bar {
-            position: fixed; right: 16px; bottom: 16px; z-index: 930;
-            display: none; font-family: 'Inter', sans-serif;
-        }
-        #journey-bar.visible { display: block; }
-        #journey-bar-toggle {
-            display: flex; align-items: center; gap: 8px;
-            max-width: 130px; padding: 10px 12px;
-            background: rgba(0,0,0,0.75); border: 1px solid rgba(244,208,63,0.35);
-            border-radius: 22px; color: #f4d03f;
-            font-family: inherit; font-size: 0.8rem; line-height: 1.1;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            cursor: pointer; transition: background 0.25s ease, border-color 0.25s ease;
-        }
-        #journey-bar-toggle:hover {
-            background: rgba(0,0,0,0.88); border-color: rgba(244,208,63,0.7);
-        }
-        #journey-bar .jb-dot {
-            width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%;
-            background: #f4d03f; box-shadow: 0 0 8px rgba(244,208,63,0.6);
-        }
-        /* min-width:0 is what makes the label a shrinkable flex item, so it clips
-           (and reports scrollWidth > clientWidth) instead of forcing the pill wider
-           than its load-bearing max-width. fitJourneyBarLabel() reads exactly that. */
-        #journey-bar-label { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        /* ---- The journey rail. One fixed column on the right, vertically centred:
+           plant at the top, progress track under it, seek buttons at the bottom.
 
-        /* ---- Seek buttons. Bottom-right, directly ABOVE the progress pill and sharing
-           its right edge, so the corner reads as one control stack.
+           It replaces the collapsed pill (#journey-bar) and its expandable panel
+           (#journey-panel), both removed along with their strings and handlers. The
+           pill's whole difficulty was that it carried a NAME and the name had to fit
+           inside a load-bearing 130px, which needed a font-shrinking routine with a
+           measured 10.5px floor. A bar carries no text, so none of that survives.
 
-           Geometry, measured: the pill (#journey-bar-toggle) is 10px+10px padding plus
-           a 1px border each side over a 0.8rem/1.1 line = 36px tall at bottom:16px, so
-           its top edge is at 52px. These sit at bottom:60px, leaving 8px of air, and
-           are 34px tall -> top edge 94px. #journey-panel opens at bottom:184px and
-           #subtitle-bar at bottom:8vh centred with max-width:70vw, both clear.
+           pointer-events:none on the column, re-enabled only on the seek buttons: the
+           rail must never swallow a click meant for the scene behind it, and nothing
+           here is clickable by design. ---- */
+        #journey-rail {
+            position: fixed; right: 18px; top: 50%; transform: translateY(-50%);
+            z-index: 930; display: flex; flex-direction: column; align-items: center;
+            gap: 14px; pointer-events: none; font-family: 'Inter', sans-serif;
+        }
+        #journey-plant {
+            width: 46px; height: 46px;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.3s ease;
+        }
+        #journey-plant svg { width: 100%; height: 100%; display: block; }
+        #journey-track {
+            position: relative; width: 6px; height: 190px; border-radius: 3px;
+            /* The unfilled part has to read against a sunlit 360 photo as well as a dim
+               café, so it carries its own dark ground rather than relying on the scene
+               behind it. */
+            background: rgba(0,0,0,0.45); box-shadow: 0 0 0 1px rgba(255,255,255,0.18);
+            overflow: hidden; transition: opacity 0.3s ease;
+        }
+        /* Fills downward from the plant: the plant is the start of the column and the
+           journey reads top to bottom with it. */
+        #journey-track-fill {
+            position: absolute; left: 0; top: 0; width: 100%; height: 0;
+            background: linear-gradient(#f4d03f, #d8b02c);
+            box-shadow: 0 0 8px rgba(244,208,63,0.5);
+            transition: height 0.6s ease;
+        }
+        /* visibility, not display: the seek buttons are in this column and follow their
+           own rules, so hiding the plant and the track must not move them. */
+        #journey-rail.rail-hidden #journey-plant,
+        #journey-rail.rail-hidden #journey-track { visibility: hidden; opacity: 0; }
 
-           z-index 9997: above #brand-story-screen (1002) and the journey bar (930) so
-           the buttons work during the brand story, below #subtitle-bar (9998) so a long
-           two-line subtitle is never covered by them. ---- */
+        /* ---- Seek buttons, at the bottom of the journey rail. They were a fixed
+           bottom-right pair; folding them into the same column removes an independent
+           thing every other bottom-band element had to be kept clear of. Stacked
+           vertically because the column is narrow.
+
+           They sit inside #journey-rail (z-index 930) and inherit it, which is below
+           #subtitle-bar (9998) -- but the rail is vertically centred on the RIGHT and
+           the subtitle is centred at the bottom, so the two never meet at any measured
+           viewport anyway.
+
+           pointer-events:auto re-enables the column here and only here. ---- */
         #seek-controls {
-            position: fixed; right: 16px; bottom: 60px; z-index: 9997;
-            display: none; gap: 8px; font-family: 'Inter', sans-serif;
+            display: none; flex-direction: column; gap: 6px;
+            pointer-events: auto; font-family: 'Inter', sans-serif;
         }
         #seek-controls.visible { display: flex; }
         #seek-controls button {
-            display: flex; align-items: center; gap: 5px;
-            height: 34px; padding: 0 11px;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            height: 30px; width: 62px; padding: 0;
             background: rgba(0,0,0,0.75); border: 1px solid rgba(244,208,63,0.35);
-            border-radius: 17px; color: #f4d03f;
-            font-family: inherit; font-size: 0.78rem; font-weight: 500; line-height: 1;
+            border-radius: 15px; color: #f4d03f;
+            font-family: inherit; font-size: 0.7rem; font-weight: 500; line-height: 1;
             white-space: nowrap; cursor: pointer;
             transition: background 0.25s ease, border-color 0.25s ease;
         }
@@ -498,36 +515,8 @@
         #seek-controls button:focus-visible {
             outline: 2px solid rgba(244,208,63,0.8); outline-offset: 2px;
         }
-        #seek-controls .sk-icon { font-size: 0.9rem; line-height: 1; }
-        /* The label is what costs width; below the pill's own 900px floor the icons
-           alone still say which way each button goes. */
-        @media (max-width: 899px) {
-            #seek-controls .sk-text { display: none; }
-            #seek-controls button { padding: 0 9px; }
-        }
+        #seek-controls .sk-icon { font-size: 0.82rem; line-height: 1; }
 
-        #journey-panel {
-            position: fixed; bottom: 184px; left: 50%; transform: translateX(-50%);
-            z-index: 931; display: none; align-items: center; gap: 20px;
-            padding: 20px; max-width: 92vw;
-            background: rgba(0,0,0,0.85); border: 1px solid rgba(244,208,63,0.35);
-            border-radius: 16px;
-        }
-        #journey-panel.visible { display: flex; }
-        #journey-plant {
-            width: 96px; height: 96px; flex: 0 0 96px;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(244,208,63,0.08); border-radius: 12px; overflow: hidden;
-        }
-        #journey-panel-track {
-            display: flex; align-items: flex-start; justify-content: center;
-            flex: 1 1 auto; min-width: 0;
-        }
-
-        /* Suppressed while the panel is open. Both are transient nudges, and both
-           restore themselves on close because this only overrides display -- their
-           own inline styles are never touched. */
-        body.journey-panel-open #tutorial-prompt { display: none !important; }
         /* The seek hint under the tutorial card. Quieter than the step label so it
            reads as a standing note rather than the thing being asked for, and it
            never affects the card's own layout. */
@@ -536,54 +525,129 @@
             color: rgba(244,244,244,0.62); font-size: 0.78rem; letter-spacing: 0.3px;
             font-family: 'Inter', sans-serif; pointer-events: none;
         }
-        body.journey-panel-open .farm-hint { display: none !important; }
 
-        /* Below the desktop gate's own 900px floor there is no room for either. */
-        @media (max-width: 899px) {
-            #journey-bar, #journey-panel { display: none !important; }
+        /* ---- The plant, inside the quiz box.
+
+           It used to be a full-screen pop-up at a scene's EXIT (#coffee-tree-popup,
+           removed with this block). Growing it here instead means the player is looking
+           at the thing they just earned, in the same box they earned it in, and it can
+           only happen once per stage because the quiz only passes once.
+
+           #quiz-plant-stage is position:relative: the watering can and the water drops
+           are absolutely positioned against it, so nothing here depends on where the
+           quiz card lands in the viewport. ---- */
+        #quiz-plant-stage {
+            position: relative; margin-top: 18px; padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            min-height: 132px;
         }
-
-        /* ---- Coffee tree pop-up. Fires on a scene quiz, over the live scene, and
-           removes itself when done. Above the clue bar (99999) because for its couple
-           of seconds it is the thing being looked at. Non-interactive. ---- */
-        #coffee-tree-popup {
-            position: fixed; inset: 0; z-index: 100000;
+        #quiz-plant-art {
+            width: 120px; height: 120px; flex: 0 0 120px;
             display: flex; align-items: center; justify-content: center;
-            pointer-events: none; opacity: 0;
-            transition: opacity 260ms ease;
-            font-family: 'Inter', sans-serif;
+            transform-origin: 50% 100%;      /* sway pivots at the soil, not the middle */
         }
-        #coffee-tree-popup.visible { opacity: 1; transition: opacity 280ms ease; }
-        #coffee-tree-popup .ct-card {
-            display: flex; flex-direction: column; align-items: center; gap: 14px;
-            padding: 26px 34px; max-width: 70vw;
-            background: rgba(0,0,0,0.82); border: 1px solid rgba(244,208,63,0.45);
-            border-radius: 20px;
-            animation: ct-pop-in 280ms cubic-bezier(.2,.9,.3,1.2) both;
+        #quiz-plant-art svg { width: 100%; height: 100%; display: block; }
+        /* Gentle idle sway, +/-3 degrees about the base. Deliberately slow and
+           continuous -- it is ambient, not feedback, so it must never look like a
+           response to the player's click. */
+        #quiz-plant-art.qp-sway { animation: qp-sway 5.2s ease-in-out infinite; }
+        @keyframes qp-sway {
+            0%, 100% { transform: rotate(-3deg); }
+            50%      { transform: rotate(3deg); }
         }
-        @keyframes ct-pop-in {
-            from { opacity: 0; transform: scale(0.86) translateY(14px); }
-            to   { opacity: 1; transform: none; }
+        /* Stage change. Same feel as the old pop-up's ct-grow so the reward reads the
+           same, just in its new home. */
+        #quiz-plant-art.qp-grow { animation: qp-grow 460ms ease-out both; }
+        @keyframes qp-grow {
+            0%   { transform: scale(0.82) translateY(6px); opacity: 0; }
+            60%  { transform: scale(1.06) translateY(0);   opacity: 1; }
+            100% { transform: scale(1)    translateY(0);   opacity: 1; }
         }
-        #coffee-tree-popup .ct-art { width: 140px; height: 140px; }
-        #coffee-tree-popup .ct-art svg { width: 100%; height: 100%; display: block; }
-        #coffee-tree-popup .ct-line {
-            color: #f4d03f; font-size: 1rem; line-height: 1.4; text-align: center;
+        #quiz-plant-caption {
+            font-size: 0.9rem; line-height: 1.35; text-align: center; color: #f4d03f;
+            min-height: 1.2em;
         }
 
-        /* The cross-fade between two stages of one pop-up: the outgoing SVG is replaced
-           and the incoming one scales up over 420ms, matching COFFEE_TREE_TIMING.cross.
-           The per-stage motion inside the plant is NOT here -- it lives with the artwork
-           in scenes/coffeeTreeArt.js, keyed off the same data-to attribute. */
-        @keyframes ct-stage-in {
-            from { opacity: 0; transform: scale(0.88); }
-            to   { opacity: 1; transform: none; }
+        /* The watering can. Large on purpose: it is the only interactive thing in the
+           box at that moment, and it has to read as draggable at a glance. Sits on the
+           LEFT with the spout facing the plant. */
+        #quiz-water-can {
+            position: absolute; left: 4px; top: 8px;
+            width: 92px; height: 92px; display: none;
+            cursor: grab; touch-action: none; user-select: none; z-index: 3;
         }
-        #coffee-tree-popup .ct-art.ct-grow { animation: ct-stage-in 420ms ease-out both; }
+        #quiz-water-can.visible { display: block; }
+        #quiz-water-can.dragging { cursor: grabbing; }
+        /* The can is TWO elements on purpose. The outer #quiz-water-can carries the
+           travel (an inline transform: translate, set from measured rects), and .wc-inner
+           carries the tilt. A CSS animation's transform beats an inline one outright, so
+           when the pour keyframes lived on the outer element they wiped the travel and
+           the can tilted in place on the far left instead of over the plant. Measured:
+           can centre x=439 against a plant at x=640. */
+        #quiz-water-can .wc-inner { display: block; width: 100%; height: 100%; }
+        #quiz-water-can svg { width: 100%; height: 100%; display: block; pointer-events: none; }
+        /* Pulsing highlight, on the halo rather than the can, so the can's own silhouette
+           stays crisp while it pulses. */
+        #quiz-water-can::before {
+            content: ''; position: absolute; inset: -8px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(244,208,63,0.35) 0%, rgba(244,208,63,0) 70%);
+            animation: qp-can-pulse 1.6s ease-in-out infinite; pointer-events: none;
+        }
+        #quiz-water-can.dragging::before, #quiz-water-can.poured::before { animation: none; opacity: 0; }
+        @keyframes qp-can-pulse {
+            0%, 100% { transform: scale(0.92); opacity: 0.55; }
+            50%      { transform: scale(1.08); opacity: 1; }
+        }
+        /* Tilt for the pour, on the INNER element (see above). The origin is the handle
+           end, on the left, so rotating clockwise swings the spout -- which is on the
+           right -- down over the plant. */
+        #quiz-water-can.pouring .wc-inner {
+            transform-origin: 22% 58%; animation: qp-pour 900ms ease-in-out forwards;
+        }
+        @keyframes qp-pour {
+            0%   { transform: rotate(0deg); }
+            25%  { transform: rotate(38deg); }
+            100% { transform: rotate(38deg); }
+        }
+        #quiz-water-prompt {
+            font-size: 0.86rem; line-height: 1.35; text-align: center;
+            color: rgba(244,208,63,0.92); min-height: 1.1em; display: none;
+        }
+        #quiz-water-prompt.visible { display: block; }
+        .qp-drop {
+            position: absolute; width: 5px; height: 9px; border-radius: 50% 50% 55% 55%;
+            background: linear-gradient(#bfe6ff, #5aa9e6); pointer-events: none; z-index: 2;
+            animation: qp-drop 620ms ease-in forwards;
+        }
+        @keyframes qp-drop {
+            0%   { transform: translateY(0) scale(0.7); opacity: 0; }
+            15%  { opacity: 1; }
+            100% { transform: translateY(var(--qp-fall, 52px)) scale(1); opacity: 0; }
+        }
 
-        /* ---- Scene summary. Only ever shown when the player seeked forward in the
-           scene it belongs to. Sits in the same seam as the coffee tree pop-up and
-           just below it in z-order, because it follows rather than overlaps it. ---- */
+        /* Short viewports: the plant and the can give up size before the question and
+           the answers do. 820px is where a four-long-option question plus a 120px plant
+           stops fitting in the card's 92vh at the 36px padding. */
+        @media (max-height: 820px) {
+            #quiz-card { padding: 24px; }
+            #quiz-plant-stage { min-height: 104px; margin-top: 12px; padding-top: 10px; }
+            #quiz-plant-art { width: 92px; height: 92px; flex: 0 0 92px; }
+            #quiz-water-can { width: 74px; height: 74px; }
+        }
+
+        /* Reduced motion: the stage still changes and the can still pours -- the
+           information is the point -- but nothing loops, drifts or swings. */
+        @media (prefers-reduced-motion: reduce) {
+            #quiz-plant-art.qp-sway,
+            #quiz-plant-art.qp-grow,
+            #quiz-water-can::before,
+            #quiz-water-can.pouring .wc-inner,
+            .qp-drop { animation: none !important; }
+            #quiz-plant-art.qp-sway { transform: none; }
+            .qp-drop { display: none; }
+        }
+
         #scene-summary-panel {
             position: fixed; inset: 0; z-index: 99990;
             display: flex; align-items: center; justify-content: center;
@@ -696,8 +760,8 @@
         #debug-info.active { display: block; }
 
         /* .farm-hint joined this rule when the score screen started setting
-           ui-overlay-active: it was suppressed only by journey-panel-open, so any
-           full-screen overlay left it on top of itself. */
+           ui-overlay-active: it was suppressed only while the old journey panel was
+           open, so any full-screen overlay left it on top of itself. */
         body.ui-overlay-active .hotspot-label,
         body.ui-overlay-active #nav-prompt,
         body.ui-overlay-active .farm-hint,
@@ -914,27 +978,18 @@
 
     <div id="subtitle-bar" style="display:none; position:fixed; bottom:8vh; left:50%; transform:translateX(-50%); max-width:70vw; padding:12px 20px; background:rgba(0,0,0,0.75); color:#f4f4f4; font-family:'Inter',sans-serif; font-size:1.05rem; line-height:1.5; text-align:center; border-radius:6px; z-index:9998; pointer-events:none; backdrop-filter:blur(4px);"></div>
 
-        <!-- Journey bar: collapsed pill bottom-right, click expands to the full track.
-         The pill is corner-anchored rather than centred because the centred bottom
-         column (nav prompt, clue bar, subtitle bar, tutorial, farm hint) is full. -->
-    <div id="journey-bar">
-        <button id="journey-bar-toggle" type="button" aria-expanded="false" onclick="toggleJourneyPanel()">
-            <span class="jb-dot"></span><span id="journey-bar-label"></span>
-        </button>
-    </div>
-    <div id="journey-panel">
+    <!-- The journey rail: plant, progress, seek. Right side, vertically centred.
+         Nothing in it is clickable except the seek buttons, and the column itself is
+         pointer-events:none so it cannot intercept a click meant for the scene. -->
+    <div id="journey-rail">
         <div id="journey-plant"></div>
-        <div id="journey-panel-track"></div>
-    </div>
-
-    <!-- Seek buttons. They call window.seekBy() -- the same function the arrow keys
-         call -- so every rule that already governs seeking (quizzes never skipped,
-         back stops at the segment start, a forward press marks the scene seeked,
-         presses accumulated through seekPending) holds for a click with no second
-         implementation to keep in step. -->
-    <div id="seek-controls">
-        <button id="seek-back" type="button"><span class="sk-icon">&#9194;</span><span class="sk-text">&minus;10s</span></button>
-        <button id="seek-fwd" type="button"><span class="sk-icon">&#9193;</span><span class="sk-text">+10s</span></button>
+        <div id="journey-track"><div id="journey-track-fill"></div></div>
+        <!-- Calls window.seekBy() -- the same function the arrow keys call -- so every
+             rule that governs seeking holds for a click with no second implementation. -->
+        <div id="seek-controls">
+            <button id="seek-back" type="button"><span class="sk-icon">&#9194;</span><span class="sk-text">&minus;10s</span></button>
+            <button id="seek-fwd" type="button"><span class="sk-icon">&#9193;</span><span class="sk-text">+10s</span></button>
+        </div>
     </div>
 
 <div id="nav-prompt" style="display:none; opacity:0; transition:opacity 0.6s ease; position:fixed; bottom:3vh; left:50%; transform:translateX(-50%); padding:10px 22px; background:rgba(0,0,0,0.7); color:#f4d03f; font-family:'Inter',sans-serif; font-size:0.95rem; letter-spacing:0.5px; text-align:center; border:1px solid rgba(244,208,63,0.35); border-radius:30px; z-index:900; pointer-events:none; backdrop-filter:blur(4px);"></div>
@@ -947,11 +1002,21 @@
     </div>
 
     <div id="quiz-overlay" style="display:none; opacity:0; transition:opacity 0.8s ease; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:950; align-items:center; justify-content:center;">
-      <div id="quiz-card" style="max-width:560px; width:88%; background:rgba(18,18,18,0.96); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:36px; color:#f4f4f4; font-family:'Inter',sans-serif;">
+      <div id="quiz-card" style="max-width:560px; width:88%; max-height:92vh; overflow-y:auto; background:rgba(18,18,18,0.96); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:36px; color:#f4f4f4; font-family:'Inter',sans-serif;">
         <div id="quiz-question" style="font-size:1.15rem; line-height:1.5; margin-bottom:12px;"></div>
         <div id="quiz-encouragement" style="font-size:0.85rem; line-height:1.4; color:rgba(244,244,244,0.6); margin-bottom:20px;"></div>
         <div id="quiz-choices" style="display:flex; flex-direction:column; gap:10px;"></div>
         <div id="quiz-feedback" style="margin-top:20px; font-size:0.95rem; line-height:1.5; min-height:1.4em;"></div>
+        <!-- The plant lives INSIDE the quiz box, centred below the answers. It is the
+             same art the journey rail shows, at the stage actually reached, and it is
+             what the watering can grows. position:relative because the can and the
+             water drops are absolutely positioned against this box. -->
+        <div id="quiz-plant-stage">
+            <div id="quiz-plant-art"></div>
+            <div id="quiz-plant-caption"></div>
+            <div id="quiz-water-can" role="button" tabindex="0"></div>
+            <div id="quiz-water-prompt"></div>
+        </div>
       </div>
     </div>
 
@@ -1082,6 +1147,14 @@
                             <span style="display:inline-flex; align-items:center; height:22px; padding:0 8px; background:rgba(0,0,0,0.75); border:1px solid rgba(244,208,63,0.35); border-radius:11px; color:#f4d03f; font-size:0.68rem; font-weight:500;">&#9193;&nbsp;+10s</span>
                             <span>skip through a narration or video (or the &larr; &rarr; keys). Quizzes are never skipped.</span>
                         </div>
+                    </div>
+                    <!-- The watering can. It only ever appears after a correct answer,
+                         so this is the one place a player can be told about it before
+                         they meet it. English only: the language picker is the next
+                         screen. -->
+                    <div style="display:flex; align-items:center; gap:10px; margin:0 0 10px 0; font-size:0.74rem; color:#a8a8a8; line-height:1.35;">
+                        <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" style="flex:0 0 26px;"><path d="M68 52 L92 38 L97 47 L74 62 Z" fill="#c9962f"/><path d="M88 33 L99 40 L95 50 L84 43 Z" fill="#e0b448"/><path d="M28 46 h42 a4 4 0 0 1 4 4 v22 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-22 a4 4 0 0 1 4 -4 z" fill="#f4d03f"/><path d="M34 44 q14 -24 32 -8" fill="none" stroke="#c9962f" stroke-width="6" stroke-linecap="round"/><rect x="22" y="39" width="56" height="9" rx="4.5" fill="#e0b448"/></svg>
+                        <span>Answer a question correctly and a watering can appears — drag it onto your coffee plant to make it grow. Your plant follows you on the right of the screen.</span>
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px 22px; width:100%;">
                     <div style="display:flex; align-items:flex-start; gap:10px; text-align:left;">

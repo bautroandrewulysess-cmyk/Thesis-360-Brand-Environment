@@ -51,6 +51,8 @@ class NurseryScene extends Scene {
         this.quizPassed = false;
         // Strings resolve lazily via t(): scenes are constructed before the
         // language is chosen, so eager lookup would freeze them to English.
+        // Which coffee-tree hook this scene's quiz earns. showQuiz reads it.
+        this.quizGrowHook = 'nursery';
         this.quiz = {
             get question() { return t('nursery.quiz.question'); },
             get choices() { return [0, 1, 2, 3].map(i => t(`nursery.quiz.choice.${i}`)); },
@@ -955,13 +957,14 @@ class NurseryScene extends Scene {
             }
             // Intercept nursery→farm transition to play drone video first
             if (hotspot.id === 'back-to-exterior' && hotspot.targetScene === 'street-view') {
-                // Ahead of the drone video, not after it: the tree belongs to the quiz
-                // just passed, and the drone video is the transition itself.
-                await growCoffeeTree('nursery');
+                // Ahead of the drone video, not after it: the drone video IS the
+                // transition, so the summary has to be closed out before it starts.
+                // The plant itself already grew, back in the quiz box.
+                await finishSceneExit('nursery');
                 this.playDroneVideoThenTransition(hotspot.spawnPosition);
                 return;
             }
-            await growCoffeeTree('nursery');
+            await finishSceneExit('nursery');
             sceneManager.switchTo(hotspot.targetScene, hotspot.spawnPosition || null);
             return;
         }

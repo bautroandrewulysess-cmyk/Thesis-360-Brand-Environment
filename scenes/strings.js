@@ -163,6 +163,10 @@ window.Strings = {
     'ui.seek.back': { en: 'Go back 10 seconds', bis: 'Balik 10 segundos' },
     'ui.seek.forward': { en: 'Skip ahead 10 seconds', bis: 'Laktaw 10 segundos' },
 
+    // Watering can. The prompt is the only instruction the player gets, so it names
+    // both the object and the target rather than saying "drag me".
+    'ui.water.prompt': { en: 'Drag the watering can to your plant', bis: 'I-drag ang regadera ngadto sa imong tanom' },
+
     // Coffee tree: one line per stage, including the intermediate stages the nursery
     // and farm pop-ups pass through on their way to the stage the hook ends at.
     'ui.tree.seed': { en: 'It starts with a single seed.', bis: 'Nagsugod kini sa usa ka liso.' },
@@ -173,11 +177,6 @@ window.Strings = {
     'ui.tree.ripeCherries': { en: 'The cherries are ripe and ready to pick.', bis: 'Hinog na ang mga cherry ug andam nang panguhaon.' },
     'ui.tree.roastedBeans': { en: 'Roasted, and ready to brew.', bis: 'Sinanlag na, ug andam nang timplahon.' },
     'ui.tree.cup': { en: 'From seed to cup \u2014 your journey is complete.', bis: 'Gikan sa liso ngadto sa tasa \u2014 kompleto na ang imong panaw.' },
-
-    // Journey bar (the collapsed pill and its expanded panel)
-    'ui.journey.title': { en: 'Your Journey', bis: 'Imong Panaw' },
-    'ui.journey.expand': { en: 'Show your journey', bis: 'Ipakita ang imong panaw' },
-    'ui.journey.collapse': { en: 'Hide your journey', bis: 'Itago ang imong panaw' },
 
     // Farm close-up hunt hints. Shown while the golden disc at farm1-4 is unfound;
     // keyed by the player's current position. Display text, unrelated to arrow labels.
