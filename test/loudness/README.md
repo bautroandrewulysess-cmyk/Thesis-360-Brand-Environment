@@ -224,7 +224,7 @@ overwriting in place would leave returning visitors on the old audio for a month
 | `Videos/bis/harvestingWeb.mp4` | `Videos/bis/harvestingWeb_v2.mp4` | -23.6 | -16.1 | -1.6 | -1.59 dBFS | +0.099 | identical |
 | `Videos/bis/coffeeRoasting.mp4` | `Videos/bis/coffeeRoasting_v2.mp4` | -24.9 | -16.0 | -1.7 | -1.78 dBFS | +0.008 | identical |
 | `Videos/bis/ownerInterview.mp4` | `Videos/bis/ownerInterview_v2.mp4` | -22.2 | -16.1 | -1.6 | n/a | +0.063 | identical |
-| `Videos/bis/farmerInterview.mp4` | `Videos/bis/farmerInterview_v2.mp4` | -24.4 | **-16.0** | **-0.4 — MISSES the -1.5 target** | n/a | +0.079 | identical |
+| `Videos/bis/farmerInterview.mp4` | `Videos/bis/farmerInterview_v2.mp4` | -24.4 | **-17.4** | -1.5 | -1.49 dBFS | +0.079 | identical |
 | `Videos/bis/brewingVideo.mp4` | `Videos/bis/brewingVideo_v2.mp4` | -21.7 | -16.0 | -1.6 | -1.60 dBFS | +0.076 | identical |
 
 Verified on every output: within **-16 ±0.5 LUFS**, true peak **at or under -1.5 dBTP**,
@@ -242,15 +242,22 @@ Two things this cost:
   stop that overshoot also pulls integrated loudness down; `ownerInterview` settled
   at -17.7 LUFS that way. The TP target is fixed and only loudness is chased.
 
-**`Videos/bis/farmerInterview_v2.mp4` does not meet the true-peak target.** It lands at
--16.0 LUFS but **-0.4 dBTP**, against the -1.5 requirement. Its source already peaks at
--1.5 dBTP with the content almost entirely in the left channel, and the +8.4 dB it needs
-puts the AAC decode overshoot above the target no matter what the loudnorm TP target is
-set to (tried -2, -3, -4, -5 — the output stayed at -0.4). An explicit `alimiter` made it
-worse, because `alimiter` applies makeup gain unless `level=disabled`, so a lower limit
-produced a LOUDER file. Options not yet tried: a higher audio bitrate to cut the decode
-overshoot, or accepting about -17 LUFS for this one file. Flagging rather than shipping a
-false claim.
+**`Videos/bis/farmerInterview_v2.mp4` is the one file not at -16 LUFS.** It sits at
+**-17.4**, because -16 cannot be reached on this source without breaching the true-peak
+limit: its audio is almost entirely in the left channel and already peaks at -1.48 dBTP,
+so the +8.5 dB that -16 would need puts the AAC decode overshoot well above -1.5.
+Stepping the target down, measured: -16.0 gives +1.8 dBTP, -17.0 gives -0.4, -17.3 gives
+**-1.5** — the loudest setting that complies. It is 1.4 LU quieter than the other ten,
+which is within the 2 LU band the rest of the set sits in.
+
+A note for whoever revisits this, because it cost real time twice: **the shell here is
+zsh, and `offset=$off:linear=true` silently mangles the filter string.** zsh reads `:l`
+as the lowercase modifier, so `$off:linear=true` expands to `0.07inear=true`, loudnorm
+rejects the `offset` option, and ffmpeg exits without writing the file. With stderr
+suppressed that looks exactly like "the target had no effect" — every target appeared to
+produce the same -16.0/-0.4 output, because it was the *previous* file being measured
+each time. Brace it: `offset=${off}:linear=true`. The `.sh` scripts in the scratch
+directory ran under bash and were never affected.
 
 Durations grow by 0.008-0.099 s. That is the AAC encoder's priming and padding, not
 a cut: the video stream is byte-identical, so no frame moved.
