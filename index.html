@@ -667,6 +667,44 @@
             display: none !important;
         }
 
+        /* ---- Scene-local DOM is suppressed whenever the scene is not the thing being
+           looked at. Two classes, both painted once per frame by updateUiSuppression()
+           in main.js, so there is exactly one predicate behind every surface here.
+
+           body.scene-loading  -- loading screen up, or mid-transition (teardown).
+           body.overlay-suppressed -- uiOverlayActive(): quiz, mini-quiz, coffee-tree
+                                      pop-up, scene summary, score panel.
+
+           Why this rule has to exist at all: the badges are position:fixed at
+           z-index 5001 and #loading-screen is z-index 1001, and switchTo() sets
+           activeScene inside loadScene() while the loading screen is still up for its
+           2s minimum. The new scene's update() therefore painted its ⓘ badges over
+           the loading screen for those two seconds. z-index was NOT raised on the
+           loading screen to fix it: the badges must be gone, not covered, or they
+           still show through the screen's 1s opacity fade.
+
+           display:none carries no state, so every one of these returns by itself the
+           frame the class comes off -- nothing has to remember to restore it.
+
+           #nav-prompt is deliberately NOT in the scene-loading list: switchTo() reuses
+           it to show "Scene couldn't load" on a failed or throwing load, and that path
+           runs while isTransitioning is still set. Suppressing it there would swallow
+           the only error the player ever sees. It stays in the overlay list, where no
+           such message is in flight. ---- */
+        body.scene-loading .hotspot-label,
+        body.scene-loading .arrow-label,
+        body.scene-loading .farm-closeup-badge,
+        body.scene-loading .gate-marker-button,
+        body.scene-loading .farm-hint,
+        body.overlay-suppressed .hotspot-label,
+        body.overlay-suppressed .arrow-label,
+        body.overlay-suppressed .farm-closeup-badge,
+        body.overlay-suppressed .gate-marker-button,
+        body.overlay-suppressed #nav-prompt,
+        body.overlay-suppressed .farm-hint {
+            display: none !important;
+        }
+
         #hotspot-popup.active {
             display: block !important;
         }

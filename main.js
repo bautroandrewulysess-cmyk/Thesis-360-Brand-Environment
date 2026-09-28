@@ -1398,6 +1398,31 @@ function uiOverlayActive() {
 }
 window.uiOverlayActive = uiOverlayActive;
 
+// True while the loading screen owns the screen, or while a switch is tearing the old
+// scene down before the loading screen is even up. Both halves matter: switchTo() does
+// fadeOut() and unloadScene() with isTransitioning set and the loading screen still
+// hidden, and it sets activeScene inside loadScene() while the loading screen is up for
+// its 2s minimum plus the fade -- so the incoming scene's update() runs, and painted its
+// badges over the loading screen, for that whole window.
+function sceneLoadingOrTearingDown() {
+    if (typeof appState !== 'undefined' && (appState.isTransitioning || appState.isLoadingScene)) return true;
+    const loading = document.getElementById('loading-screen');
+    // Opacity, not the class: .hidden only starts a 1s fade-out, so the screen is still
+    // on screen after the class lands.
+    if (loading && (!loading.classList.contains('hidden') || parseFloat(getComputedStyle(loading).opacity) > 0.01)) return true;
+    return false;
+}
+
+// Every scene-local surface (orb badges, hotspot and arrow labels, gate buttons, nav
+// prompt, farm hint, seek buttons) is hidden by CSS off these two classes -- see the
+// rule block in index.html. Painted once per frame from the global update so there is a
+// single predicate rather than one check per surface per scene.
+function updateUiSuppression() {
+    document.body.classList.toggle('scene-loading', sceneLoadingOrTearingDown());
+    document.body.classList.toggle('overlay-suppressed', uiOverlayActive());
+}
+window.updateUiSuppression = updateUiSuppression;
+
 // Seeking is refused outright while an overlay is up, mid-transition, or once the
 // harvesting quiz has parked the video in its muted loop -- there is nothing left to
 // seek there and the quiz must not be reachable past.
@@ -1953,9 +1978,15 @@ class Scene {
         if (this.hotspotEntities.some(g => g && g.hotspotData && !g.badgeElement)) {
             this.createHotspotBadges();
         }
-        const overlayActive = document.getElementById('quiz-overlay')?.style.display === 'flex'
-            || document.getElementById('completion-panel')?.style.display === 'flex'
-            || document.body.classList.contains('video-open');
+        // Was quiz-overlay + completion-panel + video-open only, which left the
+        // coffee-tree pop-up, the scene summary, the mini-quiz and the score panel
+        // uncovered -- and said nothing at all about the loading screen. The CSS in
+        // index.html now hides these too, off the same predicates; this stays because
+        // the badge's display is set inline every frame and leaving it 'flex' under a
+        // display:none rule would flash it for one frame on the way out.
+        const overlayActive = uiOverlayActive()
+            || document.body.classList.contains('video-open')
+            || sceneLoadingOrTearingDown();
         const camPos = cameraEntity.getPosition();
         const camFwd = cameraEntity.forward;
         for (const group of this.hotspotEntities) {
@@ -3366,6 +3397,9 @@ class Scene {
 // ============================================================================
 
 app.on('update', function(deltaTime) {
+    // Before the scene's own update: the scene paints its badge positions from here,
+    // and this is what decides whether any of them may be visible at all this frame.
+    updateUiSuppression();
     const activeScene = sceneManager.getActiveScene();
     if (activeScene && activeScene.update) {
         activeScene.update(deltaTime);
