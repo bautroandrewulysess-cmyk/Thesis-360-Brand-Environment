@@ -3613,7 +3613,12 @@ class Scene {
             } else {
                 // Standard gate video playback (roasterVideo, brewingPOV, ownerInterview)
                 // Fully-resolved URLs. Only the two narrated videos go through videoUrl();
-                // ownerInterview/farmerInterview keep their English path.
+                // All four go through videoUrl(), so in a non-English run they resolve
+                // to Videos/<lang>/. That is correct for all four: R2 carries bis/
+                // versions of ownerInterview and farmerInterview as well as the two
+                // narrated ones. A previous comment here claimed the interviews kept
+                // their English path, which is wrong -- and trusting it is how their
+                // bis/ variants got missed in the loudness pass, 404ing the Bisaya run.
                 const videoMap = {
                     roasterVideo: videoUrl('coffeeRoasting_v2.mp4'),
                     brewingPOV: videoUrl('brewingVideo_v2.mp4'),
