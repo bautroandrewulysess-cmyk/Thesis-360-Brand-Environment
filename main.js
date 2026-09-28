@@ -1423,6 +1423,31 @@ function updateUiSuppression() {
 }
 window.updateUiSuppression = updateUiSuppression;
 
+// The one definition of the marker icon set. Lifted out of Scene so the brand story --
+// which has no Scene at all, and runs before app.start() -- draws the SAME paths as the
+// in-scene orbs rather than a second set that would drift from them.
+//
+// size and color are the only things a caller may vary. The brand story's gate is a
+// solid gold disc, so its icon is inked near-black there, exactly as .gate-marker-button
+// already puts #050505 text on #f4d03f; the in-scene badges keep the default gold/blue
+// on their dark disc.
+function hotspotIconSvg(kind, { size = 18, color = null } = {}) {
+    const gold = '#f4d03f', blue = '#4fc3f7';
+    const stroke = color || (kind === 'info' ? blue : gold);
+    const open = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">`;
+    if (kind === 'play') {
+        // Solid triangle reads as "plays a video" at small sizes better than an outline.
+        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color || gold}"><path d="M8 5.5v13l11-6.5z"/></svg>`;
+    }
+    if (kind === 'exit') {
+        // Door with an arrow leaving it: changes scene.
+        return open + '<path d="M14 3H5v18h9"/><path d="M13 12h8"/><path d="M18 8l4 4-4 4"/></svg>';
+    }
+    return open + '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.6" r="0.9" fill="'
+        + (color || blue) + '" stroke="none"/></svg>';
+}
+window.hotspotIconSvg = hotspotIconSvg;
+
 // Seeking is refused outright while an overlay is up, mid-transition, or once the
 // harvesting quiz has parked the video in its muted loop -- there is nothing left to
 // seek there and the quiz must not be reachable past.
@@ -2032,18 +2057,7 @@ class Scene {
     }
 
     hotspotIconSvg(kind) {
-        const gold = '#f4d03f', blue = '#4fc3f7';
-        const stroke = kind === 'info' ? blue : gold;
-        const open = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">`;
-        if (kind === 'play') {
-            // Solid triangle reads as "plays a video" at small sizes better than an outline.
-            return `<svg width="18" height="18" viewBox="0 0 24 24" fill="${gold}"><path d="M8 5.5v13l11-6.5z"/></svg>`;
-        }
-        if (kind === 'exit') {
-            // Door with an arrow leaving it: changes scene.
-            return open + '<path d="M14 3H5v18h9"/><path d="M13 12h8"/><path d="M18 8l4 4-4 4"/></svg>';
-        }
-        return open + '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.6" r="0.9" fill="' + blue + '" stroke="none"/></svg>';
+        return hotspotIconSvg(kind);
     }
 
     createHotspotBadges() {

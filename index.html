@@ -1505,10 +1505,17 @@
             const gateContainer = document.getElementById('brand-story-gate');
             let brandStoryIndex = 0;
             const segments = ['brandStory_en_01', 'brandStory_en_02', 'brandStory_en_03'];
+            // kind is the marker vocabulary from the in-scene orbs, applied to the
+            // brand story's own gate so it says the same things they do:
+            //   gate 1 -> plays segment 2 over aerial.mp4
+            //   gate 2 -> plays segment 3 over farmerMontage.mp4
+            //   gate 3 -> no segment left; runs the summary and enters the café
+            // So the first two are 'play' and the last is 'exit', the same icon the
+            // transition orbs carry.
             const gates = [
-                { ref: 'mapZoom', label: 'Learn More' },
-                { ref: 'aerial', label: 'Learn More' },
-                { ref: 'farmerMontage', label: 'Learn More' }
+                { ref: 'mapZoom', label: 'Learn More', kind: 'play', ariaKey: 'ui.brandStory.gatePlay' },
+                { ref: 'aerial', label: 'Learn More', kind: 'play', ariaKey: 'ui.brandStory.gatePlay' },
+                { ref: 'farmerMontage', label: 'Learn More', kind: 'exit', ariaKey: 'ui.brandStory.gateEnter' }
             ];
 
             const playBrandStorySegment = async (index) => {
@@ -1586,8 +1593,15 @@
                 playVoSegment(segmentId, subtitles, async () => {
                     // Show pulsing gold circle button (no text)
                     const btn = document.createElement('button');
-                    btn.style.cssText = `width:80px; height:80px; border-radius:50%; background:#f4d03f; border:none; cursor:pointer; outline:none; z-index:1010; box-shadow:0 0 30px rgba(244,208,63,0.6); animation:brand-story-pulse 1.8s ease-in-out infinite;`;
-                    btn.setAttribute('aria-label', 'Proceed to next segment');
+                    // Unchanged geometry and colour -- still the 80px gold disc. The only
+                    // addition is the icon, drawn from the same hotspotIconSvg() the
+                    // in-scene orb badges use, inked #050505 because the disc is gold
+                    // (the same pairing .gate-marker-button already uses).
+                    btn.style.cssText = `width:80px; height:80px; border-radius:50%; background:#f4d03f; border:none; cursor:pointer; outline:none; z-index:1010; box-shadow:0 0 30px rgba(244,208,63,0.6); animation:brand-story-pulse 1.8s ease-in-out infinite; display:flex; align-items:center; justify-content:center; padding:0;`;
+                    btn.innerHTML = window.hotspotIconSvg(gateData.kind, { size: 34, color: '#050505' });
+                    // The icon carries no text, so the label is the only thing naming
+                    // which of the two things this gate does.
+                    btn.setAttribute('aria-label', t(gateData.ariaKey));
                     let clicked = false;
                     let pointerDownX = 0;
                     let pointerDownY = 0;

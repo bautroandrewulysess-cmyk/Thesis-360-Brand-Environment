@@ -154,6 +154,11 @@ window.Strings = {
     // arrow keys are named after them as the shortcut, not as the primary way in.
     'ui.tutorial.seekHint': { en: 'Use the ⏪ ⏩ buttons to skip 10s (or the \u2190 \u2192 keys)', bis: 'Gamita ang ⏪ ⏩ nga buton aron molaktaw 10s (o ang \u2190 \u2192 nga yawi)' },
 
+    // Brand-story gate: aria-labels only. The gate is an icon, so the label is the
+    // only thing that says which of the two things it does.
+    'ui.brandStory.gatePlay': { en: 'Play the next part of the story', bis: 'I-play ang sunod nga bahin sa istorya' },
+    'ui.brandStory.gateEnter': { en: 'Enter the café', bis: 'Sulod sa kapehan' },
+
     // Seek buttons: aria-labels only -- the visible face is the icon plus −10s / +10s.
     'ui.seek.back': { en: 'Go back 10 seconds', bis: 'Balik 10 segundos' },
     'ui.seek.forward': { en: 'Skip ahead 10 seconds', bis: 'Laktaw 10 segundos' },
