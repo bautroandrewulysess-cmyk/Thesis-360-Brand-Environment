@@ -90,7 +90,7 @@ on the buttons.
    VTT *content* changed → bump `SUBTITLE_VERSION`. **VO audio content changed → bump
    `VO_VERSION`** (VO mp3s are served with no `cache-control`, only an etag, so a
    replaced recording can otherwise be served stale from cache indefinitely). Several
-   changed → bump each. `?v=` is currently **67**, `SUBTITLE_VERSION` is **6**,
+   changed → bump each. `?v=` is currently **68**, `SUBTITLE_VERSION` is **6**,
    `VO_VERSION` is **1**.
 4. **Splats and videos carry `immutable` cache headers.** Never overwrite in place —
    returning visitors would stay on the old file for a month. Upload under a **new
