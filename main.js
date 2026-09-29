@@ -64,6 +64,13 @@ const voUrl = (audioKey) => {
     return `${assetUrl(path)}?v=${VO_VERSION}`;
 };
 window.voUrl = voUrl;
+// The version on its own, for the one VO file that cannot go through voUrl(): the
+// context narration in index.html. voUrl() is language-aware and would send a Bisaya
+// player to VO/bis/contextIntro_bis.mp3, which does not exist -- the context screen
+// runs BEFORE the language picker and is English-only by design. It still needs the
+// stamp, though: VO mp3s are served with an etag and no cache-control, so without one
+// a recut of this file could be served stale indefinitely.
+window.VO_VERSION = VO_VERSION;
 
 // Language-aware video path helper. Only the two videos with narration baked into
 // their audio track (brewingVideo, coffeeRoasting) have per-language versions; every

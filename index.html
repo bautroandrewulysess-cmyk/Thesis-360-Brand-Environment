@@ -1538,7 +1538,7 @@
                 if (beginBtn) beginBtn.disabled = false;
             };
 
-            contextVo = new Audio(`${R2_BASE}/VO/contextIntro.mp3`);
+            contextVo = new Audio(`${R2_BASE}/VO/contextIntro.mp3?v=${window.VO_VERSION || 1}`);
             contextVo.preload = 'auto';
             contextVo.addEventListener('ended', releaseBegin);
             contextVo.addEventListener('error', releaseBegin);
