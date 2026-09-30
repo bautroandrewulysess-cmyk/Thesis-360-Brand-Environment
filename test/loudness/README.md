@@ -377,10 +377,10 @@ done
 
 ---
 
-## 7. Round two — new context VO, recut Bisaya nursery
+## 7. Round two — new context VO
 
-Three more files replaced, plus three subtitle files. `?v=` is **76**,
-`SUBTITLE_VERSION` is **7**, `VO_VERSION` is **3**. None of it is on R2 yet.
+One file added under a new name. `?v=` is bumped this round;
+`SUBTITLE_VERSION` stays **6** and `VO_VERSION` stays **2**. Not on R2 yet.
 
 ### `VO/contextIntro_v3.mp3` — new recording
 
@@ -402,46 +402,14 @@ At 32.92 s it outruns the Begin button's 25 s "enable anyway" cap, which would h
 unlocked Begin with 8 s of narration still to go. The cap is now **39 s**
 (duration + 6).
 
-### `VO/bis/nursery_bis_01..03.mp3` — recut from one take
+### Reverted: the Bisaya nursery recut
 
-From `Assets/VO/Finalized VO (Bisaya)/Nursery new 2.0.m4a`, one 80.96 s recording of
-the whole nursery script, cut at the two gate boundaries. **Same filenames**, hence
-the `VO_VERSION` bump.
-
-Room tone on this take sits near **-32 dB**, so `silencedetect` needs
-`noise=-30dB`; at -35 dB it reports no silence at all.
-
-| cut | silence in the source | length | segment out | in |
-|---|---|---:|---:|---:|
-| 01 → 02 | 14.438 → 16.169 s | **1.731 s** | ends 14.638 | starts 15.969 |
-| 02 → 03 | 48.547 → 49.991 s | **1.444 s** | ends 48.747 | starts 49.791 |
-
-Both far above the 0.4 s floor, and both padded 0.2 s on each side.
-
-Structure check before cutting: 4 speech runs before cut 1, 10 between the cuts,
-13 after. Every run group maps one-to-one onto a cue of the existing BIS VTTs, with
-matching per-cue durations — the same script at the same pace, so the cut points are
-the same script boundaries as before.
-
-| file | dur s | LUFS | dBTP | sample peak |
-|---|---:|---:|---:|---:|
-| `VO/bis/nursery_bis_01.mp3` | 14.402 | -16.4 | -1.7 | -1.74 dBFS |
-| `VO/bis/nursery_bis_02.mp3` | 32.778 | -16.4 | -1.7 | -1.68 dBFS |
-| `VO/bis/nursery_bis_03.mp3` | 30.601 | -16.4 | -1.8 | -2.15 dBFS |
-
-`_03` would not meet the true-peak limit on two-pass `loudnorm` alone — measured
-**-1.0 dBTP**, and lowering loudnorm's own `TP` target did not help (`TP=-2.5` came
-out at -0.8). The mp3 encoder overshoots by roughly 1.8 dB on this material. Fixed
-with an explicit `alimiter=limit=0.71:level=false` (-3.0 dBFS) after loudnorm, with
-the loudness target nudged to -15.6 to land back on -16.4 after limiting.
-`level=false` matters: with alimiter's auto-level on, the filter applies makeup gain
-and the file came back at -13.7 LUFS / +1.2 dBTP.
-
-### `Subtitles/bis/nursery_en_01..03.vtt` — retimed
-
-Same text, each cue re-anchored to its speech-run onset (start pulled back up to
-0.12 s into the preceding pause, end extended up to 0.40 s into the following one).
-Worst cue **16.0 chars/s**; median around 13.
+A recut of `VO/bis/nursery_bis_01..03.mp3` from a single new take, with the three
+BIS VTTs retimed to it, was prepared this round and then **reverted in full**
+(`git revert` of `9c002e5`). The mp3s have been deleted from `test/loudness/VO/bis/`
+and the VTTs are back to exactly what R2 serves. `VO_VERSION` is therefore back to
+**2** and `SUBTITLE_VERSION` back to **6** — the new context narration needs neither,
+because it ships under a new filename.
 
 ### Uploading
 
@@ -449,45 +417,5 @@ Worst cue **16.0 chars/s**; median around 13.
 BUCKET=granja-alegre-assets
 cd /Users/ulysess/Documents/Acads/Thesis/01Code
 
-wrangler r2 object put "$BUCKET/VO/contextIntro_v3.mp3"      --file="test/loudness/VO/contextIntro_v3.mp3"      --content-type=audio/mpeg --remote
-wrangler r2 object put "$BUCKET/VO/bis/nursery_bis_01.mp3"   --file="test/loudness/VO/bis/nursery_bis_01.mp3"   --content-type=audio/mpeg --remote
-wrangler r2 object put "$BUCKET/VO/bis/nursery_bis_02.mp3"   --file="test/loudness/VO/bis/nursery_bis_02.mp3"   --content-type=audio/mpeg --remote
-wrangler r2 object put "$BUCKET/VO/bis/nursery_bis_03.mp3"   --file="test/loudness/VO/bis/nursery_bis_03.mp3"   --content-type=audio/mpeg --remote
-wrangler r2 object put "$BUCKET/Subtitles/bis/nursery_en_01.vtt" --file="test/nursery/Subtitles/bis/nursery_en_01.vtt" --content-type=text/vtt --remote
-wrangler r2 object put "$BUCKET/Subtitles/bis/nursery_en_02.vtt" --file="test/nursery/Subtitles/bis/nursery_en_02.vtt" --content-type=text/vtt --remote
-wrangler r2 object put "$BUCKET/Subtitles/bis/nursery_en_03.vtt" --file="test/nursery/Subtitles/bis/nursery_en_03.vtt" --content-type=text/vtt --remote
-```
-
-Then verify — ranged GET, and local size must equal remote size:
-
-```sh
-BASE=https://assets.granjaalegre.com
-while IFS='|' read -r remote local; do
-  code=$(curl -s -o /dev/null -w '%{http_code}' -r 0-1023 "$BASE/$remote")
-  rbytes=$(curl -s -r 0- "$BASE/$remote" | wc -c | tr -d ' ')
-  lbytes=$(stat -f%z "$local")
-  if [ "$code" = "206" ] && [ "$rbytes" = "$lbytes" ]; then
-    echo "ok    $remote  ($lbytes bytes)"
-  else
-    echo "FAIL  $remote  http=$code remote=$rbytes local=$lbytes"
-  fi
-done <<'LIST'
-VO/contextIntro_v3.mp3|test/loudness/VO/contextIntro_v3.mp3
-VO/bis/nursery_bis_01.mp3|test/loudness/VO/bis/nursery_bis_01.mp3
-VO/bis/nursery_bis_02.mp3|test/loudness/VO/bis/nursery_bis_02.mp3
-VO/bis/nursery_bis_03.mp3|test/loudness/VO/bis/nursery_bis_03.mp3
-Subtitles/bis/nursery_en_01.vtt|test/nursery/Subtitles/bis/nursery_en_01.vtt
-Subtitles/bis/nursery_en_02.vtt|test/nursery/Subtitles/bis/nursery_en_02.vtt
-Subtitles/bis/nursery_en_03.vtt|test/nursery/Subtitles/bis/nursery_en_03.vtt
-LIST
-
-# The bytes served must be the new ones: durations and loudness, from the URL.
-for f in VO/contextIntro_v3.mp3 VO/bis/nursery_bis_01.mp3 \
-         VO/bis/nursery_bis_02.mp3 VO/bis/nursery_bis_03.mp3; do
-  d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$BASE/$f")
-  I=$(ffmpeg -nostdin -nostats -hide_banner -i "$BASE/$f" -af ebur128 -f null - 2>&1 \
-      | awk '/Integrated loudness/{x=1} x&&/I:/{print $2; exit}')
-  echo "$f  ${d}s  ${I} LUFS"
-done
-# expected: contextIntro_v3 32.922 | nursery_bis_01 14.402 | _02 32.778 | _03 30.601
+wrangler r2 object put "$BUCKET/VO/contextIntro_v3.mp3" --file="test/loudness/VO/contextIntro_v3.mp3" --content-type=audio/mpeg --remote
 ```
