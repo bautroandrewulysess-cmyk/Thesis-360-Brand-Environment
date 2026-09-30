@@ -304,6 +304,30 @@ Then, this round:
 - **All nine quiz questions rewritten in both languages**, with the correct option
   passing and a wrong one failing in each, 9/9 in both.
 
+Then, this round:
+
+- **New farmer interview, ONE file for both languages** — `Videos/farmerInterview_v3.mp4`,
+  from `Assets/Videos/newFarmerInterview.mp4`. The source is **HEVC Main 10 /
+  yuv420p10le**, which fails silently in most browsers (hard rule 8), so it is a full
+  transcode, not a remux: libx264 crf 24, maxrate 3M, preset slow, yuv420p, +faststart.
+  89.000 s, 91.6 MB → 28.6 MB. Audio normalized to **-16.0 LUFS / -2.0 dBTP**.
+  - **It is reached by `assetUrl`, not `videoUrl`** — in `checkFarmerInterviewAtToFarm14`,
+    in the two preload sites, and in main.js's gate `videoMap`. The farmer speaks Bisaya
+    and the cut carries **burned-in Bisaya subtitles**, so there is no English version
+    and no `Videos/bis/` variant; `videoUrl` would 404 every Bisaya player. Same bypass
+    the testimony uses.
+  - **No app subtitle file is involved.** `VIDEO_SUBTITLES` has only `roasterVideo` and
+    `brewingPOV`, and the street-view gate passes no `subtitleSrc`, so the subtitle bar
+    is already silent here and cannot double up on the burned-in text. The old
+    interview used no subtitle file either.
+  - Verified by `test/verify-farmer-interview.mjs`, headed, served from disk, **24/24 in
+    both languages**: plain path with no `/bis/` segment, the file plays at 89.000 s,
+    ambient stops while it runs and restarts on `ended`, `onFinish` unlocks input, zero
+    console errors, no 4xx.
+  - **The gate's duck is `pauseAmbient()`, which stops the buffer source.**
+    `ambientGain.gain.value` stays at its base 0.8 the whole way, so a probe that only
+    watches the gain reads a false failure. Cost two bogus FAILs on the first run.
+
 ## Outstanding
 
 Everything below is **pending live verification**, not known-broken. The items struck

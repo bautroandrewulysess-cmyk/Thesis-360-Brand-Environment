@@ -1075,7 +1075,12 @@ class StreetViewScene extends Scene {
             this.toFarm14FirstArrival = false;
             const required = !window.journeyComplete;
             if (window.DEV_MODE) console.warn('[FarmerInterview] showVideoPopup called, required:', required);
-            const videoSrc = videoUrl('farmerInterview_v2.mp4');
+            // assetUrl, NOT videoUrl: this is ONE cut for both languages. The farmer
+            // speaks Bisaya and the file carries burned-in Bisaya subtitles, so there
+            // is no English version to route to and no bis/ variant to route to either
+            // -- videoUrl would send a Bisaya player to Videos/bis/farmerInterview_v3.mp4,
+            // which will not exist. Same bypass the testimony uses, for the same reason.
+            const videoSrc = assetUrl('Videos/farmerInterview_v3.mp4');
             if (window.DEV_MODE) console.warn('[FarmerInterview] video src:', videoSrc);
             if (required) {
                 this.isInputLocked = true;
@@ -1170,7 +1175,8 @@ class StreetViewScene extends Scene {
                 // Preload farmer interview video at start of toFarm chain
                 if (!window.farmerInterviewPreloaded) {
                     window.farmerInterviewPreloaded = true;
-                    fetch(videoUrl('farmerInterview_v2.mp4'), { mode: 'no-cors' }).catch(() => {});
+                    // Same single-file path as the gate below -- see the comment there.
+                    fetch(assetUrl('Videos/farmerInterview_v3.mp4'), { mode: 'no-cors' }).catch(() => {});
                 }
                 this.playVoWithSubtitles('journeyToFarm_en_02', false);
             } else if (positionKey === 'toFarm7') {
@@ -1758,7 +1764,7 @@ class StreetViewScene extends Scene {
             this.isVoFinished = false;
             this.playVoWithSubtitles('journeyToFarm_en_02', false);
             // Preload farmerInterview video for toFarm14 so it plays immediately
-            this.preloadVideo(videoUrl('farmerInterview_v2.mp4'));
+            this.preloadVideo(assetUrl('Videos/farmerInterview_v3.mp4'));
         }
     }
 
