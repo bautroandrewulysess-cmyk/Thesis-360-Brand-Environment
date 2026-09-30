@@ -1446,7 +1446,7 @@
                 if (beginBtn) beginBtn.disabled = false;
             };
 
-            contextVo = new Audio(`${R2_BASE}/VO/contextIntro.mp3?v=${window.VO_VERSION || 1}`);
+            contextVo = new Audio(`${R2_BASE}/VO/contextIntro_v3.mp3?v=${window.VO_VERSION || 1}`);
             contextVo.preload = 'auto';
             contextVo.addEventListener('ended', releaseBegin);
             contextVo.addEventListener('error', releaseBegin);
@@ -1454,8 +1454,10 @@
             // a timeout or a gsap callback would spend the transient activation and let
             // Safari refuse it outright.
             contextVo.play().catch(releaseBegin);
-            // Hard cap, independent of everything above.
-            setTimeout(releaseBegin, 25000);
+            // Hard cap, independent of everything above. contextIntro_v3.mp3 is
+            // 32.92 s measured, so the cap sits at duration + 6 s -- it must never
+            // release Begin while the narration is still speaking.
+            setTimeout(releaseBegin, 39000);
         });
 
         document.getElementById('context-begin-btn').addEventListener('click', () => {
