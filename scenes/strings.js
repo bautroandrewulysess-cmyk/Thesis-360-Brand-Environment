@@ -122,12 +122,14 @@ window.Strings = {
     'ui.progress.backToCafe': { en: 'Back to the Cafe', bis: 'Balik sa Kapehan' },
 
     // Score and reward. Points come only from first-try correct answers on the six
-    // scene quizzes; mini-quizzes never count. Winning is at most one wrong answer
-    // across the whole run, and only on a player's first completed run.
-    'ui.score.winTitle': { en: 'You did it \u2014 a coffee expert!', bis: 'Nahimo nimo — usa ka eksperto sa kape!' },
-    'ui.score.winBody': { en: 'You answered almost every question right the first time. That earns you a Granja Alegre keychain \u2014 your choice of design.', bis: 'Hapit tanang pangutana imong natubag og sakto sa unang higayon. Tungod niini, makadawat ka og Granja Alegre keychain — ikaw ang mopili sa disenyo.' },
+    // scene quizzes; mini-quizzes never count. Winning is ZERO wrong first-try
+    // answers across all seven questions, and only on a player's first completed
+    // run. Retrying a question until it is right is still allowed and always was --
+    // only the first answer to each question is scored.
+    'ui.score.winTitle': { en: 'You did it! A true coffee expert!', bis: 'Nahimo nimo! Usa ka tinuod nga eksperto sa kape!' },
+    'ui.score.winBody': { en: 'You answered every question right on the first try. That earns you a Granja Alegre keychain, your choice of design.', bis: 'Natubag nimo og sakto ang tanang pangutana sa unang higayon. Tungod niini, makadawat ka og Granja Alegre keychain, ikaw ang mopili sa disenyo.' },
     'ui.score.loseTitle': { en: 'Journey complete', bis: 'Nahuman ang panaw' },
-    'ui.score.loseBody': { en: 'You made it from seed to cup \u2014 thank you for coming along! The keychain goes to near-perfect runs, with at most one wrong answer, and this time it was just out of reach.', bis: 'Naabot nimo gikan sa liso ngadto sa tasa — salamat sa imong pag-uban! Ang keychain para sa halos hingpit nga dula, usa ra ka sayop nga tubag ang gitugot, ug niining higayona wala gyud maabot.' },
+    'ui.score.loseBody': { en: 'You made it from seed to cup. Thank you for coming along! The keychain goes to players who answer every question right on the first try, and this time it was just out of reach.', bis: 'Naabot nimo gikan sa liso ngadto sa tasa. Salamat sa imong pag-uban! Ang keychain para sa mga nakatubag og sakto sa tanang pangutana sa unang higayon, ug niining higayona wala gyud maabot.' },
     'ui.score.replayTitle': { en: 'Journey complete', bis: 'Nahuman ang panaw' },
     'ui.score.replayBody': { en: 'Thanks for coming back. The keychain is for a first run only, so this one is just for the love of coffee.', bis: 'Salamat sa imong pagbalik. Ang keychain para lamang sa unang dula, busa kini para na lang sa gugma sa kape.' },
     'ui.score.claimContact': { en: 'Message Andrew Ulysess E. Bautro to claim your prize.', bis: 'I-message si Andrew Ulysess E. Bautro aron makuha ang imong premyo.' },

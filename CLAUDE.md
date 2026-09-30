@@ -278,7 +278,7 @@ Then, since that was written:
 
 - **Full audit playthrough, English, all 13 stages PASS** (reproduced twice): context →
   brand story → café → nursery → drone → walk → farm → harvesting → roastery → back to
-  café → brewing/testimony → win screen, one wrong answer, 7/7 answered. Bisaya pass
+  café → brewing/testimony → end screen, one wrong answer, 7/7 answered. Bisaya pass
   (context, brand story, café, nursery, harvesting) PASS. **Zero console errors and no
   4xx in either**; every request failure was `ERR_ABORTED` on a video that returns 206.
 - **The score screen now suppresses the rest of the UI** (this round). It set no body
@@ -327,6 +327,15 @@ Then, this round:
   - **The gate's duck is `pauseAmbient()`, which stops the buffer source.**
     `ambientGain.gain.value` stays at its base 0.8 the whole way, so a probe that only
     watches the gain reads a false failure. Cost two bogus FAILs on the first run.
+- **The prize rule is now ZERO wrong first-try answers**, not at most one
+  (`SCORE_MAX_WRONG` 1 → 0). Retrying is untouched: the quiz still makes a player
+  answer until they are right, and only the first answer to each of the seven
+  questions is ever scored. Win title, win body and lose body rewritten in both
+  languages to say so, with no em dashes. Verified by `test/verify-score-rule.mjs`,
+  **36/36 in both languages**: 7/0 first run → win with the claim message, 6/1 →
+  lose, 0/0 → lose, 7/0 on a replay → the replay message, and in a live quiz a wrong
+  answer still leaves the box open, the retry still passes it, and the retry is not
+  scored.
 
 ## Outstanding
 
@@ -355,8 +364,9 @@ over `page.route`), which is not the same as a verification on the live site.
 Cleared this round, all by real clicks in the harness:
 
 - **Full six-quiz playthrough** — one run, café → nursery → walk → farm → harvesting →
-  roastery → café, all seven questions, exactly one wrong. The win screen appeared
-  ("You did it — a coffee expert!") with the claim message and no form button.
+  roastery → café, all seven questions, exactly one wrong. That run won under the
+  old ≤1-wrong rule; under the current zero-wrong rule the same run loses, which is
+  what the rule change was verified against.
 - **Coffee plant, all six hooks** — seed · sprout · polybagSeedling · youngTree ·
   flowering · ripeCherries · roastedBeans · cup, each with its own caption. These now
   grow inside the quiz box rather than in an exit pop-up.

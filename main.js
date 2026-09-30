@@ -1520,7 +1520,12 @@ function showLoadingTrivia(targetScene) {
 // which is exactly the required behaviour rather than a special case.
 // ============================================================================
 
-const SCORE_MAX_WRONG = 1;              // at most this many wrong answers still wins
+const SCORE_MAX_WRONG = 0;              // at most this many wrong answers still wins
+// Zero, not one: the keychain goes only to a run that got every one of the seven
+// questions right on its FIRST try. Retrying a question until it is right is
+// untouched -- the quiz still refuses to advance on a wrong answer and the player
+// keeps going -- because only the first answer to each question is ever scored
+// (window.Score.seen below). So this changes who wins, not how anyone plays.
 const SCORE_STORAGE_KEY = 'granjaAlegre.runCompleted';
 
 // Every question a complete run asks, across the six scene quizzes. Six sets, seven
@@ -1576,10 +1581,10 @@ document.addEventListener('click', (e) => {
 function showScoreEndScreen() {
     return new Promise((resolve) => {
         const firstRun = isFirstRun();
-        // Answering nothing is not a near-perfect run. A run that reached this screen
-        // without a single recorded answer used to satisfy "wrong <= 1" and win, so
-        // completing every question is now a condition in its own right. >= rather than
-        // === so an unexpected extra recorded answer can never deny a real win.
+        // Answering nothing is not a flawless run. A run that reached this screen
+        // without a single recorded answer used to satisfy the wrong-answer test and
+        // win, so completing every question is a condition in its own right. >= rather
+        // than === so an unexpected extra recorded answer can never deny a real win.
         const answered = window.Score.firstTryCorrect + window.Score.firstTryWrong;
         const completedAll = answered >= SCORE_REQUIRED_ANSWERS;
         const won = firstRun && completedAll && window.Score.firstTryWrong <= SCORE_MAX_WRONG;
