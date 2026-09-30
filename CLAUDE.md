@@ -90,11 +90,13 @@ on the buttons.
    VTT *content* changed → bump `SUBTITLE_VERSION`. **VO audio content changed → bump
    `VO_VERSION`** (VO mp3s are served with no `cache-control`, only an etag, so a
    replaced recording can otherwise be served stale from cache indefinitely). Several
-   changed → bump each. `?v=` is currently **76**, `SUBTITLE_VERSION` is **6**,
+   changed → bump each. `?v=` is currently **77**, `SUBTITLE_VERSION` is **6**,
    `VO_VERSION` is **2** (see `test/loudness/README.md`; the normalized mp3s,
-   `VO/contextIntro_v3.mp3` and the `_v2`/`_v3` videos are NOT on R2 yet). The Bisaya
-   nursery recut that had pushed these to 7 and 3 was reverted in full, so both are
-   back where R2 is.
+   `VO/contextIntro_v3.mp3`, `Videos/farmerInterview_v3.mp4` and the `_v2`/`_v3`
+   videos are NOT on R2 yet). The Bisaya nursery recut that had pushed these to 7 and
+   3 was reverted in full, so both are back where R2 is — and neither the new context
+   narration nor the new farmer interview needs them, because both ship under new
+   filenames.
 4. **Splats and videos carry `immutable` cache headers.** Never overwrite in place —
    returning visitors would stay on the old file for a month. Upload under a **new
    filename** (`_v2`, `_v3`) and keep the old one as a rollback path.
