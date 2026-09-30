@@ -377,12 +377,13 @@ done
 
 ---
 
-## 7. Round two — new context VO, new farmer interview
+## 7. Round two — new context VO, new farmer interview, recut Bisaya nursery
 
-Two files, both under **new names**, so nothing is overwritten in place and both old
-files stay as rollback paths. `?v=` is bumped this round; `SUBTITLE_VERSION` stays
-**6** and `VO_VERSION` stays **2** — a new filename needs neither. Neither file is on
-R2 yet.
+Eight files. Two go under **new names** (the context VO and the farmer interview),
+so nothing is overwritten in place and both old files stay as rollback paths. The six
+nursery files keep their **existing** names, which is what the version bumps are for:
+`SUBTITLE_VERSION` **6 → 7** and `VO_VERSION` **2 → 3**. `?v=` is bumped too.
+**None of the eight is on R2 yet.**
 
 ### `VO/contextIntro_v3.mp3` — new recording
 
@@ -450,13 +451,75 @@ only `roasterVideo` and `brewingPOV`, and the street-view gate passes no `subtit
 so the subtitle bar cannot double up on the burned-in text. The old interview used no
 subtitle file either.
 
-### Reverted: the Bisaya nursery recut
+### `VO/bis/nursery_bis_01..03.mp3` — recut from one take
 
-A recut of `VO/bis/nursery_bis_01..03.mp3` from a single new take, with the three
-BIS VTTs retimed to it, was prepared this round and then **reverted in full**
-(`git revert` of `9c002e5`). The mp3s have been deleted from `test/loudness/VO/bis/`
-and the VTTs are back to exactly what R2 serves. That is why `VO_VERSION` is back to
-**2** and `SUBTITLE_VERSION` back to **6**.
+From `Assets/VO/Finalized VO (Bisaya)/Nursery 2.4.m4a`, one **79.083 s** recording of
+the whole nursery script (aac 48 kHz stereo, -28.4 LUFS). **Same filenames**, hence the
+`VO_VERSION` bump.
+
+An earlier attempt at this, from a different take (`Nursery new 2.0.m4a`), was cut and
+then **reverted in full** (`git revert` of `9c002e5`). This is a fresh take and a fresh
+cut; none of that work survives.
+
+**No spoken slate on this take.** The first utterance (0.000–1.881 s) is cue 1,
+"Ania na kita karon sa Binhianan," — confirmed against the live segment's own first
+run, 1.814 s versus 1.881 s. Only ~0.06 s of natural lead exists before the first word
+(-53 dBFS at 0–50 ms), so **segment 01's 0.2 s lead pad is generated silence**; 02 and
+03 take theirs from the real pause. Trailing silence was 1.258 s, trimmed to 0.2 s.
+
+**The silence threshold was swept, not assumed**: 25 silences at -45 dB, **27 at -40,
+-35 and -30**, 29 at -25. `noise=-30dB` sits mid-plateau, so the run structure is not
+knife-edge.
+
+**27 speech runs, splitting 4 / 11 / 12.** The same detection run over the three live
+mp3s gives **4 / 11 / 12** as well — identical structure, which is what licenses the
+cut points.
+
+| cut | pause in the source | length | segment out | in |
+|---|---|---:|---:|---:|
+| 01 → 02 | 13.568 → 15.136 s | **1.568 s** | ends 13.568 | starts 15.136 |
+| 02 → 03 | 47.279 → 48.904 s | **1.625 s** | ends 47.279 | starts 48.904 |
+
+Both far above the 0.4 s floor, and both padded 0.2 s on each side.
+
+| file | dur s | live dur s | LUFS | dBTP | sample peak |
+|---|---:|---:|---:|---:|---:|
+| `VO/bis/nursery_bis_01.mp3` | 13.968 | 15.090 | -16.4 | -3.2 | -3.19 dBFS |
+| `VO/bis/nursery_bis_02.mp3` | 32.543 | 34.000 | -16.3 | -5.0 | -4.98 dBFS |
+| `VO/bis/nursery_bis_03.mp3` | 29.321 | 31.310 | -16.4 | -4.6 | -4.56 dBFS |
+
+mp3, 48000 Hz, stereo, 128 kbit/s. **No limiter was needed this time** — plain two-pass
+`loudnorm` landed every segment at -3 dBTP or lower. (The previous, reverted take needed
+an `alimiter` on `_03`; this one is less peaky, so the extra stage would have been
+pointless. Do not assume either way — measure.)
+
+The reading is a little quicker than the live one: each segment span is within 4.2% of
+live, and the three files together are ~4.6 s shorter. **No text was added or removed** —
+all 21 cues of the live BIS VTTs map one-to-one onto run groups.
+
+**One suspected wording difference, disproved.** At 25.330–26.027 s, where the VTT reads
+"Human itanom,", Whisper-as-Tagalog produced "Kung manitanong,". Running the same model
+and settings over the **live** `nursery_bis_02` produced "Umanitanom," for that same
+phrase — two different manglings of one short line, whose durations match to 0.011 s.
+ASR noise, not a script change. The control mangles elsewhere too ("Susiha" → "Sa siya
+kini"), which sets the error scale. **"coffee cherries" and "cherry" are both present in
+this take**, so the VTT loanwords stand.
+
+### `Subtitles/bis/nursery_en_01..03.vtt` — retimed
+
+Same text, each cue re-anchored to its speech-run onset (start pulled back up to
+0.12 s into the preceding pause, end extended up to 0.40 s into the following one,
+clamped so cues never overlap or run past the audio). Cue times are derived from the
+**source** speech-run map offset into segment time, not re-detected on the normalized
+mp3 — normalization lifts the room tone and widens the detected runs by tens of ms.
+
+Worst cue **16.3 chars/s**; median around 13.
+
+Only one cue boundary falls inside a speech run: `_02` cue 2 → cue 3, where the speaker
+runs "Magpabilin kini" straight into "sulod sa unom…". The split at **19.500 s** comes
+from the word timestamps ("kinisulod", 19.200–19.880, divided by letter count).
+
+`/tmp/nursery_cuts.sh` auditions both cut seams and the flagged spots with `afplay`.
 
 ### Upload and verify — one block
 
@@ -478,6 +541,12 @@ cd /Users/ulysess/Documents/Acads/Thesis/01Code
 MANIFEST=$(cat <<'LIST'
 VO/contextIntro_v3.mp3|test/loudness/VO/contextIntro_v3.mp3|audio/mpeg
 Videos/farmerInterview_v3.mp4|test/loudness/Videos/farmerInterview_v3.mp4|video/mp4
+VO/bis/nursery_bis_01.mp3|test/loudness/VO/bis/nursery_bis_01.mp3|audio/mpeg
+VO/bis/nursery_bis_02.mp3|test/loudness/VO/bis/nursery_bis_02.mp3|audio/mpeg
+VO/bis/nursery_bis_03.mp3|test/loudness/VO/bis/nursery_bis_03.mp3|audio/mpeg
+Subtitles/bis/nursery_en_01.vtt|test/loudness/Subtitles/bis/nursery_en_01.vtt|text/vtt
+Subtitles/bis/nursery_en_02.vtt|test/loudness/Subtitles/bis/nursery_en_02.vtt|text/vtt
+Subtitles/bis/nursery_en_03.vtt|test/loudness/Subtitles/bis/nursery_en_03.vtt|text/vtt
 LIST
 )
 
@@ -522,11 +591,13 @@ straight off the URL:
 
 ```bash
 BASE=https://assets.granjaalegre.com
-for f in VO/contextIntro_v3.mp3 Videos/farmerInterview_v3.mp4; do
+for f in VO/contextIntro_v3.mp3 Videos/farmerInterview_v3.mp4 \
+         VO/bis/nursery_bis_01.mp3 VO/bis/nursery_bis_02.mp3 VO/bis/nursery_bis_03.mp3; do
   d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$BASE/$f?check=1")
   I=$(ffmpeg -nostdin -nostats -hide_banner -i "$BASE/$f?check=1" -af ebur128 -f null - 2>&1 \
       | awk '/Integrated loudness/{x=1} x&&/I:/{print $2; exit}')
   echo "$f  ${d}s  ${I} LUFS"
 done
-# expected: contextIntro_v3  32.922s  -16.4 | farmerInterview_v3  89.000s  -16.0
+# expected: contextIntro_v3 32.922s -16.4 | farmerInterview_v3 89.000s -16.0
+#           nursery_bis_01 13.968s -16.4 | _02 32.543s -16.3 | _03 29.321s -16.4
 ```

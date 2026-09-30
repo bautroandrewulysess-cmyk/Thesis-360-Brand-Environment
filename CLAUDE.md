@@ -90,13 +90,14 @@ on the buttons.
    VTT *content* changed → bump `SUBTITLE_VERSION`. **VO audio content changed → bump
    `VO_VERSION`** (VO mp3s are served with no `cache-control`, only an etag, so a
    replaced recording can otherwise be served stale from cache indefinitely). Several
-   changed → bump each. `?v=` is currently **77**, `SUBTITLE_VERSION` is **6**,
-   `VO_VERSION` is **2** (see `test/loudness/README.md`; the normalized mp3s,
-   `VO/contextIntro_v3.mp3`, `Videos/farmerInterview_v3.mp4` and the `_v2`/`_v3`
-   videos are NOT on R2 yet). The Bisaya nursery recut that had pushed these to 7 and
-   3 was reverted in full, so both are back where R2 is — and neither the new context
-   narration nor the new farmer interview needs them, because both ship under new
-   filenames.
+   changed → bump each. `?v=` is currently **78**, `SUBTITLE_VERSION` is **7**,
+   `VO_VERSION` is **3** (see `test/loudness/README.md` §7 — **eight files are NOT on
+   R2 yet**: the normalized mp3s, `VO/contextIntro_v3.mp3`,
+   `Videos/farmerInterview_v3.mp4`, the `_v2`/`_v3` videos, the recut
+   `VO/bis/nursery_bis_0*.mp3` and the retimed `Subtitles/bis/nursery_en_0*.vtt`).
+   The two version bumps exist **only** for the nursery files, which keep their
+   existing names; the context narration and the farmer interview ship under new
+   filenames and need neither.
 4. **Splats and videos carry `immutable` cache headers.** Never overwrite in place —
    returning visitors would stay on the old file for a month. Upload under a **new
    filename** (`_v2`, `_v3`) and keep the old one as a rollback path.
@@ -329,6 +330,33 @@ Then, this round:
   - **The gate's duck is `pauseAmbient()`, which stops the buffer source.**
     `ambientGain.gain.value` stays at its base 0.8 the whole way, so a probe that only
     watches the gain reads a false failure. Cost two bogus FAILs on the first run.
+- **Bisaya nursery narration recut from `Nursery 2.4.m4a`** (this round). One 79.083 s
+  take, cut at the two gate pauses (1.568 s and 1.625 s), 0.2 s padding each side,
+  -16 LUFS. New durations **13.968 / 32.543 / 29.321** against the live
+  15.090 / 34.000 / 31.310 — the same script read a little quicker, every segment span
+  within 4.2% of live. The three BIS VTTs are retimed, text unchanged; worst cue
+  16.3 chars/s. Verified headed, files served from disk: **21/21**, all three gates on
+  time, every cue fired, worst cue lag **5 ms**, zero console errors.
+  - **Sweep the silence threshold, do not assume it.** Measured 25 silences at -45 dB,
+    27 at -40/-35/-30, 29 at -25 — `noise=-30dB` sits mid-plateau on this take, but
+    that is a measurement, not a property of the recordings.
+  - **Run the same detection over the LIVE mp3s as a control.** Both takes give
+    4 / 11 / 12 speech runs; that match is what licensed the cut points, far more than
+    any single duration did.
+  - **A suspected wording change was disproved by transcribing the live audio with the
+    same model.** Whisper-as-Tagalog heard "Kung manitanong," on the new take and
+    "Umanitanom," on the live one, for the same "Human itanom," — two manglings of one
+    line, durations within 0.011 s. Never treat a single Cebuano ASR pass as evidence
+    of a script change; get the control.
+  - **No limiter was needed**, unlike the previous reverted take, whose `_03` overshot
+    to -1.0 dBTP. Plain two-pass `loudnorm` landed all three at -3 dBTP or lower.
+    Measure before reaching for `alimiter`.
+  - **Derive VTT times from the SOURCE run map, offset into segment time.** Re-detecting
+    on the normalized mp3 lifts the room tone and widens every run by tens of ms.
+  - The retimed VTTs live at `test/loudness/Subtitles/bis/` (tracked — only
+    `test/loudness/VO/` and `test/loudness/Videos/` are gitignored). The copies under
+    `test/nursery/Subtitles/bis/` still mirror **what R2 serves today** and must be
+    refreshed from the `test/loudness` ones once the upload lands.
 - **The prize rule is now ZERO wrong first-try answers**, not at most one
   (`SCORE_MAX_WRONG` 1 → 0). Retrying is untouched: the quiz still makes a player
   answer until they are right, and only the first answer to each of the seven
