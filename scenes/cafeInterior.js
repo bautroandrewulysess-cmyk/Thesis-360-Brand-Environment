@@ -1099,7 +1099,7 @@ class CafeInteriorScene extends Scene {
             // This only closes out the summary before the completion panel covers
             // the screen.
             await finishSceneExit('backToCafe');
-            this.showCompletionPanel('Coffee Journey Complete', window.PendingQuizzes.finalChallenge.feedback, 'https://forms.gle/UmT9jCX7bCieUKDW9');
+            this.showCompletionPanel('Coffee Journey Complete', window.PendingQuizzes.finalChallenge.feedback, 'https://docs.google.com/forms/d/e/1FAIpQLScOyr4F6G2pfJnsI8jsUWDmQI5YVOF9Zx7WEo-sB2xG1eSGHQ/viewform');
         }
     }
 
