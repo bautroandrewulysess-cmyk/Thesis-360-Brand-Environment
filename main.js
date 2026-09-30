@@ -3,13 +3,13 @@
 // ============================================================================
 
 const R2_BASE = 'https://assets.granjaalegre.com';
-const SUBTITLE_VERSION = 6;
+const SUBTITLE_VERSION = 7;
 // VO audio is the one asset class R2 serves with no cache-control at all -- only an
 // etag and last-modified -- so a replaced recording is cached heuristically and a
 // returning visitor can keep the old one without ever revalidating. Bumping this
 // forces a fresh copy without renaming segment ids, exactly as SUBTITLE_VERSION does
 // for the VTTs. Bump it whenever a VO file's CONTENT changes.
-const VO_VERSION = 2;
+const VO_VERSION = 3;
 
 // Where a winner goes to choose their keychain. Leave it empty and winners get a
 // claim code to show at the cafe instead; set it to a form URL and they get a button.
