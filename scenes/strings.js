@@ -24,7 +24,7 @@ window.Strings = {
     'cafe.exit-to-exterior.label.complete': { en: 'Go Outside', bis: 'Gawas sa Café' },
     'cafe.exit-to-exterior.description': { en: 'Click to step outside the cafe.', bis: 'I-klik aron mogawas sa café.' },
     'cafe.quiz.question': { en: 'What was the original purpose of establishing Alegre Café and Roastery?', bis: 'Unsa ang orihinal nga katuyoan nganung gitukod ang Alegre Café ug Roastery?' },
-    'cafe.quiz.choice.0': { en: 'To become the largest coffee exporter not only in the region but throughout the Philippines', bis: 'Aron makatulod ug pinakadakung maka-eksport ug kape dili lamang sa rehiyon, apan usab tibuok Pilipinas' },
+    'cafe.quiz.choice.0': { en: 'To become the largest coffee exporter not only in the region but throughout the Philippines', bis: 'Aron makatukod ug pinakadakung maka-eksport ug kape dili lamang sa rehiyon, apan usab tibuok Pilipinas' },
     'cafe.quiz.choice.1': { en: 'To create a place where people can gather, converse, and enjoy coffee grown from their own farm', bis: 'Aron makahimo og lugar diin ang mga tawo makatapok, mag-istoryahanay, ug motagamtam sa kapeng gipatubo sa ilang kaugalingong umahan' },
     'cafe.quiz.choice.2': { en: 'To sell imported specialty and rare varieties of coffee', bis: 'Aron mamaligya ug mga imported nga espesyal ug talagsaong klase sa kape' },
     'cafe.quiz.choice.3': { en: 'To make Bukidnon the coffee capital of the Philippines and promote tourism', bis: 'Aron mamahimong coffee capital ang probinsya sa Bukidnon ug mapalambo niini ang turismo' },
