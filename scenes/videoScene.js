@@ -27,12 +27,31 @@ const VIDEO_SCENE_VO_START_FALLBACK_MS = 5000;
 // off the frames -- the last narration line "Sa inyong tasa." is gone by 92.0s, replaced
 // by a burned-in "click Continue" prompt. The quiz opens here rather than at the end of
 // the video, so the player is not left watching a silent tail.
+//
+// Both numbers were re-measured against the v3 cuts and both still hold. The v3 audio
+// adds a spoken click-Continue instruction after the narration body -- English at
+// 66.4-69.3s (no burned-in text), Bisaya at 92.0-95.9s under its burned-in prompt --
+// and both languages deliberately cut before it. The instruction cannot be obeyed yet:
+// the quiz comes first and only passing it reveals Continue. Cutting at the end of the
+// narration body keeps the two languages on one rule.
 const HARVEST_NARRATION_END = { en: 64.45, bis: 92.0 };
 
 // While the quiz is up the picture keeps moving so the scene never goes black, but it is
-// muted and looped over a stretch that carries no narration and no burned-in text in
-// either language -- comfortably before Bisaya's 92s prompt.
-const HARVEST_LOOP = { start: 30, end: 60 };
+// muted and looped over a stretch that ends before the last narration line and carries
+// no "click Continue" prompt in either language.
+//
+// Per-language because the two cuts are not alike, even though they currently agree.
+// English v3 carries no burned-in text anywhere, so the window is free. Bisaya v3 is
+// subtitled into the picture essentially wall to wall -- text at every second sampled
+// from 5s to 91.5s -- so there is no text-free window to pick and the loop necessarily
+// shows a stale narration line. That is cosmetic; what matters is that it is a
+// narration line and not the 92s prompt. The previous comment here claimed the window
+// was text-free in both languages, which is not true of these cuts.
+const HARVEST_LOOP = {
+    en: { start: 30, end: 60 },
+    bis: { start: 30, end: 60 },
+};
+const harvestLoopFor = (lang) => HARVEST_LOOP[lang] || HARVEST_LOOP.en;
 
 class VideoScene extends Scene {
     constructor({ name, videoSrc, audioKey, quizKey, nextScene, nextSpawn, suppressSubtitles }) {
@@ -264,8 +283,9 @@ class VideoScene extends Scene {
         const video = this.videoElement;
         if (!video) return;
 
-        const narrationEnd = HARVEST_NARRATION_END[(window.currentLanguage || 'en')]
-                          ?? HARVEST_NARRATION_END.en;
+        const lang = window.currentLanguage || 'en';
+        const narrationEnd = HARVEST_NARRATION_END[lang] ?? HARVEST_NARRATION_END.en;
+        const loop = harvestLoopFor(lang);
 
         const openQuizAtNarrationEnd = () => {
             if (this.harvestQuizArmed) return;
@@ -276,7 +296,7 @@ class VideoScene extends Scene {
             // replay over it, looped inside a stretch with nothing to read or hear.
             video.muted = true;
             video.loop = true;
-            video.currentTime = HARVEST_LOOP.start;
+            video.currentTime = loop.start;
             this.harvestLooping = true;
             video.play().catch(() => {});
             const segments = window.voSegmentsFor ? window.voSegmentsFor(this.audioKey) : null;
@@ -290,8 +310,8 @@ class VideoScene extends Scene {
                 return;
             }
             // Hold the loop window while the quiz is open.
-            if (this.harvestLooping && video.currentTime >= HARVEST_LOOP.end) {
-                video.currentTime = HARVEST_LOOP.start;
+            if (this.harvestLooping && video.currentTime >= loop.end) {
+                video.currentTime = loop.start;
             }
         };
         video.addEventListener('timeupdate', this.onHarvestTimeUpdate);
@@ -515,7 +535,7 @@ class VideoScene extends Scene {
 // Register harvesting scene
 sceneManager.registerScene('harvesting', new VideoScene({
     name: 'harvesting',
-    videoSrc: () => videoUrl('harvestingWeb_v2.mp4'),
+    videoSrc: () => videoUrl('harvestingWeb_v3.mp4'),
     audioKey: 'harvesting',
     quizKey: 'harvesting',
     // Only the Bisaya cut has subtitles burned into the picture, where the overlay
