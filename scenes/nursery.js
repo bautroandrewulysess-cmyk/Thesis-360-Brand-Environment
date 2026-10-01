@@ -1006,12 +1006,16 @@ class NurseryScene extends Scene {
         let stallWatchdog = null;
         let continueTimer = null;
         let continueBtn = null;
+        let subtitleWatch = null;
+        let onViewportResize = null;
 
         const completeTransition = async () => {
             if (transitionStarted) return;
             transitionStarted = true;
             if (stallWatchdog) { clearInterval(stallWatchdog); stallWatchdog = null; }
             if (continueTimer) { clearTimeout(continueTimer); continueTimer = null; }
+            if (subtitleWatch) { subtitleWatch.disconnect(); subtitleWatch = null; }
+            if (onViewportResize) { window.removeEventListener('resize', onViewportResize); onViewportResize = null; }
             if (continueBtn) { continueBtn.remove(); continueBtn = null; }
 
             // Fade out video over 500ms
@@ -1093,6 +1097,8 @@ class NurseryScene extends Scene {
         const UNKNOWN_DURATION_CAP_MS = 30000;
         // Manual escape hatch, offered well before the 8s stall trigger would bite.
         const CONTINUE_BUTTON_MS = 6000;
+        // Clearance between the button's bottom edge and the subtitle bar's top edge.
+        const SUBTITLE_GAP_PX = 16;
         const watchStartedAt = Date.now();
         let lastTime = 0;
         let lastProgressAt = Date.now();
@@ -1146,7 +1152,7 @@ class NurseryScene extends Scene {
             // whatever the footage is doing underneath it.
             continueBtn.style.cssText = [
                 'position:fixed', 'z-index:9999',
-                'bottom:7vh', 'left:50%', 'transform:translateX(-50%)',
+                'left:50%', 'transform:translateX(-50%)',
                 'padding:14px 38px', 'border:none', 'border-radius:30px',
                 'background:#d4a24c', 'color:#1a1208',
                 'font-family:inherit', 'font-size:1rem', 'font-weight:700',
@@ -1155,6 +1161,31 @@ class NurseryScene extends Scene {
             ].join(';');
             continueBtn.onclick = () => completeTransition();
             document.body.appendChild(continueBtn);
+
+            // Park the button on top of the subtitle bar rather than across it. A cue
+            // is 1-3 lines depending on language and viewport, so the bar's height is
+            // not a constant and a fixed offset would be overlapped by the tall ones:
+            // measure its live top edge instead, and re-measure whenever it changes.
+            const bar = document.getElementById('subtitle-bar');
+            const placeAboveSubtitles = () => {
+                if (!continueBtn) return;
+                const rect = bar ? bar.getBoundingClientRect() : null;
+                const showing = rect && rect.height > 0 && getComputedStyle(bar).display !== 'none';
+                // With no cue up there is no rect to measure, so clear the bar's own
+                // resting line (#subtitle-bar is bottom:8vh) and the button stays put
+                // when the first cue arrives at that same height.
+                const clearTo = showing ? window.innerHeight - rect.top : window.innerHeight * 0.08;
+                // Ceil before adding the gap: the bar's top lands on a subpixel, and
+                // rounding down ate 0.2px of an intended 16px clearance.
+                continueBtn.style.bottom = `${Math.ceil(clearTo) + SUBTITLE_GAP_PX}px`;
+            };
+            placeAboveSubtitles();
+            if (bar && typeof ResizeObserver !== 'undefined') {
+                subtitleWatch = new ResizeObserver(placeAboveSubtitles);
+                subtitleWatch.observe(bar);
+            }
+            onViewportResize = placeAboveSubtitles;
+            window.addEventListener('resize', onViewportResize);
         }, CONTINUE_BUTTON_MS);
 
         attemptPlay();
