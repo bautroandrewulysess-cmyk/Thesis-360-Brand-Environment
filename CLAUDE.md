@@ -90,11 +90,12 @@ on the buttons.
    VTT *content* changed → bump `SUBTITLE_VERSION`. **VO audio content changed → bump
    `VO_VERSION`** (VO mp3s are served with no `cache-control`, only an etag, so a
    replaced recording can otherwise be served stale from cache indefinitely). Several
-   changed → bump each. `?v=` is currently **78**, `SUBTITLE_VERSION` is **7**,
-   `VO_VERSION` is **3** (see `test/loudness/README.md` §7 — **eight files are NOT on
-   R2 yet**: the normalized mp3s, `VO/contextIntro_v3.mp3`,
+   changed → bump each. `?v=` is currently **82**, `SUBTITLE_VERSION` is **7**,
+   `VO_VERSION` is **3** (see `test/loudness/README.md` §7 and §8 — **ten files are NOT
+   on R2 yet**: the normalized mp3s, `VO/contextIntro_v3.mp3`,
    `Videos/farmerInterview_v3.mp4`, the `_v2`/`_v3` videos, the recut
-   `VO/bis/nursery_bis_0*.mp3` and the retimed `Subtitles/bis/nursery_en_0*.vtt`).
+   `VO/bis/nursery_bis_0*.mp3`, the retimed `Subtitles/bis/nursery_en_0*.vtt` and the
+   new `Videos/harvestingWeb_v3.mp4` + `Videos/bis/harvestingWeb_v3.mp4`).
    The two version bumps exist **only** for the nursery files, which keep their
    existing names; the context narration and the farmer interview ship under new
    filenames and need neither.
@@ -405,6 +406,11 @@ Cleared this round, all by real clicks in the harness:
   scene quiz at ~31 s.
 - **Harvesting quiz timing + muted 30–60 s loop** — quiz opened at the narration end
   (64.45 s EN, 92 s BIS); holding it open 50 s, the video was muted and wrapped twice.
+  Both numbers re-confirmed against the `_v3` cuts; `HARVEST_LOOP` is now per-language
+  (both still 30–60). **English `harvestingWeb_v3` carries no burned-in text at all;
+  Bisaya's carries it wall to wall, 5 s to 91.5 s**, so the loop there necessarily
+  shows a stale narration line — there is no text-free window to pick, and the old
+  comment claiming otherwise was wrong.
 - **Farm close-up placement** — re-walked, which is how the unreachable Back disc was
   found and fixed (see Done this round).
 - **The combined walk + farm summary** — one "What you skipped" panel with both sections,

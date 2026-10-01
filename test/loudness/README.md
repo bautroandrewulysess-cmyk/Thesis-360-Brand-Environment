@@ -601,3 +601,95 @@ done
 # expected: contextIntro_v3 32.922s -16.4 | farmerInterview_v3 89.000s -16.0
 #           nursery_bis_01 13.968s -16.4 | _02 32.543s -16.3 | _03 29.321s -16.4
 ```
+
+---
+
+## 8. Round three — new harvesting cuts
+
+Two files, both under **new names** behind the immutable cache headers, so nothing is
+overwritten in place and the `_v2` cuts stay as rollback paths. **Neither is on R2
+yet.** No subtitle or VO version bump is involved: the English VTT still matches and
+Bisaya's subtitles are burned into the picture.
+
+Sources `Assets/Videos/Harvesting Video 10-1 English.mp4` and
+`... Bisaya.mp4`, both **HEVC Main 10 / yuv420p10le** — hard rule 8 — so both are full
+transcodes.
+
+```
+libx264 crf 24, maxrate 3M, bufsize 6M, preset slow, yuv420p
+aac 128k / 48 kHz stereo
+-movflags +faststart
+```
+
+| | EN source | EN output | BIS source | BIS output |
+|---|---|---|---|---|
+| codec | hevc Main 10 | **h264 High / yuv420p** | hevc Main 10 | **h264 High / yuv420p** |
+| size | 100.2 MB | **31.6 MB** | 131.4 MB | **40.7 MB** |
+| duration | 82.800 s | **82.900 s** | 107.600 s | **107.600 s** |
+| resolution | 1920×1080 30 fps | 1920×1080 30 fps | 1920×1080 30 fps | 1920×1080 30 fps |
+| loudness | -23.44 LUFS | **-16.07 LUFS** | -23.55 LUFS | **-16.24 LUFS** |
+| true peak | -6.40 dBTP | **-1.90 dBTP** | -4.28 dBTP | **-1.81 dBTP** |
+
+**`linear=true` will not hold the true-peak ceiling here.** The first pass came out at
+-1.39 and -1.32 dBTP, both above the -1.5 target. The fix is a second audio-only pass
+with `linear=false` plus `alimiter=limit=0.794`, muxed over the already-encoded video
+with `-c:v copy` — seconds rather than another full encode.
+
+### What was re-measured, and what it changed
+
+Nothing. Both constants hold against the new cuts:
+
+| constant | old | new |
+|---|---|---|
+| `HARVEST_NARRATION_END.en` | 64.45 | **64.45** |
+| `HARVEST_NARRATION_END.bis` | 92.0 | **92.0** |
+| `HARVEST_LOOP` | 30–60 | **30–60** (now per-language) |
+| Continue fallback | narration end + 30 s | **unchanged** |
+
+- **Burned-in subtitles: English no, Bisaya yes.** English is clean at every frame
+  sampled 5–75 s. Bisaya carries them essentially wall to wall, 5 s through 91.5 s, so
+  `suppressSubtitles` stays correct and the 30–60 loop necessarily shows a stale
+  narration line. There is no text-free window to pick.
+- **Bisaya's boundary is unchanged**: "Sa inyong tasa." runs 89.5–91.5 s and the
+  burned-in "I-klik ang Continue" prompt is up at 92.0 s, exactly as before.
+- **Both cuts now add a spoken click-Continue instruction** after the narration body,
+  EN 66.4–69.3 s and BIS 92.0–95.9 s. Both languages cut before it on purpose: the
+  quiz comes first, so the instruction cannot be obeyed yet.
+- **The English VTT still matches**, text and timing — every cue boundary lands inside
+  its Whisper segment. `SUBTITLE_VERSION` is untouched.
+- **Whisper's "Thank you for watching!" at 81–85 s is a hallucination.** The audio
+  there is a flat -42 to -48 dB room tone. Always check the energy before believing a
+  trailing line.
+- **Silencedetect is useless on these cuts.** Music runs under the voice, so the
+  threshold sweep gave no plateau (EN 0/0/0/7/10 silences at -45/-40/-35/-30/-25 dB).
+  The narration end came from a 100 ms RMS envelope instead.
+
+### Upload
+
+```bash
+# Run from test/loudness/. Round three: the two new harvesting cuts.
+BUCKET=granja-alegre-assets
+
+wrangler r2 object put "$BUCKET/Videos/harvestingWeb_v3.mp4" \
+    --file="Videos/harvestingWeb_v3.mp4" \
+    --content-type=video/mp4 \
+    --cache-control="public, max-age=2592000" --remote
+
+wrangler r2 object put "$BUCKET/Videos/bis/harvestingWeb_v3.mp4" \
+    --file="Videos/bis/harvestingWeb_v3.mp4" \
+    --content-type=video/mp4 \
+    --cache-control="public, max-age=2592000" --remote
+
+# Verify: full GET (not HEAD -- HEAD has reported a fresh content-length while
+# ranged GETs still served stale bytes), cache-busted so the edge cannot answer.
+for f in Videos/harvestingWeb_v3.mp4 Videos/bis/harvestingWeb_v3.mp4; do
+    local_size=$(stat -f%z "$f")
+    remote_size=$(curl -s "https://assets.granjaalegre.com/$f?check=$RANDOM" -o /tmp/r2check.bin -w '%{size_download}')
+    if [ "$local_size" = "$remote_size" ]; then
+        echo "OK        $f  $local_size bytes"
+    else
+        echo "MISMATCH  $f  local=$local_size remote=$remote_size"
+    fi
+done
+rm -f /tmp/r2check.bin
+```
