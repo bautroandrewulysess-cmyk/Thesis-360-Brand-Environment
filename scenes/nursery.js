@@ -1004,11 +1004,15 @@ class NurseryScene extends Scene {
 
         let transitionStarted = false;
         let stallWatchdog = null;
+        let continueTimer = null;
+        let continueBtn = null;
 
         const completeTransition = async () => {
             if (transitionStarted) return;
             transitionStarted = true;
             if (stallWatchdog) { clearInterval(stallWatchdog); stallWatchdog = null; }
+            if (continueTimer) { clearTimeout(continueTimer); continueTimer = null; }
+            if (continueBtn) { continueBtn.remove(); continueBtn = null; }
 
             // Fade out video over 500ms
             video.style.transition = 'opacity 0.5s ease-out';
@@ -1025,6 +1029,13 @@ class NurseryScene extends Scene {
             sceneManager.switchTo('street-view', spawnPosition);
         };
 
+        // The route map ending is itself a reason to move on. It used to be wired to
+        // nothing -- the cut was the VO's job alone -- which is how an ended video
+        // could sit frozen indefinitely. Both measured narrations (13.1s EN, ~19.5s
+        // BIS) finish inside the 20.0s footage, so in practice the VO still decides
+        // the cut and this only matters when the VO is the thing that hung.
+        video.addEventListener('ended', () => { completeTransition(); });
+
         video.onerror = async () => {
             console.warn('[Nursery] Drone video failed to load, completing transition anyway');
             await completeTransition();
@@ -1033,12 +1044,27 @@ class NurseryScene extends Scene {
         document.body.appendChild(video);
         video.src = droneVideoUrl;
 
-        // Play video
-        video.play().catch(err => {
-            console.warn('[Nursery] Failed to play drone video:', err);
-            // Still complete transition if autoplay fails
-            completeTransition();
-        });
+        // Play the video. An autoplay policy rejects a video that carries sound when
+        // the user gesture has lapsed, so take the one retry the policy does allow --
+        // muted -- before giving up. The VO carries this beat's narration anyway, so a
+        // muted route map is a far better outcome than no route map. If even the muted
+        // attempt is refused there is nothing left to wait for, so continue at once
+        // rather than making the player sit out the watchdog.
+        const attemptPlay = async () => {
+            try {
+                await video.play();
+                return;
+            } catch (err) {
+                console.warn('[Nursery] Drone video play() rejected, retrying muted:', err);
+            }
+            try {
+                video.muted = true;
+                await video.play();
+            } catch (err2) {
+                console.warn('[Nursery] Drone video muted play() also rejected, continuing the journey:', err2);
+                completeTransition();
+            }
+        };
 
         // ------------------------------------------------------------------
         // Stall watchdog.
@@ -1065,6 +1091,8 @@ class NurseryScene extends Scene {
         // Unknown duration (metadata never arrived) still needs a ceiling, so fall back
         // to a fixed cap rather than arithmetic on NaN.
         const UNKNOWN_DURATION_CAP_MS = 30000;
+        // Manual escape hatch, offered well before the 8s stall trigger would bite.
+        const CONTINUE_BUTTON_MS = 6000;
         const watchStartedAt = Date.now();
         let lastTime = 0;
         let lastProgressAt = Date.now();
@@ -1088,16 +1116,48 @@ class NurseryScene extends Scene {
                 lastTime = video.currentTime;
                 lastProgressAt = now;
             }
-            const frozen = !video.ended && now - lastProgressAt >= VIDEO_STALL_MS;
+            // Deliberately NOT gated on !video.ended. That gate is what made this
+            // terminal: the route map is 20.0s and the Bisaya narration runs to ~19.5s,
+            // so the video reaching its end before the VO promise settles is a coin
+            // flip, and an ended video disarmed BOTH triggers for good -- leaving the
+            // player on a frozen last frame with nothing to click. Any lack of
+            // progress counts now, ended or paused or stalled alike.
+            const frozen = now - lastProgressAt >= VIDEO_STALL_MS;
             const limitMs = isFinite(video.duration) && video.duration > 0
                 ? video.duration * 1000 + VIDEO_OVERRUN_MS
                 : UNKNOWN_DURATION_CAP_MS;
-            const overran = !video.ended && now - watchStartedAt >= limitMs;
+            const overran = now - watchStartedAt >= limitMs;
             if (frozen || overran) {
                 console.warn(`[Nursery] Drone video watchdog: ${frozen ? 'stalled' : 'overran'} at ${video.currentTime.toFixed(2)}s — continuing the journey`);
                 completeTransition();
             }
         }, 1000);
+
+        // A visible way out, in case every automatic rescue above is somehow also
+        // wedged. Same handler as 'ended' and the watchdog, and completeTransition is
+        // idempotent via transitionStarted, so whichever arrives first wins and the
+        // rest are no-ops.
+        continueTimer = setTimeout(() => {
+            if (transitionStarted) return;
+            continueBtn = document.createElement('button');
+            continueBtn.id = 'drone-continue-button';
+            continueBtn.textContent = this.t('ui.video.continue');
+            // Above the video (9997) and the subtitle bar (9998) so it is reachable
+            // whatever the footage is doing underneath it.
+            continueBtn.style.cssText = [
+                'position:fixed', 'z-index:9999',
+                'bottom:7vh', 'left:50%', 'transform:translateX(-50%)',
+                'padding:14px 38px', 'border:none', 'border-radius:30px',
+                'background:#d4a24c', 'color:#1a1208',
+                'font-family:inherit', 'font-size:1rem', 'font-weight:700',
+                'letter-spacing:0.02em', 'cursor:pointer',
+                'box-shadow:0 6px 22px rgba(0,0,0,0.45)'
+            ].join(';');
+            continueBtn.onclick = () => completeTransition();
+            document.body.appendChild(continueBtn);
+        }, CONTINUE_BUTTON_MS);
+
+        attemptPlay();
 
         // Play VO narration — when it ends, complete transition (cuts video, not when video ends)
         await this.playVoWithSubtitles('journeyToFarm_en_01', false);
